@@ -4,6 +4,7 @@
 // just give visitors a path into the builder.
 
 import Link from "next/link";
+import { Logo } from "@/shared/ui/Logo";
 
 export const metadata = {
   title: "ركاز — منصة إنشاء مواقع الأعمال",
@@ -13,7 +14,7 @@ export default function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-tint-peach px-6 text-center">
       <div className="max-w-xl">
-        <p className="mb-3 text-sm font-medium text-brand">ركاز</p>
+        <Logo height={56} className="mx-auto mb-6" />
         <h1 className="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
           أنشئ موقع عملك بدون كود
         </h1>

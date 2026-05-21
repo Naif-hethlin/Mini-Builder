@@ -3,6 +3,7 @@
 // Placeholder until Phase 12. Currently offers a single "Start from scratch"
 // action that creates an empty project and routes into the builder.
 
+import { Logo } from "@/shared/ui/Logo";
 import { ScratchStarter } from "./_front/ScratchStarter";
 
 export const metadata = {
@@ -13,7 +14,7 @@ export default function TemplatesPage() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-stone-50 px-6 py-16">
       <div className="w-full max-w-3xl text-center">
-        <p className="mb-3 text-sm font-medium text-brand">ركاز</p>
+        <Logo height={44} className="mx-auto mb-6" />
         <h1 className="text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
           اختر بداية لمشروعك
         </h1>

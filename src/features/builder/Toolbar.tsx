@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconButton } from "@/shared/ui/IconButton";
+import { Logo } from "@/shared/ui/Logo";
 import type { DeviceMode } from "./state/types";
 import {
   selectCanRedo,
@@ -59,12 +60,10 @@ export function Toolbar() {
   return (
     <header className="flex items-center justify-between gap-2 border-b border-stone-200 bg-white px-3 py-2">
       {/* ── Left: brand ─────────────────────────────────────────────────── */}
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand font-semibold text-white">
-          B
-        </div>
-        <span className="hidden truncate text-sm font-medium text-stone-900 sm:inline">
-          Mini Website Builder
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Logo height={22} />
+        <span className="hidden truncate text-sm text-stone-500 sm:inline">
+          المنشئ
         </span>
       </div>
 
