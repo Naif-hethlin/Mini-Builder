@@ -141,6 +141,13 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
         </div>
       </div>
 
+      {/* Soft fade-to-stone at the bottom so the hero blends into the
+          features section instead of meeting it at a hard edge. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-stone-50"
+      />
+
       {/* Scroll-hint dots — clickable, smooth-scrolls to features. */}
       <button
         type="button"
