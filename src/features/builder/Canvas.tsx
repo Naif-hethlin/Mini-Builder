@@ -2,10 +2,12 @@
 
 import { MousePointerClick } from "lucide-react";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
-import type { DeviceMode } from "./state/types";
+import { cn } from "@/shared/lib/cn";
+import type { DeviceMode, Section } from "./state/types";
 import {
   selectDeviceMode,
   selectSections,
+  selectSelection,
   useBuilderStore,
 } from "./state/store";
 
@@ -21,21 +23,35 @@ const DEVICE_WIDTH: Record<DeviceMode, string> = {
 export function Canvas() {
   const sections = useBuilderStore(selectSections);
   const deviceMode = useBuilderStore(selectDeviceMode);
+  const selection = useBuilderStore(selectSelection);
+  const setSelection = useBuilderStore((s) => s.setSelection);
 
   const isEmpty = sections.length === 0;
+  const selectedId =
+    selection.kind === "section" ? selection.sectionId : null;
 
   return (
-    <main className="flex h-full w-full flex-1 overflow-auto bg-stone-50">
+    <main
+      className="flex h-full w-full flex-1 overflow-auto bg-stone-50"
+      onClick={() => setSelection({ kind: "none" })}
+    >
       <div
         className={`mx-auto w-full px-4 py-6 transition-[max-width] duration-200 ${DEVICE_WIDTH[deviceMode]}`}
       >
-        <div className="min-h-[calc(100vh-200px)] overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
+        <div className="min-h-[calc(100vh-200px)] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
           {isEmpty ? (
             <EmptyState />
           ) : (
             <div className="divide-y divide-stone-100">
               {sections.map((section) => (
-                <SectionRenderer key={section.id} section={section} />
+                <SelectableSection
+                  key={section.id}
+                  section={section}
+                  selected={section.id === selectedId}
+                  onSelect={() =>
+                    setSelection({ kind: "section", sectionId: section.id })
+                  }
+                />
               ))}
             </div>
           )}
@@ -45,18 +61,51 @@ export function Canvas() {
   );
 }
 
+function SelectableSection({
+  section,
+  selected,
+  onSelect,
+}: {
+  section: Section;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        "relative cursor-pointer outline-none transition-shadow",
+        selected
+          ? "shadow-[inset_0_0_0_2px_var(--color-brand)]"
+          : "hover:shadow-[inset_0_0_0_2px_rgba(232,93,93,0.25)]",
+      )}
+    >
+      <SectionRenderer section={section} />
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-brand">
         <MousePointerClick size={24} strokeWidth={1.75} />
       </div>
-      <h2 className="text-lg font-semibold text-stone-900">
-        Your page is empty
-      </h2>
+      <h2 className="text-lg font-semibold text-stone-900">صفحتك فارغة</h2>
       <p className="mt-1.5 max-w-sm text-sm text-stone-500">
-        Click a section in the library on the left to add it to your page. You
-        can then edit, rearrange, or duplicate any section.
+        اضغط على أي قسم في المكتبة على اليمين لإضافته. تقدر بعدها تعدل،
+        ترتب، أو تنسخ أي قسم.
       </p>
     </div>
   );
