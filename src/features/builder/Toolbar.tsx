@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Download,
   FolderOpen,
   Languages,
   Monitor,
@@ -12,16 +13,23 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
 import { IconButton } from "@/shared/ui/IconButton";
 import { Logo } from "@/shared/ui/Logo";
+import {
+  ProjectPicker,
+  exportProjectFile,
+  useProjects,
+} from "@/features/projects";
 import type { DeviceMode } from "./state/types";
 import {
   selectCanRedo,
   selectCanUndo,
   selectDeviceMode,
   selectLanguage,
+  selectProjectId,
   useBuilderStore,
 } from "./state/store";
 
@@ -40,6 +48,7 @@ export function Toolbar() {
   const canRedo = useBuilderStore(selectCanRedo);
   const deviceMode = useBuilderStore(selectDeviceMode);
   const language = useBuilderStore(selectLanguage);
+  const projectId = useBuilderStore(selectProjectId);
 
   // Actions are stable function references — no re-render concerns.
   const undo = useBuilderStore((s) => s.undo);
@@ -47,6 +56,21 @@ export function Toolbar() {
   const clearDesign = useBuilderStore((s) => s.clearDesign);
   const setDeviceMode = useBuilderStore((s) => s.setDeviceMode);
   const setLanguage = useBuilderStore((s) => s.setLanguage);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const handleSave = () => {
+    // Auto-save covers the actual writing; this is the explicit confirm path.
+    toast.success("تم الحفظ");
+  };
+
+  const handleExport = () => {
+    if (!projectId) return;
+    const project = useProjects.getState().get(projectId);
+    if (!project) return;
+    exportProjectFile(project);
+    toast.success(`تم تصدير ${project.name}`);
+  };
 
   const confirm = useConfirm();
   const handleClear = async () => {
@@ -106,19 +130,25 @@ export function Toolbar() {
 
         <IconButton
           icon={<Save size={16} />}
-          label="Save my work"
-          onClick={() => toast.info("Save is wired up in Phase 7")}
+          label="حفظ"
+          onClick={handleSave}
           className="hidden sm:inline-flex"
         />
         <IconButton
           icon={<FolderOpen size={16} />}
-          label="Open a saved design"
-          onClick={() => toast.info("Open is wired up in Phase 7")}
+          label="فتح مشروع"
+          onClick={() => setPickerOpen(true)}
+          className="hidden sm:inline-flex"
+        />
+        <IconButton
+          icon={<Download size={16} />}
+          label="تصدير JSON"
+          onClick={handleExport}
           className="hidden sm:inline-flex"
         />
         <IconButton
           icon={<Trash2 size={16} />}
-          label="Clear page"
+          label="مسح الصفحة"
           onClick={handleClear}
         />
 
@@ -137,13 +167,20 @@ export function Toolbar() {
 
         <button
           type="button"
-          onClick={() => toast.info("Publishing is wired up in Phase 13")}
-          className="ml-1 inline-flex h-9 items-center gap-1.5 rounded-md bg-brand px-3 text-sm font-medium text-white hover:bg-brand-dark"
+          onClick={() => toast.info("النشر التلقائي قريبًا — استخدم التصدير حالياً")}
+          className="ms-1 inline-flex h-9 items-center gap-1.5 rounded-md bg-brand px-3 text-sm font-medium text-white hover:bg-brand-dark"
         >
           <Rocket size={14} />
-          <span className="hidden sm:inline">Publish</span>
+          <span className="hidden sm:inline">نشر</span>
         </button>
       </div>
+
+      {pickerOpen && (
+        <ProjectPicker
+          currentProjectId={projectId}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </header>
   );
 }
