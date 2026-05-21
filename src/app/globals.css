@@ -35,6 +35,61 @@
   --radius-xl: 1.5rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
+
+  /* ----- landing-page animations ----- */
+  --animate-float-slow: float 15s ease-in-out infinite;
+  --animate-float-medium: float 10s ease-in-out infinite reverse;
+  --animate-float-fast: float 8s ease-in-out infinite;
+  --animate-blob: blob 7s infinite;
+  --animate-fade-in-up: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pulse-glow: pulseGlow 3s infinite;
+  --animate-morph: morph 8s ease-in-out infinite;
+  --animate-blink: blink 1s step-end infinite;
+  --animate-gradient-bg: gradientBG 15s ease infinite;
+}
+
+/* Keyframes referenced by the @theme animation tokens above. */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-30px) rotate(10deg); }
+}
+@keyframes blob {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(30px, -50px) scale(1.1); }
+  66%  { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes fadeInUp {
+  0%   { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(232, 93, 93, 0.2)); }
+  50%      { filter: drop-shadow(0 0 25px rgba(232, 93, 93, 0.6)); }
+}
+@keyframes morph {
+  0%   { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50%  { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+@keyframes gradientBG {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Landing-page utilities */
+.bg-animated-gradient {
+  background: linear-gradient(-45deg, #fdf6f5, #faece9, #fff0ed, #fdf6f5);
+  background-size: 400% 400%;
+  animation: var(--animate-gradient-bg);
+}
+.fade-in-start {
+  opacity: 0;
 }
 
 /*
