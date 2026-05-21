@@ -108,12 +108,12 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
           />
         </Link>
 
-        <div className="mb-6 flex h-[80px] w-full animate-fade-in-up items-center justify-center fade-in-start [animation-delay:100ms] md:h-[100px]">
-          <h1 className="flex flex-wrap items-center justify-center gap-x-3 text-4xl leading-tight font-extrabold md:text-5xl lg:text-6xl">
+        <div className="mb-6 flex min-h-[110px] w-full animate-fade-in-up items-center justify-center fade-in-start [animation-delay:100ms] md:min-h-[100px]">
+          <h1 className="flex flex-col items-center justify-center gap-1 text-3xl leading-tight font-extrabold whitespace-nowrap md:flex-row md:gap-x-3 md:gap-y-0 md:text-5xl lg:text-6xl">
             <span>أنشئ</span>
-            <span className="relative flex h-full min-w-[200px] items-center">
+            <span className="relative flex items-center">
               <span className="inline-block text-brand">{text}</span>
-              <span className="ms-1 inline-block h-10 w-[3px] animate-blink bg-brand md:h-12 lg:h-14" />
+              <span className="ms-1 inline-block h-8 w-[3px] animate-blink bg-brand md:h-12 lg:h-14" />
             </span>
           </h1>
         </div>
