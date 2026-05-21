@@ -7,7 +7,7 @@ import { Toaster } from "sonner";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useProjects } from "@/features/projects";
-import { DashboardSidebar } from "./DashboardSidebar";
+import { DashboardMobileNav, DashboardSidebar } from "./DashboardSidebar";
 
 /**
  * Layout wrapper for /dashboard/[id]/* — sidebar + top bar + content slot.
@@ -55,7 +55,9 @@ export function DashboardShell({
           </Link>
         </header>
 
-        <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
+        <DashboardMobileNav projectId={projectId} />
+
+        <main className="flex-1 overflow-auto p-4 md:p-8">{children}</main>
       </div>
 
       <Toaster

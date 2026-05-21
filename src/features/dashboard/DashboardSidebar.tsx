@@ -53,6 +53,7 @@ const NAV: NavItem[] = [
   },
 ];
 
+/** Desktop-only side rail with the same nav. */
 export function DashboardSidebar({ projectId }: { projectId: string }) {
   const pathname = usePathname() ?? "";
   return (
@@ -93,5 +94,35 @@ export function DashboardSidebar({ projectId }: { projectId: string }) {
         </Link>
       </div>
     </aside>
+  );
+}
+
+/** Mobile-only horizontal-scrolling pills strip with the same nav. */
+export function DashboardMobileNav({ projectId }: { projectId: string }) {
+  const pathname = usePathname() ?? "";
+  return (
+    <nav
+      aria-label="تنقل لوحة التحكم"
+      className="flex shrink-0 gap-1.5 overflow-x-auto border-b border-stone-200 bg-white px-3 py-2 md:hidden"
+    >
+      {NAV.map(({ href, match, label, Icon }) => {
+        const active = match(pathname, projectId);
+        return (
+          <Link
+            key={label}
+            href={href(projectId)}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-colors",
+              active
+                ? "bg-brand text-white"
+                : "bg-stone-100 text-stone-600 hover:bg-stone-200/70 hover:text-stone-900",
+            )}
+          >
+            <Icon size={14} />
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

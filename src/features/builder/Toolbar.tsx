@@ -107,7 +107,7 @@ export function Toolbar() {
       </div>
 
       {/* ── Middle: device preview toggle ──────────────────────────────── */}
-      <div className="flex items-center gap-0.5 rounded-md bg-stone-100 p-1">
+      <div className="hidden items-center gap-0.5 rounded-md bg-stone-100 p-1 sm:flex">
         {DEVICES.map(({ mode, Icon, label }) => (
           <IconButton
             key={mode}
