@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { Section, SectionType } from "@/app/web-builder/_back/types";
+import type { Section, SectionType } from "@/features/builder/state/types";
 
 import HeaderThumbnail from "./Header/Thumbnail";
 import { createHeader } from "./Header/defaults";

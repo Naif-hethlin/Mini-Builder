@@ -1,4 +1,4 @@
-import type { HeroProps } from "@/app/web-builder/_back/types";
+import type { HeroProps } from "@/features/builder/state/types";
 
 /**
  * Hero section. Supports 4 layout variants:

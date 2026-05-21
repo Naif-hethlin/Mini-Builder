@@ -1,4 +1,4 @@
-import type { Section } from "@/app/web-builder/_back/types";
+import type { Section } from "@/features/builder/state/types";
 
 import HeaderRender from "./Header/Render";
 import HeroRender from "./Hero/Render";
@@ -9,15 +9,14 @@ import FooterRender from "./Footer/Render";
 /**
  * Dispatches a Section to the right preset renderer based on its `type`.
  *
- * Used by:
- *   - The builder's Canvas (real-time preview while editing)
- *   - The public /p/[slug] route (rendering a published design from the DB)
+ * Used by the builder's Canvas (real-time preview while editing) and the
+ * Preview route (rendering a published design without the builder UI),
+ * so the renderers live in `features/sections/` and not inside any route
+ * folder.
  *
- * This is why the section renderers live in `features/` (shared) and NOT inside
- * `app/web-builder/`: they're used by more than just the builder route.
- *
- * The `layout` type returns null here — its content (rows/cols/components) is
- * handled separately by the LayoutRenderer in Phase 10.
+ * The `layout` type is currently unreachable — the Layout/Component data
+ * model was dropped in Phase 4. The case stays for exhaustiveness against
+ * any future variants.
  */
 export function SectionRenderer({ section }: { section: Section }) {
   switch (section.type) {

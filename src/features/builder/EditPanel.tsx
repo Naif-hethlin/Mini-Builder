@@ -1,6 +1,6 @@
 "use client";
 
-import { selectSelection, useBuilderStore } from "../_back/store";
+import { selectSelection, useBuilderStore } from "./state/store";
 
 /**
  * Right-side panel for editing whatever is currently selected.

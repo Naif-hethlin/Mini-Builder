@@ -1,6 +1,6 @@
 import { Briefcase, Camera, MessageCircle, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { FooterProps } from "@/app/web-builder/_back/types";
+import type { FooterProps } from "@/features/builder/state/types";
 
 // lucide v1 dropped brand glyphs (Twitter/Instagram/Linkedin/Whatsapp) — likely
 // for trademark reasons. We substitute neutral icons that still read clearly.

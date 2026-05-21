@@ -2,8 +2,8 @@
 
 import { Eye, Layers, Settings2 } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
-import type { MobileTab } from "../_back/types";
-import { selectMobileTab, useBuilderStore } from "../_back/store";
+import type { MobileTab } from "./state/types";
+import { selectMobileTab, useBuilderStore } from "./state/store";
 
 /**
  * Bottom tab bar shown ONLY on mobile (<md screens).

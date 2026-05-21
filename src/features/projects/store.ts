@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import type { PageDesign } from "@/app/web-builder/_back/types";
+import type { PageDesign } from "@/features/builder/state/types";
 import { loadAll, saveAll } from "./storage";
 import type { Project, ProjectMeta, ProjectTemplateType } from "./types";
 
 const EMPTY_DESIGN: PageDesign = { version: 1, sections: [] };
 
 type CreateInput = {
+  /** Explicit id — if omitted, a nanoid is generated. Useful when the route
+   *  param dictates the id (e.g. landing on /builder/<id> for an unseen id). */
+  id?: string;
   name?: string;
   templateType?: ProjectTemplateType;
   design?: PageDesign;
@@ -42,7 +45,7 @@ export const useProjects = create<ProjectsState>((set, get) => ({
   get: (id) => get().projects[id],
 
   create: (input = {}) => {
-    const id = nanoid();
+    const id = input.id ?? nanoid();
     const now = Date.now();
     const project: Project = {
       id,

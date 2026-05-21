@@ -1,6 +1,6 @@
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { FeaturesProps } from "@/app/web-builder/_back/types";
+import type { FeaturesProps } from "@/features/builder/state/types";
 
 const GRID_COLS: Record<2 | 3 | 4, string> = {
   2: "md:grid-cols-2",

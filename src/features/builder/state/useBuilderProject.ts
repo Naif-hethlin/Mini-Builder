@@ -10,21 +10,18 @@ const AUTOSAVE_DEBOUNCE_MS = 500;
  * Wires the builder to a project in localStorage.
  *
  *  1. Hydrates the projects store from localStorage.
- *  2. Picks the first project (or creates one if none exist).
+ *  2. Resolves the project by id (creates one with that id if missing).
  *  3. Loads it into the builder store.
  *  4. Subscribes to design changes and saves them back (debounced).
- *
- * Phase 3 will replace step 2 with a route-param lookup.
  */
-export function useBuilderProject() {
+export function useBuilderProject(projectId: string) {
   useEffect(() => {
     const projects = useProjects.getState();
     projects.hydrate();
 
-    const existing = projects.list()[0];
+    const existing = projects.get(projectId);
     const project =
-      projects.get(existing?.id ?? "") ??
-      projects.create({ name: "مشروع تجريبي" });
+      existing ?? projects.create({ id: projectId, name: "مشروع جديد" });
 
     useBuilderStore.getState().loadProject(project.id, project.design);
 
@@ -43,5 +40,5 @@ export function useBuilderProject() {
       if (timer) clearTimeout(timer);
       unsubscribe();
     };
-  }, []);
+  }, [projectId]);
 }

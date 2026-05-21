@@ -2,8 +2,8 @@
 
 import { Toaster } from "sonner";
 import { cn } from "@/shared/lib/cn";
-import { selectMobileTab, useBuilderStore } from "../_back/store";
-import { useBuilderProject } from "../_back/useBuilderProject";
+import { selectMobileTab, useBuilderStore } from "./state/store";
+import { useBuilderProject } from "./state/useBuilderProject";
 import { Canvas } from "./Canvas";
 import { EditPanel } from "./EditPanel";
 import { MobileTabs } from "./MobileTabs";
@@ -21,9 +21,9 @@ import { Toolbar } from "./Toolbar";
  * The `mobileTab` value from the store drives which panel is visible on mobile.
  * On md+, the `md:block` utility overrides the `hidden` and shows all three.
  */
-export function Builder() {
+export function Builder({ projectId }: { projectId: string }) {
   const mobileTab = useBuilderStore(selectMobileTab);
-  useBuilderProject();
+  useBuilderProject(projectId);
 
   return (
     <div className="flex h-screen flex-col bg-stone-50">

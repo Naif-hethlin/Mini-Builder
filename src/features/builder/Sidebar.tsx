@@ -6,8 +6,8 @@ import {
   SECTION_PRESETS,
   type SectionPresetMeta,
 } from "@/features/sections/registry";
-import type { SidebarTab } from "../_back/types";
-import { selectSidebarTab, useBuilderStore } from "../_back/store";
+import type { SidebarTab } from "./state/types";
+import { selectSidebarTab, useBuilderStore } from "./state/store";
 
 // The three tabs at the top of the left sidebar.
 // `description` is a hint shown next to the tile grid for non-tech users.

@@ -1,4 +1,4 @@
-import type { CTAProps } from "@/app/web-builder/_back/types";
+import type { CTAProps } from "@/features/builder/state/types";
 
 /**
  * Call-to-action banner. Three visual styles:

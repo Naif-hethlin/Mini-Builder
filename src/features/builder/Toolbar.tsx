@@ -14,14 +14,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { IconButton } from "@/shared/ui/IconButton";
-import type { DeviceMode } from "../_back/types";
+import type { DeviceMode } from "./state/types";
 import {
   selectCanRedo,
   selectCanUndo,
   selectDeviceMode,
   selectLanguage,
   useBuilderStore,
-} from "../_back/store";
+} from "./state/store";
 
 // All three device modes, in display order, with their lucide icons.
 const DEVICES: Array<{ mode: DeviceMode; Icon: typeof Monitor; label: string }> =

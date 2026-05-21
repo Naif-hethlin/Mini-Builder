@@ -1,5 +1,5 @@
 import { newId } from "@/shared/lib/id";
-import type { Section } from "@/app/web-builder/_back/types";
+import type { Section } from "@/features/builder/state/types";
 
 export function createCTA(): Section {
   return {

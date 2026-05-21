@@ -1,4 +1,4 @@
-import type { HeaderProps } from "@/app/web-builder/_back/types";
+import type { HeaderProps } from "@/features/builder/state/types";
 
 /**
  * Renders a Header section as it would appear on the user's published website.

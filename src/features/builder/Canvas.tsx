@@ -2,12 +2,12 @@
 
 import { MousePointerClick } from "lucide-react";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
-import type { DeviceMode } from "../_back/types";
+import type { DeviceMode } from "./state/types";
 import {
   selectDeviceMode,
   selectSections,
   useBuilderStore,
-} from "../_back/store";
+} from "./state/store";
 
 // Canvas content is constrained to one of these widths based on the device
 // toggle in the toolbar. Shrinking the inner container is what makes

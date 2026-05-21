@@ -1,4 +1,4 @@
-import type { PageDesign } from "@/app/web-builder/_back/types";
+import type { PageDesign } from "@/features/builder/state/types";
 
 export type ProjectTemplateType = "barber" | "coffee" | "photography";
 
