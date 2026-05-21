@@ -30,8 +30,5 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <CTARender props={section.props} />;
     case "footer":
       return <FooterRender props={section.props} />;
-    case "layout":
-      // Layout container — content rendered by LayoutRenderer (Phase 10).
-      return null;
   }
 }

@@ -7,7 +7,6 @@ import type {
   PageDesign,
   Section,
   Selection,
-  SidebarTab,
 } from "./types";
 
 // =============================================================================
@@ -65,7 +64,6 @@ export type BuilderState = {
   deviceMode: DeviceMode;
   language: Language;
   mobileTab: MobileTab;
-  sidebarTab: SidebarTab;
 
   // --- project lifecycle ---
   /**
@@ -98,7 +96,6 @@ export type BuilderState = {
   setDeviceMode: (mode: DeviceMode) => void;
   setLanguage: (lang: Language) => void;
   setMobileTab: (tab: MobileTab) => void;
-  setSidebarTab: (tab: SidebarTab) => void;
 
   // --- design I/O (replace the whole design at once) ---
   importDesign: (design: PageDesign) => void;
@@ -123,7 +120,6 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   deviceMode: "desktop",
   language: "ar",
   mobileTab: "canvas",
-  sidebarTab: "sections",
 
   loadProject: (projectId, design) =>
     set({
@@ -146,12 +142,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   removeSection: (sectionId) =>
     set((state) => {
-      // Clear selection if the deleted section (or one of its components) was selected
-      const sel = state.selection;
       const wasSelected =
-        (sel.kind === "section" && sel.sectionId === sectionId) ||
-        (sel.kind === "component" && sel.sectionId === sectionId);
-
+        state.selection.kind === "section" &&
+        state.selection.sectionId === sectionId;
       return {
         ...applyChange(state, (d) => ({
           ...d,
@@ -167,10 +160,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         const idx = d.sections.findIndex((s) => s.id === sectionId);
         if (idx === -1) return d;
         const copy = deepClone(d.sections[idx]);
-        copy.id = newId(); // give the copy a fresh ID
-        // also refresh nested IDs (Layout rows/cols/components) so duplicated
-        // layouts don't collide with the original
-        refreshNestedIds(copy);
+        copy.id = newId();
         const sections = [...d.sections];
         sections.splice(idx + 1, 0, copy);
         return { ...d, sections };
@@ -226,7 +216,6 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   setDeviceMode: (mode) => set({ deviceMode: mode }),
   setLanguage: (lang) => set({ language: lang }),
   setMobileTab: (tab) => set({ mobileTab: tab }),
-  setSidebarTab: (tab) => set({ sidebarTab: tab }),
 
   // --- DESIGN I/O ---
 
@@ -255,7 +244,6 @@ export const selectSelection = (s: BuilderState) => s.selection;
 export const selectDeviceMode = (s: BuilderState) => s.deviceMode;
 export const selectLanguage = (s: BuilderState) => s.language;
 export const selectMobileTab = (s: BuilderState) => s.mobileTab;
-export const selectSidebarTab = (s: BuilderState) => s.sidebarTab;
 export const selectCanUndo = (s: BuilderState) => s.past.length > 0;
 export const selectCanRedo = (s: BuilderState) => s.future.length > 0;
 
@@ -268,20 +256,3 @@ export const selectSectionById =
   (id: string) =>
   (s: BuilderState): Section | undefined =>
     s.design.sections.find((sec) => sec.id === id);
-
-// =============================================================================
-// Internal: refresh all nested IDs inside a Layout section (so duplicates don't
-// share row/col/component IDs with the original).
-// =============================================================================
-function refreshNestedIds(section: Section) {
-  if (section.type !== "layout") return;
-  for (const row of section.props.rows) {
-    row.id = newId();
-    for (const col of row.columns) {
-      col.id = newId();
-      for (const comp of col.components) {
-        comp.id = newId();
-      }
-    }
-  }
-}

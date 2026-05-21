@@ -79,83 +79,9 @@ export type FooterProps = {
 };
 
 // =============================================================================
-// THE 6 ATOMIC COMPONENT PROP TYPES (used inside Layout sections)
-// =============================================================================
-
-export type ImageComponentProps = {
-  url: string;
-  alt: string;
-  rounded: boolean;
-};
-
-export type TextComponentProps = {
-  body: string;
-  align: "left" | "center" | "right";
-};
-
-export type HeadingComponentProps = {
-  text: string;
-  level: 1 | 2 | 3 | 4;
-  align: "left" | "center" | "right";
-};
-
-export type ButtonComponentProps = {
-  label: string;
-  href: string;
-  variant: "solid" | "outline" | "ghost";
-  size: "sm" | "md" | "lg";
-};
-
-export type FeaturedItemProps = {
-  imageUrl: string;
-  title: string;
-  price: string;
-  href: string;
-};
-
-export type CommentsComponentProps = {
-  title: string;
-  placeholder: string;
-  requireName: boolean;
-};
-
-// -----------------------------------------------------------------------------
-// A COMPONENT is a discriminated union of the 6 atomic types.
-// Discriminated by the `type` field — TS will narrow `props` to the right shape
-// once you've checked the `type`.
-// -----------------------------------------------------------------------------
-
-export type Component =
-  | { id: string; type: "image"; props: ImageComponentProps }
-  | { id: string; type: "text"; props: TextComponentProps }
-  | { id: string; type: "heading"; props: HeadingComponentProps }
-  | { id: string; type: "button"; props: ButtonComponentProps }
-  | { id: string; type: "featured-item"; props: FeaturedItemProps }
-  | { id: string; type: "comments"; props: CommentsComponentProps };
-
-export type ComponentType = Component["type"];
-
-// =============================================================================
-// THE LAYOUT SECTION — contains rows -> columns -> components
-// =============================================================================
-
-export type LayoutColumn = {
-  id: string;
-  width: number; // percentage 0–100 (resize handles change this)
-  components: Component[];
-};
-
-export type LayoutRow = {
-  id: string;
-  columns: LayoutColumn[];
-};
-
-export type LayoutProps = {
-  rows: LayoutRow[];
-};
-
-// =============================================================================
-// A SECTION is one of 6 types: 5 presets + 1 Layout container
+// A SECTION is one of the 5 preset types. The Layout/Component freeform model
+// from earlier drafts is intentionally NOT included — see docs/PLAN.md "Builder
+// is NOT fully freeform".
 // =============================================================================
 
 export type Section =
@@ -163,8 +89,7 @@ export type Section =
   | { id: string; type: "hero"; props: HeroProps }
   | { id: string; type: "features"; props: FeaturesProps }
   | { id: string; type: "cta"; props: CTAProps }
-  | { id: string; type: "footer"; props: FooterProps }
-  | { id: string; type: "layout"; props: LayoutProps };
+  | { id: string; type: "footer"; props: FooterProps };
 
 export type SectionType = Section["type"];
 
@@ -184,21 +109,12 @@ export type PageDesign = {
 
 /**
  * What's currently selected for editing.
- * - "none" — nothing selected; edit panel shows "select a section to edit"
- * - "section" — a section is selected; edit panel shows its props form
- * - "component" — a component inside a Layout is selected; edit panel shows
- *   the component's props form (the path tells us which Layout/row/col it's in)
+ * - "none" — nothing selected; edit panel shows "select a section to edit".
+ * - "section" — a section is selected; edit panel shows its props form.
  */
 export type Selection =
   | { kind: "none" }
-  | { kind: "section"; sectionId: string }
-  | {
-      kind: "component";
-      sectionId: string;
-      rowId: string;
-      colId: string;
-      componentId: string;
-    };
+  | { kind: "section"; sectionId: string };
 
 /** The canvas preview width (Desktop/Tablet/Mobile toggle in the toolbar). */
 export type DeviceMode = "desktop" | "tablet" | "mobile";
@@ -208,6 +124,3 @@ export type Language = "ar" | "en";
 
 /** Which tab is active on the bottom mobile tab bar (only used <md screens). */
 export type MobileTab = "library" | "canvas" | "editor";
-
-/** Which tab is active in the LEFT sidebar (always visible on desktop). */
-export type SidebarTab = "sections" | "layouts" | "components";
