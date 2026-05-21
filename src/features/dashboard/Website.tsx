@@ -82,7 +82,7 @@ function ActionCard({
 }) {
   const body = (
     <div
-      className={`group flex h-full flex-col rounded-2xl border p-5 text-right transition-all hover:shadow-md ${
+      className={`group flex h-full flex-col rounded-2xl border p-5 text-start transition-all hover:shadow-md ${
         accent
           ? "border-brand/30 bg-brand-light/40 hover:border-brand"
           : "border-stone-200 bg-white hover:border-brand/40"
@@ -112,7 +112,7 @@ function ActionCard({
     );
   }
   return (
-    <button type="button" onClick={onClick} className="block text-right">
+    <button type="button" onClick={onClick} className="block text-start">
       {body}
     </button>
   );

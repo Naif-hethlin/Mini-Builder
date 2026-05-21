@@ -153,7 +153,7 @@ export function ProjectPicker({
                   <button
                     type="button"
                     onClick={() => handleOpen(p.id)}
-                    className="flex-1 text-right"
+                    className="flex-1 text-start"
                   >
                     <p className="text-sm font-medium text-stone-900">
                       {p.name}

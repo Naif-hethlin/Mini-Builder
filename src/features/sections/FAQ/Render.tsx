@@ -37,7 +37,7 @@ export default function FAQRender({ props }: { props: FAQProps }) {
                 <button
                   type="button"
                   onClick={() => setOpen(isOpen ? null : item.id)}
-                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-right"
+                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-start"
                 >
                   <span className="text-sm font-semibold text-stone-900">
                     {item.question}

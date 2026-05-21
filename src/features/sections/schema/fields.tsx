@@ -280,7 +280,7 @@ export function ListField({
                 <button
                   type="button"
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
-                  className="flex-1 truncate text-right text-xs font-medium text-stone-700"
+                  className="flex-1 truncate text-start text-xs font-medium text-stone-700"
                 >
                   {title}
                 </button>

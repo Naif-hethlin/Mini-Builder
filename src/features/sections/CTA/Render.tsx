@@ -31,7 +31,7 @@ export default function CTARender({ props }: { props: CTAProps }) {
   const styles = STYLE_CLASSES[props.style];
   return (
     <section className={`px-6 py-16 md:px-10 ${styles.wrap}`}>
-      <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 text-center md:flex-row md:justify-between md:text-left">
+      <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 text-center md:flex-row md:justify-between md:text-end">
         <div className="md:flex-1">
           <h2 className={`text-2xl font-bold tracking-tight md:text-3xl ${styles.title}`}>
             {props.title}

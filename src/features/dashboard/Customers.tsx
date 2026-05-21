@@ -14,7 +14,7 @@ export function Customers() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-        <table className="w-full text-right text-sm">
+        <table className="w-full text-start text-sm">
           <thead className="bg-stone-50 text-xs text-stone-500">
             <tr>
               <th className="px-5 py-3 font-medium">الاسم</th>

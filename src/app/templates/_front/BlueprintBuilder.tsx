@@ -138,7 +138,7 @@ function ToggleCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex-1 overflow-hidden rounded-2xl border-2 bg-white p-6 text-right transition-all duration-300",
+        "group relative flex-1 overflow-hidden rounded-2xl border-2 bg-white p-6 text-start transition-all duration-300",
         active
           ? "scale-105 border-brand shadow-lg ring-4 ring-brand/15"
           : "scale-95 border-stone-300 opacity-80 hover:scale-100 hover:border-brand hover:opacity-100 hover:shadow-md",
@@ -455,7 +455,7 @@ function TemplatesWorkspace({
               key={template}
               type="button"
               onClick={() => onSelect(template)}
-              className="group block w-full cursor-pointer rounded-xl border-2 border-dashed border-stone-200 p-3 text-right transition-all hover:border-brand hover:bg-brand-light/40"
+              className="group block w-full cursor-pointer rounded-xl border-2 border-dashed border-stone-200 p-3 text-start transition-all hover:border-brand hover:bg-brand-light/40"
             >
               <div className="mb-2 flex items-center gap-3">
                 <div
@@ -550,7 +550,7 @@ function TemplatePreviewCard({
       type="button"
       onClick={onClick}
       style={{ ...style, width: 320 }}
-      className="absolute cursor-pointer overflow-hidden rounded-2xl border-2 border-brand/40 bg-white text-right shadow-lg transition-all hover:border-brand hover:shadow-xl"
+      className="absolute cursor-pointer overflow-hidden rounded-2xl border-2 border-brand/40 bg-white text-start shadow-lg transition-all hover:border-brand hover:shadow-xl"
     >
       <div
         className={cn(

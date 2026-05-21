@@ -56,7 +56,7 @@ function SectionTile({
       type="button"
       onClick={onClick}
       title={preset.description}
-      className="group rounded-xl border border-stone-200 bg-white p-2 text-right transition-all hover:border-brand hover:shadow-sm focus-visible:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1"
+      className="group rounded-xl border border-stone-200 bg-white p-2 text-start transition-all hover:border-brand hover:shadow-sm focus-visible:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1"
     >
       <Thumbnail />
       <div className="mt-2 px-0.5">

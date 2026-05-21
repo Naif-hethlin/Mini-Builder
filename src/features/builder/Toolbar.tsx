@@ -4,7 +4,6 @@ import {
   Download,
   Eye,
   FolderOpen,
-  Languages,
   LayoutDashboard,
   Monitor,
   Redo2,
@@ -31,7 +30,6 @@ import {
   selectCanRedo,
   selectCanUndo,
   selectDeviceMode,
-  selectLanguage,
   selectProjectId,
   useBuilderStore,
 } from "./state/store";
@@ -50,7 +48,6 @@ export function Toolbar() {
   const canUndo = useBuilderStore(selectCanUndo);
   const canRedo = useBuilderStore(selectCanRedo);
   const deviceMode = useBuilderStore(selectDeviceMode);
-  const language = useBuilderStore(selectLanguage);
   const projectId = useBuilderStore(selectProjectId);
 
   // Actions are stable function references — no re-render concerns.
@@ -58,7 +55,6 @@ export function Toolbar() {
   const redo = useBuilderStore((s) => s.redo);
   const clearDesign = useBuilderStore((s) => s.clearDesign);
   const setDeviceMode = useBuilderStore((s) => s.setDeviceMode);
-  const setLanguage = useBuilderStore((s) => s.setLanguage);
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -175,17 +171,6 @@ export function Toolbar() {
         />
 
         <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:inline-block" />
-
-        <button
-          type="button"
-          onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
-          aria-label="Toggle language"
-          title="Toggle language"
-          className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-        >
-          <Languages size={14} />
-          {language === "ar" ? "AR" : "EN"}
-        </button>
 
         <button
           type="button"
