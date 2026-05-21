@@ -92,23 +92,19 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-6 text-center">
         <Link
           href="/templates"
-          className="group mb-10 flex animate-fade-in-up items-center gap-3 fade-in-start"
+          className="group relative mb-10 inline-flex animate-fade-in-up items-center fade-in-start"
         >
-          <div className="relative flex h-14 w-14 animate-pulse-glow items-center justify-center transition-transform duration-500 group-hover:scale-110">
-            <div
-              aria-hidden
-              className="absolute inset-0 animate-morph bg-brand/20"
-            />
-            <Logo
-              variant="mark"
-              height={44}
-              className="relative z-10 drop-shadow-md"
-            />
-          </div>
+          {/* Soft morph halo behind the wordmark — visual interest without
+              repeating the swoosh icon, which already lives inside the
+              wordmark SVG. */}
+          <div
+            aria-hidden
+            className="absolute -inset-3 -z-10 animate-morph bg-brand/15 blur-sm"
+          />
           <Logo
             variant="wordmark"
-            height={32}
-            className="transition-opacity duration-300 group-hover:opacity-90"
+            height={42}
+            className="animate-pulse-glow transition-transform duration-500 group-hover:scale-105"
           />
         </Link>
 

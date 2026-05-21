@@ -58,9 +58,8 @@ export function DashboardSidebar({ projectId }: { projectId: string }) {
   return (
     <aside className="hidden h-full w-60 flex-col border-l border-stone-200 bg-white md:flex">
       <div className="border-b border-stone-100 px-5 py-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Logo variant="mark" height={28} />
-          <Logo variant="wordmark" height={22} />
+        <Link href="/" className="flex items-center">
+          <Logo variant="wordmark" height={26} />
         </Link>
       </div>
 

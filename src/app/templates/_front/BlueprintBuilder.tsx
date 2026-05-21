@@ -88,9 +88,8 @@ function Header({
 }) {
   return (
     <header className="relative z-10 flex flex-col items-center px-4 pt-16 pb-8 text-center">
-      <div className="mb-8 flex cursor-pointer items-center gap-2.5">
-        <Logo variant="mark" height={36} />
-        <Logo variant="wordmark" height={26} />
+      <div className="mb-8 flex cursor-pointer items-center">
+        <Logo variant="wordmark" height={32} />
       </div>
 
       <h1 className="mb-4 text-4xl font-extrabold text-stone-900 md:text-5xl">
