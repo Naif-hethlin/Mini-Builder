@@ -106,5 +106,13 @@ function labelOf(type: Section["type"]): string {
       return "دعوة للإجراء";
     case "footer":
       return "التذييل";
+    case "gallery":
+      return "معرض الصور";
+    case "testimonials":
+      return "آراء العملاء";
+    case "faq":
+      return "الأسئلة الشائعة";
+    case "contact":
+      return "تواصل معنا";
   }
 }

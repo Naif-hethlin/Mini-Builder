@@ -22,6 +22,22 @@ import FooterThumbnail from "./Footer/Thumbnail";
 import { createFooter } from "./Footer/defaults";
 import { footerSchema } from "./Footer/schema";
 
+import GalleryThumbnail from "./Gallery/Thumbnail";
+import { createGallery } from "./Gallery/defaults";
+import { gallerySchema } from "./Gallery/schema";
+
+import TestimonialsThumbnail from "./Testimonials/Thumbnail";
+import { createTestimonials } from "./Testimonials/defaults";
+import { testimonialsSchema } from "./Testimonials/schema";
+
+import FAQThumbnail from "./FAQ/Thumbnail";
+import { createFAQ } from "./FAQ/defaults";
+import { faqSchema } from "./FAQ/schema";
+
+import ContactThumbnail from "./Contact/Thumbnail";
+import { createContact } from "./Contact/defaults";
+import { contactSchema } from "./Contact/schema";
+
 // =============================================================================
 // SECTION REGISTRY
 //
@@ -76,6 +92,38 @@ export const SECTION_PRESETS: SectionPresetMeta[] = [
     Thumbnail: CTAThumbnail,
     createDefault: createCTA,
     schema: ctaSchema,
+  },
+  {
+    type: "gallery",
+    label: "معرض الصور",
+    description: "شبكة من الصور (٢ / ٣ / ٤ أعمدة) لعرض أعمالك.",
+    Thumbnail: GalleryThumbnail,
+    createDefault: createGallery,
+    schema: gallerySchema,
+  },
+  {
+    type: "testimonials",
+    label: "آراء العملاء",
+    description: "بطاقات تقييمات بنجوم وأسماء عملائك.",
+    Thumbnail: TestimonialsThumbnail,
+    createDefault: createTestimonials,
+    schema: testimonialsSchema,
+  },
+  {
+    type: "faq",
+    label: "الأسئلة الشائعة",
+    description: "أكورديون بأكثر الأسئلة شيوعًا وإجاباتها.",
+    Thumbnail: FAQThumbnail,
+    createDefault: createFAQ,
+    schema: faqSchema,
+  },
+  {
+    type: "contact",
+    label: "تواصل معنا",
+    description: "نموذج اتصال + معلومات (بريد، هاتف، عنوان).",
+    Thumbnail: ContactThumbnail,
+    createDefault: createContact,
+    schema: contactSchema,
   },
   {
     type: "footer",

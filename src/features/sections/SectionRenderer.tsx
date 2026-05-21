@@ -5,6 +5,10 @@ import HeroRender from "./Hero/Render";
 import FeaturesRender from "./Features/Render";
 import CTARender from "./CTA/Render";
 import FooterRender from "./Footer/Render";
+import GalleryRender from "./Gallery/Render";
+import TestimonialsRender from "./Testimonials/Render";
+import FAQRender from "./FAQ/Render";
+import ContactRender from "./Contact/Render";
 
 /**
  * Dispatches a Section to the right preset renderer based on its `type`.
@@ -30,5 +34,13 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <CTARender props={section.props} />;
     case "footer":
       return <FooterRender props={section.props} />;
+    case "gallery":
+      return <GalleryRender props={section.props} />;
+    case "testimonials":
+      return <TestimonialsRender props={section.props} />;
+    case "faq":
+      return <FAQRender props={section.props} />;
+    case "contact":
+      return <ContactRender props={section.props} />;
   }
 }

@@ -78,10 +78,44 @@ export type FooterProps = {
   copyright: string;
 };
 
+export type GalleryProps = {
+  title: string;
+  subtitle: string;
+  items: Array<{ id: string; url: string; alt: string }>;
+  columns: 2 | 3 | 4;
+};
+
+export type TestimonialsProps = {
+  title: string;
+  subtitle: string;
+  items: Array<{
+    id: string;
+    name: string;
+    role: string;
+    quote: string;
+    rating: 1 | 2 | 3 | 4 | 5;
+  }>;
+  columns: 2 | 3;
+};
+
+export type FAQProps = {
+  title: string;
+  subtitle: string;
+  items: Array<{ id: string; question: string; answer: string }>;
+};
+
+export type ContactProps = {
+  title: string;
+  subtitle: string;
+  email: string;
+  phone: string;
+  address: string;
+};
+
 // =============================================================================
-// A SECTION is one of the 5 preset types. The Layout/Component freeform model
-// from earlier drafts is intentionally NOT included — see docs/PLAN.md "Builder
-// is NOT fully freeform".
+// A SECTION is one of the preset types. Section-only by design (no Layout
+// container, no atomic components) — see docs/PLAN.md "Builder is NOT fully
+// freeform".
 // =============================================================================
 
 export type Section =
@@ -89,7 +123,11 @@ export type Section =
   | { id: string; type: "hero"; props: HeroProps }
   | { id: string; type: "features"; props: FeaturesProps }
   | { id: string; type: "cta"; props: CTAProps }
-  | { id: string; type: "footer"; props: FooterProps };
+  | { id: string; type: "footer"; props: FooterProps }
+  | { id: string; type: "gallery"; props: GalleryProps }
+  | { id: string; type: "testimonials"; props: TestimonialsProps }
+  | { id: string; type: "faq"; props: FAQProps }
+  | { id: string; type: "contact"; props: ContactProps };
 
 export type SectionType = Section["type"];
 
