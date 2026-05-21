@@ -1,0 +1,25 @@
+# Files NOT to copy into the Docker build context.
+# Smaller context = faster builds + smaller cache invalidation surface.
+
+node_modules
+.next
+out
+build
+.git
+.gitignore
+.vscode
+.idea
+.claude
+CLAUDE.md
+AGENTS.md
+.mcp.json
+.env*
+*.log
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+playwright-report
+test-results
+blob-report
+coverage
