@@ -5,6 +5,7 @@ import {
   Eye,
   FolderOpen,
   Languages,
+  LayoutDashboard,
   Monitor,
   Redo2,
   Rocket,
@@ -14,6 +15,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
@@ -96,6 +98,16 @@ export function Toolbar() {
         <span className="hidden truncate text-sm text-stone-500 sm:inline">
           المنشئ
         </span>
+        {projectId && (
+          <Link
+            href={`/dashboard/${projectId}`}
+            title="لوحة التحكم"
+            className="ms-2 hidden h-7 items-center gap-1.5 rounded-md border border-stone-200 px-2 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand sm:inline-flex"
+          >
+            <LayoutDashboard size={12} />
+            لوحة التحكم
+          </Link>
+        )}
       </div>
 
       {/* ── Middle: device preview toggle ──────────────────────────────── */}
