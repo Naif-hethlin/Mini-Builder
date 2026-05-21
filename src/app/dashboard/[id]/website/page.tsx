@@ -1,12 +1,7 @@
-import { ComingSoon } from "@/features/dashboard/ComingSoon";
+import { Website } from "@/features/dashboard/Website";
 
 export const metadata = { title: "الموقع — ركاز" };
 
 export default function DashboardWebsitePage() {
-  return (
-    <ComingSoon
-      title="إدارة الموقع"
-      description="تحرير الموقع، فتح المعاينة، وإجراء النشر — كلها مجمعة هنا."
-    />
-  );
+  return <Website />;
 }
