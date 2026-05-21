@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Download, FolderUp, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -91,14 +92,22 @@ export function ProjectPicker({
       aria-label="مشاريعي"
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
     >
-      <button
+      <motion.button
         type="button"
         aria-label="إغلاق"
         onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
         className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
       />
 
-      <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 320, damping: 28 }}
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
+      >
         <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-stone-900">مشاريعي</h2>
@@ -195,7 +204,7 @@ export function ProjectPicker({
             مشروع جديد
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

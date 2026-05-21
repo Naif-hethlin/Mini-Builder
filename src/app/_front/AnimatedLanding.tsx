@@ -9,6 +9,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { motion } from "framer-motion";
 import { ArrowLeft, Hand, TrendingUp } from "lucide-react";
 import { Logo } from "@/shared/ui/Logo";
 
@@ -186,24 +187,28 @@ function WhyRekazSection({
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FeatureCard
+            index={0}
             title="حجوزات منظمة بدون فوضى"
             description="تجربة حجز مكتملة من الطلب الأول إلى التذكير والوصول، مع سير عمل جاهز لكل فريق."
             cta="موقعك في 3 دقائق"
             illustration={<BookingIllustration />}
           />
           <FeatureCard
+            index={1}
             title="كل المؤشرات في لوحة واحدة"
             description="تابع المبيعات والعضويات وسير الطلبات لحظياً عبر لوحة تحكم مصممة لتجيب عن أسئلتك فوراً."
             cta="منصتك خلال 3 دقائق"
             illustration={<DashboardIllustration />}
           />
           <FeatureCard
+            index={2}
             title="سحب وإفلات سهل"
             description="صمم موقعك بسحب وإفلات العناصر بكل سهولة. لا تحتاج لخبرة برمجية، فقط اسحب العناصر وحركها."
             cta="ابدأ التصميم الآن"
             illustration={<DragIllustration />}
           />
           <FeatureCard
+            index={3}
             title="تحليلات وإحصائيات"
             description="شاهد كيف يتفاعل عملاؤك مع موقعك وتحسن تجربة المستخدم. احصل على رؤى عميقة حول سلوك الزوار."
             cta="اكتشف المزيد"
@@ -233,14 +238,26 @@ function FeatureCard({
   description,
   cta,
   illustration,
+  index = 0,
 }: {
   title: string;
   description: string;
   cta: string;
   illustration: ReactNode;
+  index?: number;
 }) {
   return (
-    <div className="group relative cursor-pointer overflow-hidden rounded-3xl border border-stone-100 bg-white p-8 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.08,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className="group relative cursor-pointer overflow-hidden rounded-3xl border border-stone-100 bg-white p-8 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl"
+    >
       <div className="relative z-10">
         <h3 className="mb-3 text-2xl font-bold text-stone-900 transition-colors group-hover:text-brand">
           {title}
@@ -252,7 +269,7 @@ function FeatureCard({
         </div>
       </div>
       <div className="mt-8 flex justify-center">{illustration}</div>
-    </div>
+    </motion.div>
   );
 }
 

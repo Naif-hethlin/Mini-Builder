@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/shared/lib/cn";
@@ -37,6 +38,7 @@ export function ConfirmDialog({
   }, [onCancel]);
 
   return (
+    <AnimatePresence>
     <div
       role="dialog"
       aria-modal="true"
@@ -44,15 +46,25 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
     >
       {/* Backdrop */}
-      <button
+      <motion.button
         type="button"
         aria-label={cancelLabel}
         onClick={onCancel}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
       />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-stone-200 bg-white shadow-2xl">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ type: "spring", stiffness: 320, damping: 28 }}
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-stone-200 bg-white shadow-2xl"
+      >
         <button
           type="button"
           onClick={onCancel}
@@ -104,7 +116,8 @@ export function ConfirmDialog({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
+    </AnimatePresence>
   );
 }
