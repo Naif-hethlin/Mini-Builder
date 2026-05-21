@@ -1,0 +1,29 @@
+# docker compose for the Mini Website Builder.
+#
+# This file lives OUTSIDE naifhub so the project stays self-contained.
+# We join naifhub's existing Caddy network (docker_default) as an "external"
+# network so the shared Caddy can reverse-proxy traffic to our container.
+#
+# Deploy commands (run from this folder):
+#   docker compose build
+#   docker compose up -d
+#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+services:
+  app:
+    build: .
+    container_name: mini-website-builder
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - caddy_net
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+
+networks:
+  caddy_net:
+    name: docker_default # the network created by /home/ubuntu/naifhub/docker/docker-compose.yml
+    external: true

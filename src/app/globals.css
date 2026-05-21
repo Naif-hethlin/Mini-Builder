@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Tailwind 4 theme tokens.
+ *
+ * `--font-sans` is set by Next.js's font loader in layout.tsx → IBM Plex Sans
+ * Arabic. We pull it through into Tailwind here so utilities like `font-sans`
+ * resolve to the right family.
+ *
+ * Brand color = Rekaz coral (extracted from rekaz.io — used in their logo,
+ * primary buttons, and accent text).
+ */
+@theme {
+  --color-brand: #df625b;
+  --color-brand-dark: #c4504a;
+  --color-brand-light: #fceeed;
+
+  --font-sans:
+    var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/*
+ * Light mode only — Rekaz's site is light, and the brief said one accent color
+ * on a light editor (like Notion / Linear / Webflow).
+ */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f8fafc; /* slate-50 — soft off-white so the white canvas pops */
+  color: #0f172a; /* slate-900 */
+  font-family: var(--font-sans);
+}
+
+/* Focus rings pick up the brand color. */
+:focus-visible {
+  outline-color: var(--color-brand);
 }
