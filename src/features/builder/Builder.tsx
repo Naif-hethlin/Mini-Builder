@@ -2,6 +2,7 @@
 
 import { Toaster } from "sonner";
 import { cn } from "@/shared/lib/cn";
+import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { selectMobileTab, useBuilderStore } from "./state/store";
 import { useBuilderProject } from "./state/useBuilderProject";
 import { Canvas } from "./Canvas";
@@ -26,6 +27,7 @@ export function Builder({ projectId }: { projectId: string }) {
   useBuilderProject(projectId);
 
   return (
+    <ConfirmProvider>
     <div className="flex h-screen flex-col bg-stone-50">
       <Toolbar />
 
@@ -71,5 +73,6 @@ export function Builder({ projectId }: { projectId: string }) {
         duration={3000}
       />
     </div>
+    </ConfirmProvider>
   );
 }

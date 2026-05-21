@@ -13,6 +13,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/shared/ui/ConfirmProvider";
 import { IconButton } from "@/shared/ui/IconButton";
 import { Logo } from "@/shared/ui/Logo";
 import type { DeviceMode } from "./state/types";
@@ -47,14 +48,19 @@ export function Toolbar() {
   const setDeviceMode = useBuilderStore((s) => s.setDeviceMode);
   const setLanguage = useBuilderStore((s) => s.setLanguage);
 
-  // Clear with native confirm — Phase 9 swaps this for a real dialog component.
-  const handleClear = () => {
-    if (
-      window.confirm("Clear the whole page? You can undo this with Ctrl+Z.")
-    ) {
-      clearDesign();
-      toast.success("Page cleared");
-    }
+  const confirm = useConfirm();
+  const handleClear = async () => {
+    const ok = await confirm({
+      title: "مسح الصفحة بالكامل؟",
+      description:
+        "سيتم حذف كل الأقسام من هذا المشروع. تقدر تتراجع بالضغط على Ctrl+Z.",
+      confirmLabel: "نعم، امسح",
+      cancelLabel: "إلغاء",
+      danger: true,
+    });
+    if (!ok) return;
+    clearDesign();
+    toast.success("تم مسح الصفحة");
   };
 
   return (
