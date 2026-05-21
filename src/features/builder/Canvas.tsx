@@ -35,6 +35,8 @@ export function Canvas() {
   const selection = useBuilderStore(selectSelection);
   const setSelection = useBuilderStore((s) => s.setSelection);
   const reorderSections = useBuilderStore((s) => s.reorderSections);
+  const removeSection = useBuilderStore((s) => s.removeSection);
+  const duplicateSection = useBuilderStore((s) => s.duplicateSection);
 
   // 6px activation distance — clicks still register as clicks, only meaningful
   // drags trigger reorder.
@@ -73,17 +75,23 @@ export function Canvas() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="divide-y divide-stone-100">
-                  {sections.map((section) => (
+                  {sections.map((section, index) => (
                     <SortableSection
                       key={section.id}
                       section={section}
                       selected={section.id === selectedId}
+                      canMoveUp={index > 0}
+                      canMoveDown={index < sections.length - 1}
                       onSelect={() =>
                         setSelection({
                           kind: "section",
                           sectionId: section.id,
                         })
                       }
+                      onMoveUp={() => reorderSections(index, index - 1)}
+                      onMoveDown={() => reorderSections(index, index + 1)}
+                      onDuplicate={() => duplicateSection(section.id)}
+                      onDelete={() => removeSection(section.id)}
                     />
                   ))}
                 </div>
