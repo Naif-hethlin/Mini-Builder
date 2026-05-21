@@ -2,6 +2,7 @@
 
 import {
   Download,
+  Eye,
   FolderOpen,
   Languages,
   Monitor,
@@ -144,6 +145,15 @@ export function Toolbar() {
           icon={<Download size={16} />}
           label="تصدير JSON"
           onClick={handleExport}
+          className="hidden sm:inline-flex"
+        />
+        <IconButton
+          icon={<Eye size={16} />}
+          label="معاينة"
+          onClick={() => {
+            if (!projectId) return;
+            window.open(`/preview/${projectId}`, "_blank");
+          }}
           className="hidden sm:inline-flex"
         />
         <IconButton
