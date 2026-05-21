@@ -3,6 +3,8 @@
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { Toaster } from "sonner";
+import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { useProjects } from "@/features/projects";
 import { DashboardSidebar } from "./DashboardSidebar";
 
@@ -25,6 +27,7 @@ export function DashboardShell({
   const project = useProjects((s) => s.projects[projectId]);
 
   return (
+    <ConfirmProvider>
     <div className="flex h-screen bg-stone-50">
       <DashboardSidebar projectId={projectId} />
 
@@ -48,6 +51,14 @@ export function DashboardShell({
 
         <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
       </div>
+
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        duration={3000}
+      />
     </div>
+    </ConfirmProvider>
   );
 }
