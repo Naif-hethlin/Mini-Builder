@@ -1,9 +1,19 @@
 "use client";
 
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { MousePointerClick } from "lucide-react";
-import { SectionRenderer } from "@/features/sections/SectionRenderer";
-import { cn } from "@/shared/lib/cn";
-import type { DeviceMode, Section } from "./state/types";
+import { SortableSection } from "./SortableSection";
+import type { DeviceMode } from "./state/types";
 import {
   selectDeviceMode,
   selectSections,
@@ -12,8 +22,7 @@ import {
 } from "./state/store";
 
 // Canvas content is constrained to one of these widths based on the device
-// toggle in the toolbar. Shrinking the inner container is what makes
-// "preview on tablet/mobile" actually do something.
+// toggle in the toolbar.
 const DEVICE_WIDTH: Record<DeviceMode, string> = {
   desktop: "max-w-[1280px]",
   tablet: "max-w-[768px]",
@@ -25,6 +34,22 @@ export function Canvas() {
   const deviceMode = useBuilderStore(selectDeviceMode);
   const selection = useBuilderStore(selectSelection);
   const setSelection = useBuilderStore((s) => s.setSelection);
+  const reorderSections = useBuilderStore((s) => s.reorderSections);
+
+  // 6px activation distance — clicks still register as clicks, only meaningful
+  // drags trigger reorder.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = sections.findIndex((s) => s.id === active.id);
+    const to = sections.findIndex((s) => s.id === over.id);
+    if (from === -1 || to === -1) return;
+    reorderSections(from, to);
+  };
 
   const isEmpty = sections.length === 0;
   const selectedId =
@@ -42,57 +67,32 @@ export function Canvas() {
           {isEmpty ? (
             <EmptyState />
           ) : (
-            <div className="divide-y divide-stone-100">
-              {sections.map((section) => (
-                <SelectableSection
-                  key={section.id}
-                  section={section}
-                  selected={section.id === selectedId}
-                  onSelect={() =>
-                    setSelection({ kind: "section", sectionId: section.id })
-                  }
-                />
-              ))}
-            </div>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={sections.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="divide-y divide-stone-100">
+                  {sections.map((section) => (
+                    <SortableSection
+                      key={section.id}
+                      section={section}
+                      selected={section.id === selectedId}
+                      onSelect={() =>
+                        setSelection({
+                          kind: "section",
+                          sectionId: section.id,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>
     </main>
-  );
-}
-
-function SelectableSection({
-  section,
-  selected,
-  onSelect,
-}: {
-  section: Section;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-      className={cn(
-        "relative cursor-pointer outline-none transition-shadow",
-        selected
-          ? "shadow-[inset_0_0_0_2px_var(--color-brand)]"
-          : "hover:shadow-[inset_0_0_0_2px_rgba(232,93,93,0.25)]",
-      )}
-    >
-      <SectionRenderer section={section} />
-    </div>
   );
 }
 
