@@ -3,6 +3,7 @@
 import { Toaster } from "sonner";
 import { cn } from "@/shared/lib/cn";
 import { selectMobileTab, useBuilderStore } from "../_back/store";
+import { useBuilderProject } from "../_back/useBuilderProject";
 import { Canvas } from "./Canvas";
 import { EditPanel } from "./EditPanel";
 import { MobileTabs } from "./MobileTabs";
@@ -22,6 +23,7 @@ import { Toolbar } from "./Toolbar";
  */
 export function Builder() {
   const mobileTab = useBuilderStore(selectMobileTab);
+  useBuilderProject();
 
   return (
     <div className="flex h-screen flex-col bg-stone-50">

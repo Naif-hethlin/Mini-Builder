@@ -52,6 +52,9 @@ function deepClone<T>(value: T): T {
 // =============================================================================
 
 export type BuilderState = {
+  // --- which project this store is currently editing ---
+  projectId: string | null;
+
   // --- design state (tracked by undo/redo, exported to JSON) ---
   design: PageDesign;
   past: PageDesign[];
@@ -63,6 +66,14 @@ export type BuilderState = {
   language: Language;
   mobileTab: MobileTab;
   sidebarTab: SidebarTab;
+
+  // --- project lifecycle ---
+  /**
+   * Load a project's design into the builder. Replaces design AND clears
+   * undo/redo history (the loaded state is the new baseline). Selection
+   * is reset to "none".
+   */
+  loadProject: (projectId: string, design: PageDesign) => void;
 
   // --- section actions ---
   addSection: (section: Section) => void;
@@ -104,6 +115,7 @@ export type BuilderState = {
 
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   // initial state
+  projectId: null,
   design: EMPTY_DESIGN,
   past: [],
   future: [],
@@ -112,6 +124,15 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   language: "ar",
   mobileTab: "canvas",
   sidebarTab: "sections",
+
+  loadProject: (projectId, design) =>
+    set({
+      projectId,
+      design,
+      past: [],
+      future: [],
+      selection: { kind: "none" },
+    }),
 
   // --- SECTION ACTIONS ---
 
@@ -228,6 +249,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 // stay narrow.
 // =============================================================================
 
+export const selectProjectId = (s: BuilderState) => s.projectId;
 export const selectSections = (s: BuilderState) => s.design.sections;
 export const selectSelection = (s: BuilderState) => s.selection;
 export const selectDeviceMode = (s: BuilderState) => s.deviceMode;
