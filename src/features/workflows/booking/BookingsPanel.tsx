@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, Trash2, X } from "lucide-react";
+import { CalendarX, Check, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { cn } from "@/shared/lib/cn";
 import { useBookings, type Booking } from "./store";
 
@@ -86,11 +87,15 @@ export function BookingsPanel({ projectId }: { projectId: string }) {
 
       {/* List */}
       {visible.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-stone-200 bg-white p-10 text-center text-sm text-stone-500">
-          {bookings.length === 0
-            ? "لا توجد حجوزات بعد. أضف قسم نموذج حجز للموقع لاستقبال الحجوزات."
-            : "لا توجد حجوزات بهذه الحالة."}
-        </div>
+        <EmptyState
+          icon={CalendarX}
+          title={bookings.length === 0 ? "لا توجد حجوزات بعد" : "لا حجوزات بهذه الحالة"}
+          description={
+            bookings.length === 0
+              ? "أضف قسم نموذج حجز للموقع لاستقبال الحجوزات من زوارك."
+              : "جرّب فلتر مختلف من الأعلى."
+          }
+        />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
           <table className="w-full text-right text-sm">

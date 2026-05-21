@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
+import { Skeleton } from "@/shared/ui/Skeleton";
 import { useProjects } from "@/features/projects";
 import { DashboardSidebar } from "./DashboardSidebar";
 
@@ -25,6 +26,7 @@ export function DashboardShell({
   }, []);
 
   const project = useProjects((s) => s.projects[projectId]);
+  const hydrated = useProjects((s) => s.hydrated);
 
   return (
     <ConfirmProvider>
@@ -35,9 +37,13 @@ export function DashboardShell({
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-stone-200 bg-white px-5">
           <div className="min-w-0">
             <p className="text-xs text-stone-500">مشروع</p>
-            <h1 className="truncate text-sm font-semibold text-stone-900">
-              {project?.name ?? "..."}
-            </h1>
+            {hydrated ? (
+              <h1 className="truncate text-sm font-semibold text-stone-900">
+                {project?.name ?? "غير موجود"}
+              </h1>
+            ) : (
+              <Skeleton className="mt-0.5 h-4 w-32" />
+            )}
           </div>
           <Link
             href={`/preview/${projectId}`}

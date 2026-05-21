@@ -1,11 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Download, FolderUp, Plus, Trash2, X } from "lucide-react";
+import {
+  Download,
+  FolderOpen,
+  FolderUp,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { exportProjectFile, importProjectFile } from "./io";
 import { useProjects } from "./store";
 import type { ProjectMeta } from "./types";
@@ -125,9 +133,12 @@ export function ProjectPicker({
 
         <div className="max-h-[55vh] overflow-y-auto p-3">
           {list.length === 0 ? (
-            <div className="rounded-xl border-2 border-dashed border-stone-200 p-8 text-center text-sm text-stone-500">
-              لا توجد مشاريع محفوظة بعد.
-            </div>
+            <EmptyState
+              icon={FolderOpen}
+              title="لا توجد مشاريع محفوظة بعد"
+              description="ابدأ بمشروع جديد أو استورد ملف JSON محفوظ مسبقًا."
+              className="p-8"
+            />
           ) : (
             <ul className="space-y-1.5">
               {list.map((p) => (

@@ -12,6 +12,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { MousePointerClick } from "lucide-react";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { SortableSection } from "./SortableSection";
 import type { DeviceMode } from "./state/types";
 import {
@@ -67,7 +68,7 @@ export function Canvas() {
       >
         <div className="min-h-[calc(100vh-200px)] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
           {isEmpty ? (
-            <EmptyState />
+            <CanvasEmpty />
           ) : (
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <SortableContext
@@ -104,17 +105,14 @@ export function Canvas() {
   );
 }
 
-function EmptyState() {
+function CanvasEmpty() {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-brand">
-        <MousePointerClick size={24} strokeWidth={1.75} />
-      </div>
-      <h2 className="text-lg font-semibold text-stone-900">صفحتك فارغة</h2>
-      <p className="mt-1.5 max-w-sm text-sm text-stone-500">
-        اضغط على أي قسم في المكتبة على اليمين لإضافته. تقدر بعدها تعدل،
-        ترتب، أو تنسخ أي قسم.
-      </p>
-    </div>
+    <EmptyState
+      icon={MousePointerClick}
+      title="صفحتك فارغة"
+      description="اضغط على أي قسم في المكتبة على اليمين لإضافته. تقدر بعدها تعدل، ترتب، أو تنسخ أي قسم."
+      dashed={false}
+      className="m-6 border-0 shadow-none"
+    />
   );
 }
