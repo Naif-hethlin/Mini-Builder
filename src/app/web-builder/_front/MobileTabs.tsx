@@ -26,7 +26,7 @@ export function MobileTabs() {
     <nav
       role="tablist"
       aria-label="Builder sections"
-      className="flex border-t border-slate-200 bg-white md:hidden"
+      className="flex border-t border-stone-200 bg-white md:hidden"
     >
       {TABS.map(({ id, label, Icon }) => {
         const isActive = mobileTab === id;
@@ -41,7 +41,7 @@ export function MobileTabs() {
               "flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors",
               isActive
                 ? "text-brand"
-                : "text-slate-500 hover:text-slate-900",
+                : "text-stone-500 hover:text-stone-900",
             )}
           >
             <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />

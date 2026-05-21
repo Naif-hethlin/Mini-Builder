@@ -35,8 +35,8 @@ export function IconButton({
 
   const variants: Record<typeof variant, string> = {
     default: active
-      ? "bg-slate-200 text-slate-900"
-      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+      ? "bg-stone-200 text-stone-900"
+      : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
     primary: "bg-brand text-white hover:bg-brand-dark",
   };
 

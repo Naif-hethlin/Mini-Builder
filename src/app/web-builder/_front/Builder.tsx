@@ -24,7 +24,7 @@ export function Builder() {
   const mobileTab = useBuilderStore(selectMobileTab);
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50">
+    <div className="flex h-screen flex-col bg-stone-50">
       <Toolbar />
 
       <div className="flex flex-1 overflow-hidden">

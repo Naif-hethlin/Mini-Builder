@@ -18,12 +18,12 @@ export default function HeroRender({ props }: { props: HeroProps }) {
         className="relative flex min-h-[480px] items-center justify-center bg-cover bg-center px-6 py-20 text-white md:px-10"
         style={{ backgroundImage: `url(${props.imageUrl})` }}
       >
-        <div className="absolute inset-0 bg-slate-900/55" />
+        <div className="absolute inset-0 bg-stone-900/55" />
         <div className="relative max-w-2xl text-center">
           <HeroText
             props={props}
             textColor="text-white"
-            subColor="text-slate-200"
+            subColor="text-stone-200"
           />
         </div>
       </section>
@@ -50,7 +50,7 @@ export default function HeroRender({ props }: { props: HeroProps }) {
         <div className={props.alignment === "center" ? "text-center" : ""}>
           <HeroText props={props} />
         </div>
-        <div className="overflow-hidden rounded-xl bg-slate-100">
+        <div className="overflow-hidden rounded-xl bg-stone-100">
           {props.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -59,7 +59,7 @@ export default function HeroRender({ props }: { props: HeroProps }) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="aspect-[4/3] bg-slate-200" />
+            <div className="aspect-[4/3] bg-stone-200" />
           )}
         </div>
       </div>
@@ -70,8 +70,8 @@ export default function HeroRender({ props }: { props: HeroProps }) {
 /** Internal — the headline + subtitle + buttons block. Shared across variants. */
 function HeroText({
   props,
-  textColor = "text-slate-900",
-  subColor = "text-slate-600",
+  textColor = "text-stone-900",
+  subColor = "text-stone-600",
 }: {
   props: HeroProps;
   textColor?: string;
@@ -96,7 +96,7 @@ function HeroText({
         {props.primaryButton.show && (
           <a
             href={props.primaryButton.href}
-            className="inline-flex items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-700"
+            className="inline-flex items-center justify-center rounded-md bg-stone-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-700"
           >
             {props.primaryButton.label}
           </a>
@@ -104,7 +104,7 @@ function HeroText({
         {props.secondaryButton.show && (
           <a
             href={props.secondaryButton.href}
-            className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-5 py-2.5 text-sm font-medium text-stone-900 transition-colors hover:bg-stone-50"
           >
             {props.secondaryButton.label}
           </a>

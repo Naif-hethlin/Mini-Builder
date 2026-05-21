@@ -57,19 +57,19 @@ export function Toolbar() {
   };
 
   return (
-    <header className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2">
+    <header className="flex items-center justify-between gap-2 border-b border-stone-200 bg-white px-3 py-2">
       {/* ── Left: brand ─────────────────────────────────────────────────── */}
       <div className="flex min-w-0 items-center gap-2">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand font-semibold text-white">
           B
         </div>
-        <span className="hidden truncate text-sm font-medium text-slate-900 sm:inline">
+        <span className="hidden truncate text-sm font-medium text-stone-900 sm:inline">
           Mini Website Builder
         </span>
       </div>
 
       {/* ── Middle: device preview toggle ──────────────────────────────── */}
-      <div className="flex items-center gap-0.5 rounded-md bg-slate-100 p-1">
+      <div className="flex items-center gap-0.5 rounded-md bg-stone-100 p-1">
         {DEVICES.map(({ mode, Icon, label }) => (
           <IconButton
             key={mode}
@@ -97,7 +97,7 @@ export function Toolbar() {
           onClick={redo}
         />
 
-        <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:inline-block" />
+        <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:inline-block" />
 
         <IconButton
           icon={<Save size={16} />}
@@ -117,14 +117,14 @@ export function Toolbar() {
           onClick={handleClear}
         />
 
-        <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:inline-block" />
+        <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:inline-block" />
 
         <button
           type="button"
           onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
           aria-label="Toggle language"
           title="Toggle language"
-          className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-sm font-medium text-stone-600 hover:bg-stone-100 hover:text-stone-900"
         >
           <Languages size={14} />
           {language === "ar" ? "AR" : "EN"}

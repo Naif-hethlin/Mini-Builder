@@ -16,9 +16,9 @@ const ibmPlex = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Mini Website Builder",
+  title: "ركاز — منصة إنشاء مواقع الأعمال",
   description:
-    "Build your website by clicking, dragging, and editing — no code.",
+    "أنشئ موقعك بالنقر والسحب والتعديل — بدون كود.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ar"
+      dir="rtl"
       className={`${ibmPlex.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>

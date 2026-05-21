@@ -3,27 +3,27 @@ import type { CTAProps } from "@/app/web-builder/_back/types";
 /**
  * Call-to-action banner. Three visual styles:
  *   - "solid":    dark slate background, white text — high contrast
- *   - "gradient": slate-to-near-black gradient, white text — slightly fancier
+ *   - "gradient": stone-to-near-black gradient, white text — slightly fancier
  *   - "subtle":   off-white background, slate text — quieter, fits between content
  */
 const STYLE_CLASSES: Record<CTAProps["style"], { wrap: string; title: string; desc: string; button: string }> = {
   solid: {
-    wrap: "bg-slate-900 text-white",
+    wrap: "bg-stone-900 text-white",
     title: "text-white",
-    desc: "text-slate-300",
-    button: "bg-white text-slate-900 hover:bg-slate-100",
+    desc: "text-stone-300",
+    button: "bg-white text-stone-900 hover:bg-stone-100",
   },
   gradient: {
-    wrap: "bg-gradient-to-br from-slate-800 to-slate-950 text-white",
+    wrap: "bg-gradient-to-br from-stone-800 to-stone-950 text-white",
     title: "text-white",
-    desc: "text-slate-300",
-    button: "bg-white text-slate-900 hover:bg-slate-100",
+    desc: "text-stone-300",
+    button: "bg-white text-stone-900 hover:bg-stone-100",
   },
   subtle: {
-    wrap: "bg-slate-50 text-slate-900 border-y border-slate-200",
-    title: "text-slate-900",
-    desc: "text-slate-600",
-    button: "bg-slate-900 text-white hover:bg-slate-700",
+    wrap: "bg-stone-50 text-stone-900 border-y border-stone-200",
+    title: "text-stone-900",
+    desc: "text-stone-600",
+    button: "bg-stone-900 text-white hover:bg-stone-700",
   },
 };
 

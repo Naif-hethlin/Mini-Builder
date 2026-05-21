@@ -26,15 +26,15 @@ export default function FeaturesRender({ props }: { props: FeaturesProps }) {
       <div className="mx-auto max-w-6xl">
         <div className="mb-10 text-center">
           {props.eyebrow && (
-            <p className="mb-2 text-sm font-medium uppercase tracking-wider text-slate-500">
+            <p className="mb-2 text-sm font-medium uppercase tracking-wider text-stone-500">
               {props.eyebrow}
             </p>
           )}
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
             {props.title}
           </h2>
           {props.subtitle && (
-            <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600">
+            <p className="mx-auto mt-3 max-w-2xl text-base text-stone-600">
               {props.subtitle}
             </p>
           )}
@@ -46,15 +46,15 @@ export default function FeaturesRender({ props }: { props: FeaturesProps }) {
             return (
               <div
                 key={item.id}
-                className="rounded-lg border border-slate-200 bg-white p-6"
+                className="rounded-lg border border-stone-200 bg-white p-6"
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-stone-100 text-stone-700">
                   <Icon size={20} />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900">
+                <h3 className="text-base font-semibold text-stone-900">
                   {item.title}
                 </h3>
-                <p className="mt-1.5 text-sm text-slate-600">
+                <p className="mt-1.5 text-sm text-stone-600">
                   {item.description}
                 </p>
               </div>

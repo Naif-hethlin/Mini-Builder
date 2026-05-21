@@ -1,33 +1,49 @@
 @import "tailwindcss";
 
 /*
- * Tailwind 4 theme tokens.
+ * Design tokens — Tailwind 4 @theme block.
  *
- * `--font-sans` is set by Next.js's font loader in layout.tsx → IBM Plex Sans
- * Arabic. We pull it through into Tailwind here so utilities like `font-sans`
- * resolve to the right family.
+ * Source of truth: docs/PLAN.md (design system section). When you change a
+ * token here, mirror the value there.
  *
- * Brand color = Rekaz coral (extracted from rekaz.io — used in their logo,
- * primary buttons, and accent text).
+ * `--font-sans` is set by Next.js's font loader in layout.tsx (IBM Plex Sans
+ * Arabic), then pulled through here so utilities like `font-sans` resolve to
+ * the right family.
  */
 @theme {
-  --color-brand: #df625b;
-  --color-brand-dark: #c4504a;
-  --color-brand-light: #fceeed;
+  /* ----- brand (coral, from Rekaz.io) ----- */
+  --color-brand: #e85d5d;
+  --color-brand-dark: #c44e4e;
+  --color-brand-soft: #f28b82;
+  --color-brand-light: #fdeeea; /* alias of tint-peach for legacy usages */
 
+  /* ----- section tint backgrounds (Rekaz homepage pattern) ----- */
+  --color-tint-peach: #fdeeea;
+  --color-tint-mint: #e8f4ec;
+  --color-tint-lavender: #efedf7;
+  --color-tint-cream: #fbf6ee;
+  --color-surface-dark: #0f0f10;
+
+  /* ----- typography ----- */
   --font-sans:
     var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* ----- radii ----- */
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 }
 
 /*
- * Light mode only — Rekaz's site is light, and the brief said one accent color
- * on a light editor (like Notion / Linear / Webflow).
+ * Light, calm, Arabic-first canvas. Stone neutrals over slate — warmer feel.
  */
 html,
 body {
-  background: #f8fafc; /* slate-50 — soft off-white so the white canvas pops */
-  color: #0f172a; /* slate-900 */
+  background: #fafaf9; /* stone-50 */
+  color: #1c1917; /* stone-900 */
   font-family: var(--font-sans);
 }
 

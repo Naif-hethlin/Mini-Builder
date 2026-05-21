@@ -25,15 +25,15 @@ export function Canvas() {
   const isEmpty = sections.length === 0;
 
   return (
-    <main className="flex h-full w-full flex-1 overflow-auto bg-slate-50">
+    <main className="flex h-full w-full flex-1 overflow-auto bg-stone-50">
       <div
         className={`mx-auto w-full px-4 py-6 transition-[max-width] duration-200 ${DEVICE_WIDTH[deviceMode]}`}
       >
-        <div className="min-h-[calc(100vh-200px)] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="min-h-[calc(100vh-200px)] overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
           {isEmpty ? (
             <EmptyState />
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-stone-100">
               {sections.map((section) => (
                 <SectionRenderer key={section.id} section={section} />
               ))}
@@ -51,10 +51,10 @@ function EmptyState() {
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-brand">
         <MousePointerClick size={24} strokeWidth={1.75} />
       </div>
-      <h2 className="text-lg font-semibold text-slate-900">
+      <h2 className="text-lg font-semibold text-stone-900">
         Your page is empty
       </h2>
-      <p className="mt-1.5 max-w-sm text-sm text-slate-500">
+      <p className="mt-1.5 max-w-sm text-sm text-stone-500">
         Click a section in the library on the left to add it to your page. You
         can then edit, rearrange, or duplicate any section.
       </p>
