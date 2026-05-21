@@ -9,6 +9,9 @@ import GalleryRender from "./Gallery/Render";
 import TestimonialsRender from "./Testimonials/Render";
 import FAQRender from "./FAQ/Render";
 import ContactRender from "./Contact/Render";
+import BookingRender from "./Booking/Render";
+import MenuRender from "./Menu/Render";
+import PortfolioRender from "./Portfolio/Render";
 
 /**
  * Dispatches a Section to the right preset renderer based on its `type`.
@@ -42,5 +45,11 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <FAQRender props={section.props} />;
     case "contact":
       return <ContactRender props={section.props} />;
+    case "booking":
+      return <BookingRender props={section.props} />;
+    case "menu":
+      return <MenuRender props={section.props} />;
+    case "portfolio":
+      return <PortfolioRender props={section.props} />;
   }
 }

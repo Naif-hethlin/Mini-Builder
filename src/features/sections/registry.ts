@@ -38,6 +38,18 @@ import ContactThumbnail from "./Contact/Thumbnail";
 import { createContact } from "./Contact/defaults";
 import { contactSchema } from "./Contact/schema";
 
+import BookingThumbnail from "./Booking/Thumbnail";
+import { createBooking } from "./Booking/defaults";
+import { bookingSchema } from "./Booking/schema";
+
+import MenuThumbnail from "./Menu/Thumbnail";
+import { createMenu } from "./Menu/defaults";
+import { menuSchema } from "./Menu/schema";
+
+import PortfolioThumbnail from "./Portfolio/Thumbnail";
+import { createPortfolio } from "./Portfolio/defaults";
+import { portfolioSchema } from "./Portfolio/schema";
+
 // =============================================================================
 // SECTION REGISTRY
 //
@@ -124,6 +136,30 @@ export const SECTION_PRESETS: SectionPresetMeta[] = [
     Thumbnail: ContactThumbnail,
     createDefault: createContact,
     schema: contactSchema,
+  },
+  {
+    type: "booking",
+    label: "نموذج حجز",
+    description: "اسم، تاريخ، وقت، موظف — يُحفظ في لوحة الحجوزات.",
+    Thumbnail: BookingThumbnail,
+    createDefault: createBooking,
+    schema: bookingSchema,
+  },
+  {
+    type: "menu",
+    label: "قائمة طعام",
+    description: "أصناف ببطاقات (صورة، اسم، وصف، سعر).",
+    Thumbnail: MenuThumbnail,
+    createDefault: createMenu,
+    schema: menuSchema,
+  },
+  {
+    type: "portfolio",
+    label: "معرض الأعمال",
+    description: "شبكة أعمال (صورة، عنوان، تصنيف) — للمصورين والمصممين.",
+    Thumbnail: PortfolioThumbnail,
+    createDefault: createPortfolio,
+    schema: portfolioSchema,
   },
   {
     type: "footer",

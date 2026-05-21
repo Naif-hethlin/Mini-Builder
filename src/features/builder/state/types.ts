@@ -112,6 +112,41 @@ export type ContactProps = {
   address: string;
 };
 
+export type BookingProps = {
+  title: string;
+  subtitle: string;
+  staff: Array<{ id: string; name: string }>;
+  /** Times offered to visitors (HH:MM 24h strings). */
+  slots: string[];
+  buttonLabel: string;
+};
+
+export type MenuProps = {
+  title: string;
+  subtitle: string;
+  currency: string;
+  items: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    imageUrl: string;
+  }>;
+  columns: 2 | 3;
+};
+
+export type PortfolioProps = {
+  title: string;
+  subtitle: string;
+  items: Array<{
+    id: string;
+    imageUrl: string;
+    title: string;
+    category: string;
+  }>;
+  columns: 2 | 3 | 4;
+};
+
 // =============================================================================
 // A SECTION is one of the preset types. Section-only by design (no Layout
 // container, no atomic components) — see docs/PLAN.md "Builder is NOT fully
@@ -127,7 +162,10 @@ export type Section =
   | { id: string; type: "gallery"; props: GalleryProps }
   | { id: string; type: "testimonials"; props: TestimonialsProps }
   | { id: string; type: "faq"; props: FAQProps }
-  | { id: string; type: "contact"; props: ContactProps };
+  | { id: string; type: "contact"; props: ContactProps }
+  | { id: string; type: "booking"; props: BookingProps }
+  | { id: string; type: "menu"; props: MenuProps }
+  | { id: string; type: "portfolio"; props: PortfolioProps };
 
 export type SectionType = Section["type"];
 

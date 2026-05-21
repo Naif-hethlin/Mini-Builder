@@ -114,5 +114,11 @@ function labelOf(type: Section["type"]): string {
       return "الأسئلة الشائعة";
     case "contact":
       return "تواصل معنا";
+    case "booking":
+      return "نموذج حجز";
+    case "menu":
+      return "قائمة طعام";
+    case "portfolio":
+      return "معرض الأعمال";
   }
 }
