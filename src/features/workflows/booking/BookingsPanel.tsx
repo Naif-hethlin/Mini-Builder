@@ -1,14 +1,23 @@
 "use client";
 
-import { CalendarX, Check, Trash2, X } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarX,
+  Check,
+  List,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { cn } from "@/shared/lib/cn";
+import { BookingsCalendar } from "./BookingsCalendar";
 import { useBookings, type Booking } from "./store";
 
 type Filter = "all" | "pending" | "done" | "canceled";
+type View = "list" | "calendar";
 
 const FILTERS: Array<{ id: Filter; label: string }> = [
   { id: "all", label: "الكل" },
@@ -20,6 +29,8 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
 export function BookingsPanel({ projectId }: { projectId: string }) {
   const confirm = useConfirm();
   const [filter, setFilter] = useState<Filter>("all");
+  const [view, setView] = useState<View>("list");
+  const [dayFilter, setDayFilter] = useState<string | null>(null);
 
   useEffect(() => {
     useBookings.getState().hydrate();
@@ -33,8 +44,9 @@ export function BookingsPanel({ projectId }: { projectId: string }) {
     () =>
       [...bookings]
         .sort((a, b) => b.createdAt - a.createdAt)
-        .filter((b) => filter === "all" || b.status === filter),
-    [bookings, filter],
+        .filter((b) => filter === "all" || b.status === filter)
+        .filter((b) => !dayFilter || b.date === dayFilter),
+    [bookings, filter, dayFilter],
   );
 
   const handleDelete = async (b: Booking) => {
@@ -51,9 +63,65 @@ export function BookingsPanel({ projectId }: { projectId: string }) {
 
   return (
     <div className="space-y-5">
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-1.5">
-        {FILTERS.map((f) => {
+      {/* View toggle + active day filter chip */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex rounded-xl bg-stone-100 p-0.5">
+          <button
+            type="button"
+            onClick={() => {
+              setView("list");
+              setDayFilter(null);
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              view === "list"
+                ? "bg-white text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-900",
+            )}
+          >
+            <List size={12} />
+            قائمة
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("calendar")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              view === "calendar"
+                ? "bg-white text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-900",
+            )}
+          >
+            <CalendarDays size={12} />
+            تقويم
+          </button>
+        </div>
+        {dayFilter && (
+          <button
+            type="button"
+            onClick={() => setDayFilter(null)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-3 py-1 text-xs font-medium text-brand"
+          >
+            عرض {dayFilter} فقط
+            <X size={10} />
+          </button>
+        )}
+      </div>
+
+      {view === "calendar" ? (
+        <BookingsCalendar
+          bookings={bookings}
+          onPickDate={(d) => {
+            setDayFilter(d);
+            setView("list");
+          }}
+        />
+      ) : null}
+
+      {/* Filter chips — list view only */}
+      {view === "list" && (
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => {
           const count =
             f.id === "all"
               ? bookings.length
@@ -83,10 +151,11 @@ export function BookingsPanel({ projectId }: { projectId: string }) {
             </button>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* List */}
-      {visible.length === 0 ? (
+      {view === "list" && (visible.length === 0 ? (
         <EmptyState
           icon={CalendarX}
           title={bookings.length === 0 ? "لا توجد حجوزات بعد" : "لا حجوزات بهذه الحالة"}
@@ -164,7 +233,7 @@ export function BookingsPanel({ projectId }: { projectId: string }) {
             </tbody>
           </table>
         </div>
-      )}
+      ))}
     </div>
   );
 }
