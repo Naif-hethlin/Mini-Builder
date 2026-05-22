@@ -151,10 +151,38 @@ const listSchema: FieldSchema[] = [
   { kind: "text", key: "color", label: "اللون (HEX أو CSS)" },
 ];
 
+const shapeSchema: FieldSchema[] = [
+  {
+    kind: "select",
+    key: "kind",
+    label: "نوع الشكل",
+    options: [
+      { value: "circle", label: "دائرة" },
+      { value: "square", label: "مربع" },
+      { value: "triangle", label: "مثلث" },
+    ],
+  },
+  { kind: "text", key: "fillColor", label: "لون التعبئة (HEX)" },
+  {
+    kind: "select",
+    key: "borderWidth",
+    label: "سُمك الحد",
+    options: [
+      { value: "0", label: "بدون" },
+      { value: "1", label: "1px" },
+      { value: "2", label: "2px" },
+      { value: "4", label: "4px" },
+      { value: "8", label: "8px" },
+    ],
+  },
+  { kind: "text", key: "borderColor", label: "لون الحد (HEX)" },
+];
+
 export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {
   text: textSchema,
   heading: headingSchema,
   button: buttonSchema,
   image: imageSchema,
   list: listSchema,
+  shape: shapeSchema,
 };

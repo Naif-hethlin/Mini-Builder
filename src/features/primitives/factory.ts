@@ -84,5 +84,20 @@ export function createPrimitive(type: PrimitiveType): Primitive {
           color: "#1c1917",
         },
       };
+    case "shape":
+      return {
+        id: newId(),
+        type: "shape",
+        x: 40,
+        y: 40,
+        w: 140,
+        h: 140,
+        props: {
+          kind: "circle",
+          fillColor: "#e85d5d",
+          borderColor: "#1c1917",
+          borderWidth: 0,
+        },
+      };
   }
 }

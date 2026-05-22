@@ -55,13 +55,20 @@ export type ListPrimitiveProps = {
   color: string;
 };
 
+export type ShapePrimitiveProps = {
+  kind: "circle" | "square" | "triangle";
+  fillColor: string;
+  borderColor: string;
+  borderWidth: number;
+};
+
 // ----- Discriminated union -----------------------------------------------
 
 type Geometry = {
   x: number;
   y: number;
   w: number;
-  h?: number; // images use it; text/heading/button/list height auto
+  h?: number; // images + shapes use it; text/heading/button/list height auto
 };
 
 export type Primitive = Geometry &
@@ -71,6 +78,7 @@ export type Primitive = Geometry &
     | { id: string; type: "button"; props: ButtonPrimitiveProps }
     | { id: string; type: "image"; props: ImagePrimitiveProps }
     | { id: string; type: "list"; props: ListPrimitiveProps }
+    | { id: string; type: "shape"; props: ShapePrimitiveProps }
   );
 
 export type PrimitiveType = Primitive["type"];

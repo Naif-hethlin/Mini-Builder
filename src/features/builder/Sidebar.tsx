@@ -150,9 +150,9 @@ function ElementsPanel({ query }: { query: string }) {
         <div className="grid grid-cols-2 gap-3">
           {filtered.map((preset) => (
             <ElementTile
-              key={preset.type}
+              key={preset.id}
               preset={preset}
-              onClick={() => addPrimitiveToBuilder(preset.type)}
+              onClick={() => addPrimitiveToBuilder(preset)}
             />
           ))}
         </div>
@@ -268,7 +268,7 @@ function EmptyResults({ query }: { query: string }) {
 // canvas section, stacks under existing content, auto-grows height).
 // =============================================================================
 
-function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
+function addPrimitiveToBuilder(preset: PrimitivePresetMeta) {
   const store = useBuilderStore.getState();
   const sections = store.design.sections;
 
@@ -289,7 +289,14 @@ function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
     existingPrimitives = [];
   }
 
-  const primitive = createPrimitive(type);
+  const primitive = createPrimitive(preset.type);
+  // Apply per-tile defaults (e.g. shape kind = circle vs triangle).
+  if (preset.propsOverride) {
+    primitive.props = {
+      ...primitive.props,
+      ...preset.propsOverride,
+    } as typeof primitive.props;
+  }
 
   const maxBottom = existingPrimitives.reduce((m, p) => {
     const guessedHeight = p.h ?? estimatePrimitiveHeight(p);
@@ -315,7 +322,7 @@ function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
     primitiveId: primitive.id,
   });
 
-  toast.success(`أضيف ${primitiveLabelFor(type)}`);
+  toast.success(`أضيف ${preset.label}`);
 }
 
 function estimatePrimitiveHeight(p: Primitive): number {
@@ -336,10 +343,8 @@ function estimatePrimitiveHeight(p: Primitive): number {
       return 200;
     case "list":
       return Math.max(80, p.props.items.length * (p.props.fontSize + 8) + 16);
+    case "shape":
+      return p.h ?? 140;
   }
 }
 
-function primitiveLabelFor(type: PrimitivePresetMeta["type"]): string {
-  const preset = PRIMITIVE_PRESETS.find((p) => p.type === type);
-  return preset?.label ?? type;
-}

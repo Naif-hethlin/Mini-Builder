@@ -194,6 +194,10 @@ function PrimitiveForm({
       if (typeof next.fontSize === "string")
         next.fontSize = Number(next.fontSize);
     }
+    if (primitive.type === "shape") {
+      if (typeof next.borderWidth === "string")
+        next.borderWidth = Number(next.borderWidth);
+    }
     onChange(next);
   };
 
@@ -283,5 +287,7 @@ function primitiveLabel(type: Primitive["type"]): string {
       return "الصورة";
     case "list":
       return "القائمة";
+    case "shape":
+      return "الشكل";
   }
 }
