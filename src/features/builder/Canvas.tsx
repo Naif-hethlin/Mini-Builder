@@ -107,8 +107,9 @@ export function Canvas() {
       {/* Floating device + zoom selector */}
       <FloatingDeviceBar />
 
-      {/* Canvas scroll area */}
-      <div className="relative z-10 flex flex-1 items-start justify-center overflow-auto px-4 py-16">
+      {/* Canvas scroll area — tight padding on mobile, generous on desktop
+          since desktop has the floating device + shortcut bars. */}
+      <div className="relative z-10 flex flex-1 items-start justify-center overflow-auto px-2 py-4 sm:px-4 sm:py-16">
         <div
           className={cn(
             "w-full transition-[max-width] duration-200",
@@ -164,6 +165,8 @@ export function Canvas() {
 // previous in-Toolbar device toggle.
 // =============================================================================
 
+// Hidden on phones — the toggle isn't useful on a device that already
+// shows you the mobile breakpoint, and it eats vertical canvas space.
 function FloatingDeviceBar() {
   const deviceMode = useBuilderStore(selectDeviceMode);
   const setDeviceMode = useBuilderStore((s) => s.setDeviceMode);
@@ -182,7 +185,7 @@ function FloatingDeviceBar() {
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-4 left-1/2 z-20 -translate-x-1/2"
+      className="absolute top-4 left-1/2 z-20 hidden -translate-x-1/2 sm:block"
     >
       <div className="flex items-center gap-1 rounded-2xl border border-slate-200/60 bg-white/80 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] backdrop-blur-md">
         {DEVICES.map(({ mode, Icon, label, showLabel }) => {
@@ -239,11 +242,13 @@ function FloatingDeviceBar() {
 // Floating shortcut bar — pinned to bottom-center of the canvas.
 // =============================================================================
 
+// Hidden on phones — kbd shortcuts don't apply, and the bar would
+// crowd the MobileTabs strip at the bottom.
 function FloatingShortcutBar() {
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2"
+      className="absolute bottom-5 left-1/2 z-20 hidden -translate-x-1/2 sm:block"
     >
       <div className="flex items-center gap-6 rounded-2xl border border-slate-200/60 bg-white/90 px-5 py-2.5 text-xs font-bold text-slate-500 shadow-[0_4px_20px_rgb(0,0,0,0.08)] backdrop-blur-sm">
         <ShortcutChip combo="Ctrl Z" label="تراجع" />

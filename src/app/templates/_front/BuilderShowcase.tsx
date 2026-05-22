@@ -120,7 +120,7 @@ export function BuilderShowcase() {
   );
 
   return (
-    <div className="flex h-screen w-screen flex-row overflow-hidden bg-stone-50 text-stone-800">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-stone-50 text-stone-800 md:flex-row">
       <Sidebar
         onScratch={startScratch}
         onTemplates={() => setChooserOpen(true)}
@@ -167,7 +167,7 @@ function Sidebar({
   onTemplates: () => void;
 }) {
   return (
-    <aside className="relative z-20 flex h-full w-[380px] shrink-0 flex-col border-s border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)]">
+    <aside className="relative z-20 flex max-h-[60vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
       <div className="relative z-10 flex items-center gap-3 border-b border-stone-100 bg-white px-8 py-6">
         <Logo variant="wordmark" height={28} />
       </div>
@@ -501,41 +501,44 @@ function Main({
 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col">
-      {/* Top bar */}
-      <div className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-stone-200 bg-white/90 px-8 backdrop-blur-sm">
-        <div className="flex items-center gap-3 text-sm font-semibold">
-          <span className="text-stone-500">مساحة العمل</span>
-          <ChevronLeft size={16} className="text-stone-300" />
+      {/* Top bar — tight padding on mobile so the inline buttons + chip fit. */}
+      <div className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white/90 px-3 backdrop-blur-sm sm:h-16 sm:px-8">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-semibold sm:gap-3">
+          <span className="hidden text-stone-500 sm:inline">مساحة العمل</span>
+          <ChevronLeft size={16} className="hidden text-stone-300 sm:inline" />
           {previewing ? (
-            <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-3 py-1.5 text-brand">
-              <Sparkles size={14} />
-              معاينة قالب — {templateName(previewing)}
+            <span className="inline-flex min-w-0 items-center gap-2 truncate rounded-lg bg-brand-light px-2.5 py-1.5 text-xs text-brand sm:px-3 sm:text-sm">
+              <Sparkles size={14} className="shrink-0" />
+              <span className="truncate">معاينة — {templateName(previewing)}</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-3 py-1.5 text-brand">
+            <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-2.5 py-1.5 text-xs text-brand sm:px-3 sm:text-sm">
               <Home size={14} />
-              الصفحة الرئيسية
+              <span className="hidden sm:inline">الصفحة الرئيسية</span>
+              <span className="sm:hidden">رئيسية</span>
             </span>
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex shrink-0 gap-2 sm:gap-3">
           {previewing ? (
             <>
               <button
                 type="button"
                 onClick={onExitPreview}
-                className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100"
+                aria-label="إغلاق المعاينة"
+                className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100 sm:px-5"
               >
                 <X size={16} />
-                إغلاق المعاينة
+                <span className="hidden sm:inline">إغلاق المعاينة</span>
               </button>
               <button
                 type="button"
                 onClick={() => onUseTemplate(previewing)}
-                className="group inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2 text-sm font-bold text-white shadow-lg shadow-brand/30 transition-all hover:bg-brand-dark"
+                className="group inline-flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white shadow-lg shadow-brand/30 transition-all hover:bg-brand-dark sm:px-6"
               >
-                استخدم هذا القالب
+                <span className="hidden sm:inline">استخدم هذا القالب</span>
+                <span className="sm:hidden">استخدم</span>
                 <ArrowLeft
                   size={16}
                   className="transition-transform group-hover:-translate-x-0.5"
@@ -546,7 +549,7 @@ function Main({
             <>
               <button
                 type="button"
-                className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100"
+                className="hidden rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100 sm:inline-flex"
               >
                 معاينة
               </button>
@@ -554,14 +557,15 @@ function Main({
                 type="button"
                 ref={publishRef}
                 onClick={onPublish}
+                aria-label="نشر الموقع"
                 className={cn(
-                  "group inline-flex items-center gap-2 rounded-xl px-6 py-2 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition-all",
+                  "group inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition-all sm:px-6",
                   publishActive
                     ? "scale-105 bg-brand"
                     : "bg-stone-900 hover:bg-stone-800",
                 )}
               >
-                نشر الموقع
+                <span className="hidden sm:inline">نشر الموقع</span>
                 <Send
                   size={16}
                   className="transition-transform group-hover:-translate-y-0.5"
@@ -572,8 +576,9 @@ function Main({
         </div>
       </div>
 
-      {/* Blueprint area */}
-      <div className="blueprint-grid relative flex flex-1 justify-center overflow-hidden px-8 py-10">
+      {/* Blueprint area — tighter padding on mobile so the browser-frame
+          canvas can actually be seen. */}
+      <div className="blueprint-grid relative flex flex-1 justify-center overflow-hidden px-3 py-4 sm:px-8 sm:py-10">
         <div className="relative z-10 flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] ring-8 ring-white/50">
           {/* Browser chrome */}
           <div className="flex h-14 shrink-0 items-center gap-2 border-b border-stone-200 bg-stone-50/80 px-5 backdrop-blur-md">

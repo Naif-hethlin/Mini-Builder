@@ -105,7 +105,7 @@ export function AuthOverlay() {
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-[200] flex items-center justify-center bg-white"
         >
-          <div className="w-full max-w-md px-8">
+          <div className="w-full max-w-md px-5 sm:px-8">
             {/* Brand */}
             <div className="mb-10 flex justify-center">
               <Logo variant="wordmark" height={36} />
