@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/cn";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { selectMobileTab, useBuilderStore } from "./state/store";
 import { useBuilderProject } from "./state/useBuilderProject";
+import { useBuilderHotkeys } from "./useBuilderHotkeys";
 import { Canvas } from "./Canvas";
 import { EditPanel } from "./EditPanel";
 import { MobileTabs } from "./MobileTabs";
@@ -25,6 +26,7 @@ import { Toolbar } from "./Toolbar";
 export function Builder({ projectId }: { projectId: string }) {
   const mobileTab = useBuilderStore(selectMobileTab);
   useBuilderProject(projectId);
+  useBuilderHotkeys();
 
   return (
     <ConfirmProvider>
