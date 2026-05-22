@@ -1,17 +1,34 @@
 "use client";
 
 import {
+  ArrowDownRight,
+  ArrowUpRight,
   CalendarCheck,
-  Eye,
-  TrendingUp,
+  Layers,
+  Users,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
+import { cn } from "@/shared/lib/cn";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { useBookings } from "@/features/workflows/booking/store";
 import { useProjects } from "@/features/projects";
-import { MOCK_ANALYTICS } from "./mock-data";
+import { metricsFromBookings, recentBookings } from "./derive";
+
+const STATUS_LABEL: Record<"pending" | "done" | "canceled", string> = {
+  pending: "قيد الانتظار",
+  done: "مكتمل",
+  canceled: "ملغى",
+};
+
+const STATUS_CHIP: Record<"pending" | "done" | "canceled", string> = {
+  pending: "bg-amber-50 text-amber-700",
+  done: "bg-emerald-50 text-emerald-700",
+  canceled: "bg-stone-100 text-stone-500",
+};
 
 export function Overview() {
   const { id } = useParams<{ id: string }>();
@@ -23,56 +40,76 @@ export function Overview() {
 
   const bookings = useBookings((s) => s.byProject[id] ?? []);
   const project = useProjects((s) => s.projects[id]);
+  const metrics = useMemo(() => metricsFromBookings(bookings), [bookings]);
+  const activity = useMemo(() => recentBookings(bookings, 5), [bookings]);
+
   const totalSections =
     project?.pages.reduce((acc, p) => acc + p.design.sections.length, 0) ?? 0;
   const liveStatus = totalSections > 0 ? "نشط" : "مسودة";
 
-  const sparkData = MOCK_ANALYTICS.visits.spark.map((v) => ({ v }));
+  const sparkData = metrics.spark.map((v) => ({ v }));
+  const trendUp = metrics.trendPercent >= 0;
+  const TrendIcon = trendUp ? ArrowUpRight : ArrowDownRight;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-stone-900">نظرة عامة</h1>
         <p className="mt-1 text-sm text-stone-500">
-          ملخص نشاط مشروعك خلال آخر فترة.
+          أرقام مشروعك مستخرجة من الحجوزات الحقيقية في المتجر.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="الزيارات"
-          value={MOCK_ANALYTICS.visits.total.toLocaleString("ar")}
-          delta={`+${MOCK_ANALYTICS.visits.deltaPercent}%`}
-          icon={TrendingUp}
+          label="الحجوزات (الكل)"
+          value={metrics.totalBookings.toLocaleString("ar")}
+          delta={
+            metrics.totalBookings === 0
+              ? "—"
+              : `${metrics.pendingBookings} قيد الانتظار · ${metrics.doneBookings} مكتمل`
+          }
+          icon={CalendarCheck}
         >
-          <div className="-mx-2 mt-2 h-12">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sparkData}>
-                <Line
-                  type="monotone"
-                  dataKey="v"
-                  stroke="var(--color-brand)"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {metrics.totalBookings > 0 && (
+            <div className="-mx-2 mt-2 h-12">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sparkData}>
+                  <Line
+                    type="monotone"
+                    dataKey="v"
+                    stroke="var(--color-brand)"
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </StatCard>
 
         <StatCard
-          label="الحجوزات"
-          value={bookings.length.toLocaleString("ar")}
-          delta={`${bookings.filter((b) => b.status === "pending").length} قيد الانتظار`}
-          icon={CalendarCheck}
+          label="هذا الشهر"
+          value={metrics.bookingsThisMonth.toLocaleString("ar")}
+          delta={
+            metrics.bookingsLastMonth === 0 && metrics.bookingsThisMonth === 0
+              ? "لا مقارنة بعد"
+              : `${trendUp ? "+" : ""}${metrics.trendPercent}% عن الشهر السابق`
+          }
+          accent={trendUp ? "green" : "stone"}
+          icon={TrendIcon}
         />
 
         <StatCard
-          label="مشاهدات الصفحة"
-          value={MOCK_ANALYTICS.pageViews.toLocaleString("ar")}
-          delta={`${MOCK_ANALYTICS.conversionRate}% تحويل`}
-          icon={Eye}
+          label="العملاء"
+          value={metrics.totalCustomers.toLocaleString("ar")}
+          delta={
+            metrics.newCustomersThisMonth > 0
+              ? `+${metrics.newCustomersThisMonth} جديد هذا الشهر`
+              : "لا جدد هذا الشهر"
+          }
+          icon={Users}
         />
 
         <StatCard
@@ -83,19 +120,70 @@ export function Overview() {
               ? `${totalSections} قسم في ${project.pages.length} صفحة`
               : "—"
           }
+          icon={Layers}
           accent={liveStatus === "نشط" ? "green" : "stone"}
         />
       </div>
 
-      <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-stone-900">
-          آخر النشاطات
-        </h2>
-        <p className="mt-1 text-xs text-stone-500">
-          {bookings.length === 0
-            ? "لا توجد حجوزات بعد. أضف قسم نموذج حجز للموقع لاستقبال الحجوزات."
-            : `آخر ${Math.min(bookings.length, 5)} حجوزات في صفحة الإدارة.`}
-        </p>
+      <div className="rounded-2xl border border-stone-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-stone-900">
+              آخر النشاطات
+            </h2>
+            <p className="mt-0.5 text-xs text-stone-500">
+              {bookings.length === 0
+                ? "لا توجد حجوزات بعد."
+                : `آخر ${activity.length} حجوزات.`}
+            </p>
+          </div>
+          {bookings.length > 0 && (
+            <Link
+              href={`/dashboard/${id}/workflow`}
+              className="text-xs font-medium text-brand hover:text-brand-dark"
+            >
+              عرض الكل ←
+            </Link>
+          )}
+        </div>
+
+        {activity.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon={CalendarCheck}
+              title="لا حجوزات بعد"
+              description="أضف قسم نموذج حجز للموقع لاستقبال أول حجوزاتك."
+              className="border-0 shadow-none"
+            />
+          </div>
+        ) : (
+          <ul className="divide-y divide-stone-100">
+            {activity.map((b) => (
+              <li
+                key={b.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-6 py-3 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-stone-900">
+                    {b.name}
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs text-stone-500">
+                    {b.date} · {b.time}
+                    {b.staffName ? ` · ${b.staffName}` : ""}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    STATUS_CHIP[b.status],
+                  )}
+                >
+                  {STATUS_LABEL[b.status]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -118,7 +206,7 @@ function StatCard({
 }) {
   const chip =
     accent === "green"
-      ? "bg-green-50 text-green-600"
+      ? "bg-emerald-50 text-emerald-600"
       : accent === "stone"
         ? "bg-stone-100 text-stone-600"
         : "bg-brand-light text-brand";
