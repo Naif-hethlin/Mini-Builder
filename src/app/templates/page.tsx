@@ -8,7 +8,7 @@
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { AuthOverlay } from "@/features/auth/AuthOverlay";
-import { BlueprintBuilder } from "./_front/BlueprintBuilder";
+import { BuilderShowcase } from "./_front/BuilderShowcase";
 
 export const metadata = {
   title: "اختر بداية — ركاز",
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 export default function TemplatesPage() {
   return (
     <>
-      <BlueprintBuilder />
+      <BuilderShowcase />
       <Suspense fallback={null}>
         <AuthOverlay />
       </Suspense>
