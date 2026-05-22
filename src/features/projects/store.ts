@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { newId } from "@/shared/lib/id";
 import type { PageDesign } from "@/features/builder/state/types";
+import { starterDesignFor } from "@/features/sections/starters";
 import { loadAll, saveAll } from "./storage";
 import type {
   Page,
@@ -126,11 +127,17 @@ export const useProjects = create<ProjectsState>((set, get) => ({
   create: (input = {}) => {
     const id = input.id ?? nanoid();
     const now = Date.now();
+    // If a templateType was given (and no explicit design override), seed
+    // the home page with the matching starter content so the user sees a
+    // real-looking site instead of an empty canvas.
+    const homeDesign =
+      input.design ??
+      (input.templateType ? starterDesignFor(input.templateType) : undefined);
     const project: Project = {
       id,
       name: input.name ?? "مشروع جديد",
       templateType: input.templateType,
-      pages: [makeHomePage(input.design)],
+      pages: [makeHomePage(homeDesign)],
       createdAt: now,
       updatedAt: now,
     };

@@ -1,6 +1,7 @@
 import "server-only";
 import { query } from "./db";
 import { ensureMigrated } from "./migrations";
+import { starterDesignFor } from "@/features/sections/starters";
 import type {
   Page,
   Project,
@@ -112,12 +113,16 @@ export async function createForOwner(
   );
   const project = pRows[0];
 
-  // Seed a home page.
+  // Seed a home page — populated when a templateType was provided.
+  const homeDesign =
+    input.templateType !== undefined
+      ? starterDesignFor(input.templateType)
+      : EMPTY_DESIGN;
   const { rows: pageRows } = await query<PageRow>(
     `INSERT INTO pages (project_id, slug, name, "order", is_home, design)
      VALUES ($1, 'home', 'الصفحة الرئيسية', 0, TRUE, $2::jsonb)
      RETURNING id, project_id, slug, name, "order", is_home, design`,
-    [project.id, JSON.stringify(EMPTY_DESIGN)],
+    [project.id, JSON.stringify(homeDesign)],
   );
 
   return projectFromRow(project, pageRows.map(pageFromRow));
