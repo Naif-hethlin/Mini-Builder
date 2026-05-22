@@ -9,6 +9,7 @@ import { useBuilderHotkeys } from "./useBuilderHotkeys";
 import { Canvas } from "./Canvas";
 import { EditPanel } from "./EditPanel";
 import { MobileTabs } from "./MobileTabs";
+import { OnboardingTour } from "./OnboardingTour";
 import { Sidebar } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
 
@@ -66,6 +67,8 @@ export function Builder({ projectId }: { projectId: string }) {
       </div>
 
       <MobileTabs />
+
+      <OnboardingTour />
 
       {/* Toaster is the global toast renderer — `toast(...)` from anywhere shows here. */}
       <Toaster
