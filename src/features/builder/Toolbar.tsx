@@ -25,6 +25,7 @@ import {
   useProjects,
 } from "@/features/projects";
 import { PageSwitcher } from "./PageSwitcher";
+import { PublishModal } from "./PublishModal";
 import {
   selectCanRedo,
   selectCanUndo,
@@ -49,6 +50,7 @@ export function Toolbar() {
   const clearDesign = useBuilderStore((s) => s.clearDesign);
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   const projectName = useProjects((s) =>
     projectId ? s.projects[projectId]?.name : undefined,
@@ -206,9 +208,13 @@ export function Toolbar() {
 
         <button
           type="button"
-          onClick={() =>
-            toast.info("النشر التلقائي قريبًا — استخدم التصدير حالياً")
-          }
+          onClick={() => {
+            if (!projectId) {
+              toast.info("افتح مشروعاً أولاً");
+              return;
+            }
+            setPublishOpen(true);
+          }}
           className="inline-flex items-center gap-2 rounded-xl border border-brand bg-gradient-to-l from-brand-dark to-brand px-3 py-2 text-sm font-bold text-white shadow-[0_4px_12px_rgba(232,93,93,0.25)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(232,93,93,0.35)] sm:px-5"
         >
           <span className="hidden sm:inline">نشر الموقع</span>
@@ -220,6 +226,14 @@ export function Toolbar() {
         <ProjectPicker
           currentProjectId={projectId}
           onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {projectId && (
+        <PublishModal
+          open={publishOpen}
+          projectId={projectId}
+          onClose={() => setPublishOpen(false)}
         />
       )}
     </header>

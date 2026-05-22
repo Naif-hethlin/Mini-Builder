@@ -63,6 +63,16 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );`,
+
+  // Publishing — slug is the public URL piece (/sites/<slug>). Unique
+  // across all projects when set; NULL when the project hasn't been
+  // published yet.
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS slug TEXT;`,
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS published BOOLEAN NOT NULL DEFAULT FALSE;`,
+  `ALTER TABLE projects ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;`,
+  `DO $$ BEGIN
+     ALTER TABLE projects ADD CONSTRAINT projects_slug_unique UNIQUE (slug);
+   EXCEPTION WHEN others THEN NULL; END $$;`,
   `CREATE TABLE IF NOT EXISTS pages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,

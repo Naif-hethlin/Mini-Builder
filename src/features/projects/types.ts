@@ -21,6 +21,11 @@ export type Project = {
   name: string;
   templateType?: ProjectTemplateType;
   pages: Page[];
+  /** URL-safe slug for the public /sites/<slug> route. Null when not yet published. */
+  slug?: string | null;
+  /** True if the project has been published and is reachable at /sites/<slug>. */
+  published?: boolean;
+  publishedAt?: number | null;
   createdAt: number;
   updatedAt: number;
 };
