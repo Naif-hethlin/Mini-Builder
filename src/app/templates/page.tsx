@@ -5,6 +5,7 @@
 // those who picked "browse without login") see the BlueprintBuilder
 // directly.
 
+import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { AuthOverlay } from "@/features/auth/AuthOverlay";
 import { BlueprintBuilder } from "./_front/BlueprintBuilder";
@@ -15,11 +16,17 @@ export const metadata = {
     "ابدأ من الصفر أو اختر قالبًا جاهزًا (حلاق، مقهى، مصور) لإطلاق موقعك.",
 };
 
+// AuthOverlay reads useSearchParams (for ?auth=open from the /login
+// redirect), which forces dynamic rendering. Skip the prerender entirely.
+export const dynamic = "force-dynamic";
+
 export default function TemplatesPage() {
   return (
     <>
       <BlueprintBuilder />
-      <AuthOverlay />
+      <Suspense fallback={null}>
+        <AuthOverlay />
+      </Suspense>
       <Toaster
         position="bottom-right"
         richColors

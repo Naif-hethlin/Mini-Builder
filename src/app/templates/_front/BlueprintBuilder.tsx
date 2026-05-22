@@ -20,6 +20,10 @@ import {
   Save,
   Scissors,
 } from "lucide-react";
+import { LogIn } from "lucide-react";
+import { useAuthOverlay } from "@/features/auth/overlayState";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { UserMenu } from "@/features/auth/UserMenu";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
 import {
@@ -107,6 +111,10 @@ function Header({
 }) {
   return (
     <header className="relative z-10 flex flex-col items-center px-4 pt-16 pb-8 text-center">
+      <div className="absolute top-5 end-5 z-20">
+        <SignInChip />
+      </div>
+
       <div className="mb-8 flex cursor-pointer items-center">
         <Logo variant="wordmark" height={32} />
       </div>
@@ -669,4 +677,28 @@ function templateName(template: ProjectTemplateType): string {
     case "photography":
       return "عدسة الإبداع";
   }
+}
+
+/**
+ * Top-end chip: signed-in users see their UserMenu; anonymous users see a
+ * "تسجيل الدخول" button that re-opens the AuthOverlay (clearing the
+ * "browse without login" skip flag for the session).
+ */
+function SignInChip() {
+  const openAuth = useAuthOverlay((s) => s.open);
+  const { user, loading } = useCurrentUser();
+
+  if (loading) return null;
+  if (user) return <UserMenu />;
+
+  return (
+    <button
+      type="button"
+      onClick={openAuth}
+      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-xs font-medium text-white shadow-md shadow-brand/20 transition-colors hover:bg-brand-dark"
+    >
+      <LogIn size={12} />
+      تسجيل الدخول
+    </button>
+  );
 }

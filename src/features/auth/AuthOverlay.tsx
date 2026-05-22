@@ -2,13 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Phone, User } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
+import { SKIP_KEY, useAuthOverlay } from "./overlayState";
 import { refreshCurrentUser, useCurrentUser } from "./useCurrentUser";
-
-const SKIP_KEY = "rekaz-builder/auth/skipped";
 
 type Mode = "login" | "signup";
 
@@ -23,8 +23,19 @@ type Mode = "login" | "signup";
  */
 export function AuthOverlay() {
   const { user, loading } = useCurrentUser();
+  const searchParams = useSearchParams();
+  const openAuth = useAuthOverlay((s) => s.open);
+  const forceOpen = useAuthOverlay((s) => s.forceOpen);
+  const closeForce = useAuthOverlay((s) => s.close);
   const [skipped, setSkipped] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  // ?auth=open is set by the /login redirect and any "sign in" link from
+  // outside the templates page. Treat it as an explicit re-open request.
+  const wantsAuth = searchParams.get("auth") === "open";
+  useEffect(() => {
+    if (wantsAuth) openAuth();
+  }, [wantsAuth, openAuth]);
 
   const [mode, setMode] = useState<Mode>("login");
   const [phone, setPhone] = useState("");
@@ -39,13 +50,20 @@ export function AuthOverlay() {
     setHydrated(true);
   }, []);
 
-  const show = hydrated && !loading && !user && !skipped;
+  // Re-read skipped flag when forceOpen flips on — that store call already
+  // cleared sessionStorage but we also need local state in sync.
+  useEffect(() => {
+    if (forceOpen) setSkipped(false);
+  }, [forceOpen]);
+
+  const show = hydrated && !loading && !user && (forceOpen || !skipped);
 
   const handleSkip = () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem(SKIP_KEY, "1");
     }
     setSkipped(true);
+    closeForce();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
