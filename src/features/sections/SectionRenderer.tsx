@@ -1,23 +1,30 @@
-import type { Section } from "@/app/web-builder/_back/types";
+import type { Section } from "@/features/builder/state/types";
 
 import HeaderRender from "./Header/Render";
 import HeroRender from "./Hero/Render";
 import FeaturesRender from "./Features/Render";
 import CTARender from "./CTA/Render";
 import FooterRender from "./Footer/Render";
+import GalleryRender from "./Gallery/Render";
+import TestimonialsRender from "./Testimonials/Render";
+import FAQRender from "./FAQ/Render";
+import ContactRender from "./Contact/Render";
+import BookingRender from "./Booking/Render";
+import MenuRender from "./Menu/Render";
+import PortfolioRender from "./Portfolio/Render";
+import CanvasRender from "./Canvas/Render";
 
 /**
  * Dispatches a Section to the right preset renderer based on its `type`.
  *
- * Used by:
- *   - The builder's Canvas (real-time preview while editing)
- *   - The public /p/[slug] route (rendering a published design from the DB)
+ * Used by the builder's Canvas (real-time preview while editing) and the
+ * Preview route (rendering a published design without the builder UI),
+ * so the renderers live in `features/sections/` and not inside any route
+ * folder.
  *
- * This is why the section renderers live in `features/` (shared) and NOT inside
- * `app/web-builder/`: they're used by more than just the builder route.
- *
- * The `layout` type returns null here — its content (rows/cols/components) is
- * handled separately by the LayoutRenderer in Phase 10.
+ * The `layout` type is currently unreachable — the Layout/Component data
+ * model was dropped in Phase 4. The case stays for exhaustiveness against
+ * any future variants.
  */
 export function SectionRenderer({ section }: { section: Section }) {
   switch (section.type) {
@@ -31,8 +38,21 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <CTARender props={section.props} />;
     case "footer":
       return <FooterRender props={section.props} />;
-    case "layout":
-      // Layout container — content rendered by LayoutRenderer (Phase 10).
-      return null;
+    case "gallery":
+      return <GalleryRender props={section.props} />;
+    case "testimonials":
+      return <TestimonialsRender props={section.props} />;
+    case "faq":
+      return <FAQRender props={section.props} />;
+    case "contact":
+      return <ContactRender props={section.props} />;
+    case "booking":
+      return <BookingRender props={section.props} />;
+    case "menu":
+      return <MenuRender props={section.props} />;
+    case "portfolio":
+      return <PortfolioRender props={section.props} />;
+    case "canvas":
+      return <CanvasRender props={section.props} />;
   }
 }

@@ -1,9 +1,15 @@
-// Root route: /
-// For now we redirect to /web-builder. Later we may turn this into a landing
-// page that markets the builder before sending users in.
+// Landing route: /
+//
+// Server component shell that mounts the interactive landing client.
 
-import { redirect } from "next/navigation";
+import { AnimatedLanding } from "./_front/AnimatedLanding";
 
-export default function RootPage() {
-  redirect("/web-builder");
+export const metadata = {
+  title: "ركاز — منصة إنشاء مواقع الأعمال",
+  description:
+    "قوالب جاهزة، تخصيص مرن، وأدوات مبسطة لإدارة مشروعك — كل ذلك في منصة واحدة.",
+};
+
+export default function LandingPage() {
+  return <AnimatedLanding />;
 }

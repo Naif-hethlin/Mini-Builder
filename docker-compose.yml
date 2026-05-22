@@ -1,19 +1,38 @@
 # docker compose for the Mini Website Builder.
 #
-# This file lives OUTSIDE naifhub so the project stays self-contained.
-# We join naifhub's existing Caddy network (docker_default) as an "external"
-# network so the shared Caddy can reverse-proxy traffic to our container.
+# Two services: a Postgres 16 container (named mini-website-builder-db) and
+# the Next.js app. The app talks to Postgres over the shared docker_default
+# network using the hostname `postgres`.
 #
-# Deploy commands (run from this folder):
-#   docker compose build
-#   docker compose up -d
-#   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+# Credentials default to dev-only values; production deployments should
+# override POSTGRES_PASSWORD + SESSION_SECRET via .env in the same folder.
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mini-website-builder-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rekaz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rekaz-dev-only-replace-me}
+      POSTGRES_DB: ${POSTGRES_DB:-rekaz_builder}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - caddy_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rekaz}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     container_name: mini-website-builder
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     expose:
       - "3000"
     networks:
@@ -22,8 +41,13 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      - DATABASE_URL=postgres://${POSTGRES_USER:-rekaz}:${POSTGRES_PASSWORD:-rekaz-dev-only-replace-me}@postgres:5432/${POSTGRES_DB:-rekaz_builder}
+      - SESSION_SECRET=${SESSION_SECRET:-rekaz-dev-only-32-byte-secret-replace}
 
 networks:
   caddy_net:
-    name: docker_default # the network created by /home/ubuntu/naifhub/docker/docker-compose.yml
+    name: docker_default
     external: true
+
+volumes:
+  postgres_data:
