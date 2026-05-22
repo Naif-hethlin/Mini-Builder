@@ -21,6 +21,7 @@ import {
 import { createPrimitive } from "@/features/primitives/factory";
 import { createCanvas } from "@/features/sections/Canvas/defaults";
 import { cn } from "@/shared/lib/cn";
+import { explodeSection, isExplodable } from "./explode";
 import { useBuilderStore } from "./state/store";
 import type { Section } from "./state/types";
 import type { Primitive } from "@/features/primitives/types";
@@ -216,7 +217,14 @@ function SectionsPanel({ query }: { query: string }) {
               key={preset.type}
               preset={preset}
               onClick={() => {
-                addSection(preset.createDefault());
+                // Auto-explode preset sections so the user can drag /
+                // recolor any piece from the moment it's added, matching
+                // the behaviour of templates seeded via starterDesignFor.
+                const fresh = preset.createDefault();
+                const next = isExplodable(fresh)
+                  ? (explodeSection(fresh) ?? fresh)
+                  : fresh;
+                addSection(next);
                 toast.success(`أضيف ${preset.label}`);
               }}
             />
