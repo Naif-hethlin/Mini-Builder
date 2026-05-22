@@ -31,10 +31,10 @@ export function Builder({ projectId }: { projectId: string }) {
 
   return (
     <ConfirmProvider>
-      <div className="flex h-screen w-screen flex-col gap-3 overflow-hidden bg-slate-50 p-3 text-slate-800 antialiased selection:bg-brand-light selection:text-brand-dark">
+      <div className="flex h-screen w-screen flex-col gap-2 overflow-hidden bg-slate-50 p-2 text-slate-800 antialiased selection:bg-brand-light selection:text-brand-dark sm:gap-3 sm:p-3">
         <Toolbar />
 
-        <div className="flex flex-1 gap-3 overflow-hidden">
+        <div className="flex flex-1 gap-2 overflow-hidden sm:gap-3">
           {/* SIDEBAR — fixed 320px on md+, full width on mobile when active */}
           <div
             className={cn(

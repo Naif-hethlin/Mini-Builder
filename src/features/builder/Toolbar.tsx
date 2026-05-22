@@ -5,6 +5,7 @@ import {
   Eye,
   FolderOpen,
   LayoutDashboard,
+  MoreVertical,
   PaintBucket,
   Redo2,
   Rocket,
@@ -13,7 +14,7 @@ import {
   Undo2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
 import { Logo } from "@/shared/ui/Logo";
@@ -79,21 +80,21 @@ export function Toolbar() {
   return (
     <header
       className={cn(
-        "z-30 flex h-16 shrink-0 items-center justify-between gap-3 px-4",
+        "z-30 flex h-14 shrink-0 items-center justify-between gap-2 px-3 sm:h-16 sm:gap-3 sm:px-4",
         PANEL_CLASS,
       )}
     >
-      {/* ── Left: brand chip + nav pills ────────────────────────────── */}
+      {/* ── Left: brand chip + nav pills (nav pills hide on mobile) ─── */}
       <div className="flex h-full items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-xl bg-brand-light px-3 py-1.5 text-brand">
+        <span className="inline-flex items-center gap-2 rounded-xl bg-brand-light px-2.5 py-1.5 text-brand sm:px-3">
           <Logo height={20} />
         </span>
 
-        <div className="mx-2 h-6 w-px bg-slate-200" />
+        <div className="mx-1 hidden h-6 w-px bg-slate-200 sm:block sm:mx-2" />
 
         <nav
           aria-label="أقسام البناء"
-          className="flex items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 p-1"
+          className="hidden items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 p-1 sm:flex"
         >
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-white px-4 py-1.5 text-sm font-bold text-brand-dark shadow-sm">
             <PaintBucket size={14} />
@@ -141,7 +142,7 @@ export function Toolbar() {
       )}
 
       {/* ── Right: history + view group + publish ───────────────────── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <div className={PILL_GROUP_CLASS}>
           <ToolbarIconButton
             icon={<Undo2 size={15} />}
@@ -157,6 +158,8 @@ export function Toolbar() {
           />
         </div>
 
+        {/* Desktop: each action gets its own pill. Mobile: collapses
+            into the overflow menu below. */}
         <div className={cn(PILL_GROUP_CLASS, "hidden sm:flex")}>
           <ToolbarIconButton
             icon={<Eye size={15} />}
@@ -192,12 +195,21 @@ export function Toolbar() {
           />
         </div>
 
+        {/* Mobile overflow menu — exposes the same actions but kebab-style. */}
+        <MobileOverflowMenu
+          projectId={projectId}
+          onPreview={() => projectId && window.open(`/preview/${projectId}`, "_blank")}
+          onOpenPicker={() => setPickerOpen(true)}
+          onExport={handleExport}
+          onClear={handleClear}
+        />
+
         <button
           type="button"
           onClick={() =>
             toast.info("النشر التلقائي قريبًا — استخدم التصدير حالياً")
           }
-          className="inline-flex items-center gap-2 rounded-xl border border-brand bg-gradient-to-l from-brand-dark to-brand px-5 py-2 text-sm font-bold text-white shadow-[0_4px_12px_rgba(232,93,93,0.25)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(232,93,93,0.35)]"
+          className="inline-flex items-center gap-2 rounded-xl border border-brand bg-gradient-to-l from-brand-dark to-brand px-3 py-2 text-sm font-bold text-white shadow-[0_4px_12px_rgba(232,93,93,0.25)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(232,93,93,0.35)] sm:px-5"
         >
           <span className="hidden sm:inline">نشر الموقع</span>
           <Rocket size={14} />
@@ -242,6 +254,141 @@ function ToolbarIconButton({
       )}
     >
       {icon}
+    </button>
+  );
+}
+
+// =============================================================================
+// Mobile overflow — kebab menu that bundles the desktop pill-group actions
+// into a single popover on small screens.
+// =============================================================================
+
+function MobileOverflowMenu({
+  projectId,
+  onPreview,
+  onOpenPicker,
+  onExport,
+  onClear,
+}: {
+  projectId: string | null;
+  onPreview: () => void;
+  onOpenPicker: () => void;
+  onExport: () => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative sm:hidden">
+      <button
+        type="button"
+        aria-label="مزيد"
+        title="مزيد"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-500 hover:bg-white hover:text-slate-800"
+      >
+        <MoreVertical size={16} />
+      </button>
+      {open && (
+        <div className="absolute end-0 top-full z-40 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+          <MobileMenuItem
+            icon={<Eye size={14} />}
+            label="معاينة"
+            onClick={() => {
+              setOpen(false);
+              onPreview();
+            }}
+            disabled={!projectId}
+          />
+          <MobileMenuItem
+            icon={<FolderOpen size={14} />}
+            label="فتح مشروع"
+            onClick={() => {
+              setOpen(false);
+              onOpenPicker();
+            }}
+          />
+          <MobileMenuItem
+            icon={<Download size={14} />}
+            label="تصدير JSON"
+            onClick={() => {
+              setOpen(false);
+              onExport();
+            }}
+            disabled={!projectId}
+          />
+          {projectId && (
+            <Link
+              href={`/dashboard/${projectId}`}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 border-t border-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <LayoutDashboard size={14} />
+              لوحة التحكم
+            </Link>
+          )}
+          {projectId && (
+            <Link
+              href={`/dashboard/${projectId}/settings`}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <Settings size={14} />
+              إعدادات
+            </Link>
+          )}
+          <MobileMenuItem
+            icon={<Trash2 size={14} />}
+            label="مسح الصفحة"
+            onClick={() => {
+              setOpen(false);
+              onClear();
+            }}
+            danger
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileMenuItem({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+  danger = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "flex w-full items-center gap-2.5 px-3 py-2.5 text-start text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+        danger
+          ? "border-t border-slate-50 text-rose-600 hover:bg-rose-50"
+          : "text-slate-700 hover:bg-slate-50",
+      )}
+    >
+      {icon}
+      {label}
     </button>
   );
 }
