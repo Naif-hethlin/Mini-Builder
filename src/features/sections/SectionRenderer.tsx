@@ -12,6 +12,7 @@ import ContactRender from "./Contact/Render";
 import BookingRender from "./Booking/Render";
 import MenuRender from "./Menu/Render";
 import PortfolioRender from "./Portfolio/Render";
+import CanvasRender from "./Canvas/Render";
 
 /**
  * Dispatches a Section to the right preset renderer based on its `type`.
@@ -51,5 +52,7 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <MenuRender props={section.props} />;
     case "portfolio":
       return <PortfolioRender props={section.props} />;
+    case "canvas":
+      return <CanvasRender props={section.props} />;
   }
 }

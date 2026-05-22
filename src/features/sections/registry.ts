@@ -50,6 +50,10 @@ import PortfolioThumbnail from "./Portfolio/Thumbnail";
 import { createPortfolio } from "./Portfolio/defaults";
 import { portfolioSchema } from "./Portfolio/schema";
 
+import CanvasThumbnail from "./Canvas/Thumbnail";
+import { createCanvas } from "./Canvas/defaults";
+import { canvasSchema } from "./Canvas/schema";
+
 // =============================================================================
 // SECTION REGISTRY
 //
@@ -160,6 +164,14 @@ export const SECTION_PRESETS: SectionPresetMeta[] = [
     Thumbnail: PortfolioThumbnail,
     createDefault: createPortfolio,
     schema: portfolioSchema,
+  },
+  {
+    type: "canvas",
+    label: "لوحة حرّة",
+    description: "ابنِ من الصفر — اسحب وضع النصوص والأزرار والصور بحرية.",
+    Thumbnail: CanvasThumbnail,
+    createDefault: createCanvas,
+    schema: canvasSchema,
   },
   {
     type: "footer",

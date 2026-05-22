@@ -148,9 +148,20 @@ export type PortfolioProps = {
 };
 
 // =============================================================================
-// A SECTION is one of the preset types. Section-only by design (no Layout
-// container, no atomic components) — see docs/PLAN.md "Builder is NOT fully
-// freeform".
+// CANVAS — free-form section. Holds absolutely-positioned primitives.
+// Primitive types live in src/features/primitives/types.ts.
+// =============================================================================
+
+import type { Primitive } from "@/features/primitives/types";
+
+export type CanvasProps = {
+  height: number; // px (desktop); mobile flow-fallback ignores this
+  background: "transparent" | "white" | "stone" | "peach" | "mint";
+  primitives: Primitive[];
+};
+
+// =============================================================================
+// SECTION union — presets + the new Canvas.
 // =============================================================================
 
 export type Section =
@@ -165,7 +176,8 @@ export type Section =
   | { id: string; type: "contact"; props: ContactProps }
   | { id: string; type: "booking"; props: BookingProps }
   | { id: string; type: "menu"; props: MenuProps }
-  | { id: string; type: "portfolio"; props: PortfolioProps };
+  | { id: string; type: "portfolio"; props: PortfolioProps }
+  | { id: string; type: "canvas"; props: CanvasProps };
 
 export type SectionType = Section["type"];
 
@@ -187,10 +199,16 @@ export type PageDesign = {
  * What's currently selected for editing.
  * - "none" — nothing selected; edit panel shows "select a section to edit".
  * - "section" — a section is selected; edit panel shows its props form.
+ * - "primitive" — a primitive inside a Canvas section is selected.
  */
 export type Selection =
   | { kind: "none" }
-  | { kind: "section"; sectionId: string };
+  | { kind: "section"; sectionId: string }
+  | {
+      kind: "primitive";
+      sectionId: string;
+      primitiveId: string;
+    };
 
 /** The canvas preview width (Desktop/Tablet/Mobile toggle in the toolbar). */
 export type DeviceMode = "desktop" | "tablet" | "mobile";

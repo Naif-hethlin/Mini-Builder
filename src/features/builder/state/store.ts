@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { newId } from "@/shared/lib/id";
+import type { Primitive } from "@/features/primitives/types";
 import type {
   DeviceMode,
   Language,
@@ -87,6 +88,20 @@ export type BuilderState = {
     updater: (section: Section) => Section,
   ) => void;
   reorderSections: (fromIndex: number, toIndex: number) => void;
+
+  // --- primitive actions (inside Canvas sections) ---
+  addPrimitive: (canvasSectionId: string, primitive: Primitive) => void;
+  updatePrimitive: (
+    canvasSectionId: string,
+    primitiveId: string,
+    updater: (p: Primitive) => Primitive,
+  ) => void;
+  removePrimitive: (canvasSectionId: string, primitiveId: string) => void;
+  movePrimitive: (
+    canvasSectionId: string,
+    primitiveId: string,
+    delta: { dx: number; dy: number },
+  ) => void;
 
   // --- history actions ---
   undo: () => void;
@@ -187,6 +202,90 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
         sections.splice(toIndex, 0, moved);
         return { ...d, sections };
       }),
+    ),
+
+  // --- PRIMITIVES (inside Canvas sections) ---
+
+  addPrimitive: (canvasSectionId, primitive) =>
+    set((state) =>
+      applyChange(state, (d) => ({
+        ...d,
+        sections: d.sections.map((s) =>
+          s.id === canvasSectionId && s.type === "canvas"
+            ? { ...s, props: { ...s.props, primitives: [...s.props.primitives, primitive] } }
+            : s,
+        ),
+      })),
+    ),
+
+  updatePrimitive: (canvasSectionId, primitiveId, updater) =>
+    set((state) =>
+      applyChange(state, (d) => ({
+        ...d,
+        sections: d.sections.map((s) => {
+          if (s.id !== canvasSectionId || s.type !== "canvas") return s;
+          return {
+            ...s,
+            props: {
+              ...s.props,
+              primitives: s.props.primitives.map((p) =>
+                p.id === primitiveId ? updater(p) : p,
+              ),
+            },
+          };
+        }),
+      })),
+    ),
+
+  removePrimitive: (canvasSectionId, primitiveId) =>
+    set((state) => {
+      const wasSelected =
+        state.selection.kind === "primitive" &&
+        state.selection.primitiveId === primitiveId;
+      return {
+        ...applyChange(state, (d) => ({
+          ...d,
+          sections: d.sections.map((s) => {
+            if (s.id !== canvasSectionId || s.type !== "canvas") return s;
+            return {
+              ...s,
+              props: {
+                ...s.props,
+                primitives: s.props.primitives.filter(
+                  (p) => p.id !== primitiveId,
+                ),
+              },
+            };
+          }),
+        })),
+        selection: wasSelected ? { kind: "none" } : state.selection,
+      };
+    }),
+
+  // Move-by-delta is the hot path during pointer drag. We don't push every
+  // delta into undo history (that would explode it); the drag-end caller is
+  // expected to commit a single applyChange via updatePrimitive if it wants
+  // the move undoable. For now: drags ARE undoable as a series of small
+  // history entries — coarse but simple.
+  movePrimitive: (canvasSectionId, primitiveId, delta) =>
+    set((state) =>
+      applyChange(state, (d) => ({
+        ...d,
+        sections: d.sections.map((s) => {
+          if (s.id !== canvasSectionId || s.type !== "canvas") return s;
+          return {
+            ...s,
+            props: {
+              ...s.props,
+              primitives: s.props.primitives.map((p) =>
+                p.id === primitiveId
+                  ? { ...p, x: p.x + delta.dx, y: p.y + delta.dy }
+                  : p,
+              ),
+            },
+          };
+        }),
+      })),
     ),
 
   // --- HISTORY ---

@@ -12,6 +12,7 @@ import {
 import type { CSSProperties } from "react";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
 import { cn } from "@/shared/lib/cn";
+import { CanvasEditor } from "./canvas/CanvasEditor";
 import type { Section } from "./state/types";
 
 /**
@@ -87,7 +88,11 @@ export function SortableSection({
           : "hover:shadow-[inset_0_0_0_2px_rgba(232,93,93,0.25)]",
       )}
     >
-      <SectionRenderer section={section} />
+      {section.type === "canvas" ? (
+        <CanvasEditor sectionId={section.id} props={section.props} />
+      ) : (
+        <SectionRenderer section={section} />
+      )}
 
       {/* Drag handle — top-start */}
       <button
