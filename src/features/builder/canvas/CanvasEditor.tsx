@@ -8,12 +8,17 @@ import {
   PRIMITIVE_PRESETS,
   type PrimitivePresetMeta,
 } from "@/features/primitives/registry";
+import type { Primitive } from "@/features/primitives/types";
 import type { CanvasProps } from "@/features/builder/state/types";
 import { cn } from "@/shared/lib/cn";
 import {
   selectSelection,
   useBuilderStore,
 } from "@/features/builder/state/store";
+import {
+  InlinePrimitiveEditor,
+  isInlineEditable,
+} from "./InlinePrimitiveEditor";
 
 const BG_CLASS: Record<CanvasProps["background"], string> = {
   transparent: "",
@@ -83,13 +88,6 @@ export function CanvasEditor({
               selection.sectionId === sectionId &&
               selection.primitiveId === p.id
             }
-            onSelect={() =>
-              setSelection({
-                kind: "primitive",
-                sectionId,
-                primitiveId: p.id,
-              })
-            }
           />
         ))}
       </div>
@@ -132,15 +130,15 @@ function DraggablePrimitive({
   sectionId,
   primitive,
   selected,
-  onSelect,
 }: {
   sectionId: string;
-  primitive: { id: string; x: number; y: number; w: number; h?: number };
+  primitive: Primitive;
   selected: boolean;
-  onSelect: () => void;
 }) {
   const movePrimitive = useBuilderStore((s) => s.movePrimitive);
   const removePrimitive = useBuilderStore((s) => s.removePrimitive);
+  const updatePrimitive = useBuilderStore((s) => s.updatePrimitive);
+  const setSelection = useBuilderStore((s) => s.setSelection);
   const ref = useRef<HTMLDivElement>(null);
 
   // Local drag state — only commits to the store on pointer up.
@@ -148,6 +146,13 @@ function DraggablePrimitive({
     | { startX: number; startY: number; dx: number; dy: number; moved: boolean }
     | null
   >(null);
+
+  // Inline-edit state — toggled by click-while-selected or double-click.
+  // Gated by `selected` in render so deselecting elsewhere implicitly
+  // exits edit mode without an effect-driven setState (avoids the
+  // "setState in effect" lint rule and possible cascading renders).
+  const [editing, setEditing] = useState(false);
+  const isEditing = editing && selected;
 
   useEffect(() => {
     if (!drag) return;
@@ -166,8 +171,15 @@ function DraggablePrimitive({
           dx: drag.dx,
           dy: drag.dy,
         });
+      } else if (selected && isInlineEditable(primitive.type)) {
+        // Second click on an already-selected primitive → enter inline edit.
+        setEditing(true);
       } else {
-        onSelect();
+        setSelection({
+          kind: "primitive",
+          sectionId,
+          primitiveId: primitive.id,
+        });
       }
       setDrag(null);
     };
@@ -179,7 +191,15 @@ function DraggablePrimitive({
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-  }, [drag, sectionId, primitive.id, movePrimitive, onSelect]);
+  }, [
+    drag,
+    sectionId,
+    primitive.id,
+    primitive.type,
+    selected,
+    movePrimitive,
+    setSelection,
+  ]);
 
   const liveX = primitive.x + (drag?.dx ?? 0);
   const liveY = primitive.y + (drag?.dy ?? 0);
@@ -194,7 +214,7 @@ function DraggablePrimitive({
     top: `${liveY}px`,
     width: `${primitive.w}px`,
     ...(primitive.h !== undefined ? { height: `${primitive.h}px` } : {}),
-    cursor: drag ? "grabbing" : "grab",
+    cursor: isEditing ? "text" : drag ? "grabbing" : "grab",
     touchAction: "none",
   };
 
@@ -205,6 +225,9 @@ function DraggablePrimitive({
       onPointerDown={(e) => {
         // ignore right-click + secondary buttons
         if (e.button !== 0) return;
+        // While inline-editing the contents, leave pointer events to the
+        // input so the user can place the caret / select text.
+        if (isEditing) return;
         e.stopPropagation();
         setDrag({
           startX: e.clientX,
@@ -214,19 +237,43 @@ function DraggablePrimitive({
           moved: false,
         });
       }}
+      onDoubleClick={(e) => {
+        if (!isInlineEditable(primitive.type)) return;
+        e.stopPropagation();
+        setSelection({
+          kind: "primitive",
+          sectionId,
+          primitiveId: primitive.id,
+        });
+        setEditing(true);
+      }}
       className={cn(
         "select-none transition-shadow",
+        isEditing && "select-text",
         selected
           ? "shadow-[0_0_0_2px_var(--color-brand)]"
           : "hover:shadow-[0_0_0_2px_rgba(232,93,93,0.35)]",
       )}
     >
-      <PrimitiveRenderer
-        primitive={primitive as Parameters<typeof PrimitiveRenderer>[0]["primitive"]}
-        positioned={false}
-      />
+      {isEditing ? (
+        <InlinePrimitiveEditor
+          primitive={primitive}
+          onCommit={(nextProps) => {
+            updatePrimitive(
+              sectionId,
+              primitive.id,
+              (p) =>
+                ({ ...p, props: nextProps }) as Primitive,
+            );
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <PrimitiveRenderer primitive={primitive} positioned={false} />
+      )}
 
-      {selected && (
+      {selected && !isEditing && (
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
