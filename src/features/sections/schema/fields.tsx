@@ -111,6 +111,211 @@ export function SelectField({
 }
 
 // =============================================================================
+// Color field — swatch button that opens a popover containing a native color
+// wheel, brand + neutral preset swatches, and a hex text input. Edits flow
+// straight to onChange so the canvas updates live as the user drags the
+// color wheel.
+// =============================================================================
+
+const COLOR_PRESETS = [
+  // Brand
+  "#e85d5d",
+  "#c44e4e",
+  "#f28b82",
+  "#fdeeea",
+  // Neutrals
+  "#000000",
+  "#1c1917",
+  "#475569",
+  "#94a3b8",
+  "#cbd5e1",
+  "#e2e8f0",
+  "#f1f5f9",
+  "#ffffff",
+  // Warm / cool accents
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#10b981",
+  "#06b6d4",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+];
+
+// Loose hex validator — accepts #abc, #abcd, #abcdef, #abcdef12.
+const HEX_RE = /^#?[0-9a-fA-F]{3,8}$/;
+
+function normalizeHex(input: string): string | null {
+  const trimmed = input.trim();
+  if (!HEX_RE.test(trimmed)) return null;
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+export function ColorField({
+  field,
+  value,
+  onChange,
+}: {
+  field: Extract<FieldSchema, { kind: "color" }>;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+
+  // The native <input type="color"> can't represent shorthand or transparency,
+  // so we feed it a normalized 6-digit hex; if `value` is bad we fall back to
+  // black so the wheel still opens.
+  const nativeColorValue =
+    value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000";
+
+  return (
+    <div className="relative space-y-1.5">
+      <label htmlFor={id} className={fieldLabel}>
+        {field.label}
+      </label>
+
+      <button
+        id={id}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex h-10 w-full items-center gap-3 rounded-xl border border-stone-200 bg-white px-2 text-start text-sm transition-colors hover:border-brand focus:outline focus:outline-2 focus:outline-brand/30",
+          open && "border-brand",
+        )}
+      >
+        <span
+          aria-hidden
+          className="h-7 w-7 shrink-0 rounded-md border border-stone-200 shadow-inner"
+          style={{ background: value || "transparent" }}
+        />
+        <span className="flex-1 truncate font-mono text-xs text-stone-700">
+          {value || "بدون لون"}
+        </span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "shrink-0 text-stone-400 transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <ColorPopover
+          value={value}
+          nativeValue={nativeColorValue}
+          onChange={onChange}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ColorPopover({
+  value,
+  nativeValue,
+  onChange,
+  onClose,
+}: {
+  value: string;
+  nativeValue: string;
+  onChange: (color: string) => void;
+  onClose: () => void;
+}) {
+  // The hex input is uncontrolled — `defaultValue` seeds it from the upstream
+  // value, and the `key={value}` on the input re-mounts it whenever a preset
+  // or the wheel updates the value, so the displayed text stays in sync
+  // without a synchronous setState-in-render dance.
+  const commitHex = (raw: string) => {
+    const next = normalizeHex(raw);
+    if (next && next !== value) onChange(next);
+  };
+
+  return (
+    <>
+      {/* Backdrop — click anywhere outside to close. */}
+      <button
+        type="button"
+        aria-label="إغلاق"
+        onClick={onClose}
+        className="fixed inset-0 z-30 cursor-default bg-transparent"
+      />
+      <div className="absolute z-40 mt-1 w-full rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
+        {/* Native color wheel — full-width swatch you can drag inside. */}
+        <label className="mb-2 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 p-2">
+          <input
+            type="color"
+            value={nativeValue}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent p-0"
+          />
+          <span className="text-xs font-medium text-stone-600">
+            اختر لوناً من العجلة
+          </span>
+        </label>
+
+        {/* Preset swatches */}
+        <div className="mb-3">
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-stone-500">
+            ألوان جاهزة
+          </p>
+          <div className="grid grid-cols-10 gap-1">
+            {COLOR_PRESETS.map((c) => {
+              const active = c.toLowerCase() === value.toLowerCase();
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={c}
+                  title={c}
+                  onClick={() => onChange(c)}
+                  className={cn(
+                    "h-6 w-6 rounded-md border transition-transform hover:scale-110",
+                    active
+                      ? "border-stone-900 ring-2 ring-brand"
+                      : "border-stone-200",
+                  )}
+                  style={{ background: c }}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Hex input — uncontrolled; re-keyed on value to refresh defaultValue. */}
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">
+            HEX
+          </p>
+          <input
+            key={value}
+            type="text"
+            defaultValue={value}
+            onBlur={(e) => commitHex(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitHex((e.target as HTMLInputElement).value);
+                onClose();
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                onClose();
+              }
+            }}
+            placeholder="#000000"
+            className={cn(inputBase, "h-9 font-mono text-xs")}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// =============================================================================
 // Composite fields (Link, ToggleableLink, List)
 // =============================================================================
 

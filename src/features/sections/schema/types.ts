@@ -40,6 +40,11 @@ export type FieldSchema =
       placeholder?: string;
     }
   | {
+      kind: "color";
+      key: string;
+      label: string;
+    }
+  | {
       kind: "select";
       key: string;
       label: string;

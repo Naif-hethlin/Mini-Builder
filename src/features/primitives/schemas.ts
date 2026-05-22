@@ -46,7 +46,7 @@ const textSchema: FieldSchema[] = [
       { value: "end", label: "نهاية" },
     ],
   },
-  { kind: "text", key: "color", label: "اللون (HEX أو CSS)" },
+  { kind: "color", key: "color", label: "اللون" },
 ];
 
 const headingSchema: FieldSchema[] = [
@@ -72,7 +72,7 @@ const headingSchema: FieldSchema[] = [
       { value: "end", label: "نهاية" },
     ],
   },
-  { kind: "text", key: "color", label: "اللون (HEX)" },
+  { kind: "color", key: "color", label: "اللون" },
 ];
 
 const buttonSchema: FieldSchema[] = [
@@ -148,7 +148,7 @@ const listSchema: FieldSchema[] = [
       { value: "24", label: "24px" },
     ],
   },
-  { kind: "text", key: "color", label: "اللون (HEX أو CSS)" },
+  { kind: "color", key: "color", label: "اللون" },
 ];
 
 const shapeSchema: FieldSchema[] = [
@@ -162,7 +162,7 @@ const shapeSchema: FieldSchema[] = [
       { value: "triangle", label: "مثلث" },
     ],
   },
-  { kind: "text", key: "fillColor", label: "لون التعبئة (HEX)" },
+  { kind: "color", key: "fillColor", label: "لون التعبئة" },
   {
     kind: "select",
     key: "borderWidth",
@@ -175,7 +175,7 @@ const shapeSchema: FieldSchema[] = [
       { value: "8", label: "8px" },
     ],
   },
-  { kind: "text", key: "borderColor", label: "لون الحد (HEX)" },
+  { kind: "color", key: "borderColor", label: "لون الحد" },
 ];
 
 export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {

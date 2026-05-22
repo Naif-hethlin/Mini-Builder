@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ColorField,
   LinkField,
   ListField,
   SelectField,
@@ -58,6 +59,15 @@ export function Form({
           case "select":
             return (
               <SelectField
+                key={field.key}
+                field={field}
+                value={(current as string) ?? ""}
+                onChange={(v) => set(field.key, v)}
+              />
+            );
+          case "color":
+            return (
+              <ColorField
                 key={field.key}
                 field={field}
                 value={(current as string) ?? ""}
