@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { Skeleton } from "@/shared/ui/Skeleton";
+import { UserMenu } from "@/features/auth/UserMenu";
 import { useProjects } from "@/features/projects";
 import { DashboardMobileNav, DashboardSidebar } from "./DashboardSidebar";
 
@@ -45,14 +46,17 @@ export function DashboardShell({
               <Skeleton className="mt-0.5 h-4 w-32" />
             )}
           </div>
-          <Link
-            href={`/preview/${projectId}`}
-            target="_blank"
-            className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand"
-          >
-            معاينة الموقع
-            <ExternalLink size={12} />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/preview/${projectId}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand"
+            >
+              معاينة الموقع
+              <ExternalLink size={12} />
+            </Link>
+            <UserMenu />
+          </div>
         </header>
 
         <DashboardMobileNav projectId={projectId} />
