@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlignRight,
@@ -30,6 +30,8 @@ import {
   useProjects,
   type ProjectTemplateType,
 } from "@/features/projects";
+import { SectionRenderer } from "@/features/sections/SectionRenderer";
+import { starterDesignFor } from "@/features/sections/starters";
 import { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 type Workspace = "fresh" | "templates";
@@ -571,6 +573,14 @@ function TemplatesWorkspace({
   );
 }
 
+// Width of the inner "virtual viewport" that the real sections render at,
+// before being scaled down to fit the card. Picked so a desktop hero looks
+// natural — at the card's actual ~320px the scale factor lands at ~0.27.
+const SCALE_SOURCE_WIDTH = 1200;
+const CARD_WIDTH = 320;
+const SCALE_FACTOR = CARD_WIDTH / SCALE_SOURCE_WIDTH;
+const PREVIEW_VIEWPORT_HEIGHT = 360; // scaled-down preview height in card
+
 function TemplatePreviewCard({
   style,
   template,
@@ -584,44 +594,76 @@ function TemplatePreviewCard({
 }) {
   const { Icon, title, english, tone } = template;
   const t = TONE_CLASSES[tone];
+  // Render the first few sections of the real starter design, scaled down
+  // so the card shows the actual website rather than placeholder rectangles.
+  const design = useMemo(
+    () => starterDesignFor(template.template),
+    [template.template],
+  );
+  const sectionsToShow = design.sections.slice(0, 4);
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      style={{ ...style, width: 320 }}
-      className="absolute cursor-pointer overflow-hidden rounded-2xl border-2 border-brand/40 bg-white text-start shadow-lg transition-all hover:border-brand hover:shadow-xl"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      style={{ ...style, width: CARD_WIDTH }}
+      className="group absolute cursor-pointer overflow-hidden rounded-2xl border-2 border-brand/40 bg-white text-start shadow-lg transition-all hover:border-brand hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
     >
+      {/* Header chip strip */}
       <div
         className={cn(
-          "relative flex h-40 flex-col bg-gradient-to-br",
+          "relative flex items-center gap-2 bg-gradient-to-br p-3",
           t.gradient,
         )}
       >
-        <div className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/80">
-          <Icon size={16} className={t.iconText} />
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/80">
+          <Icon size={14} className={t.iconText} />
         </div>
-        <div className="mt-auto p-4">
-          <h4 className={cn("text-lg font-bold", t.title)}>{title}</h4>
-          <p className="text-xs opacity-70">{english}</p>
-        </div>
-      </div>
-      <div className="space-y-3 p-4">
-        <div className="flex gap-2">
-          <div className="h-16 w-16 rounded-lg bg-stone-100" />
-          <div className="flex-1 space-y-2">
-            <div className="h-3 w-3/4 rounded bg-stone-200" />
-            <div className="h-2 w-1/2 rounded bg-stone-100" />
-            <div className={cn("h-6 w-24 rounded-full", t.chip)} />
-          </div>
-        </div>
-        <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-xs text-stone-400">
-          <ImageIcon size={14} className="me-2" /> معاينة المحتوى
+        <div className="flex-1">
+          <h4 className={cn("text-sm font-bold", t.title)}>{title}</h4>
+          <p className="text-[10px] opacity-70">{english}</p>
         </div>
       </div>
-      <span className="absolute -top-3 -right-3 rounded bg-brand px-2 py-1 text-[10px] font-bold text-white">
+
+      {/* Real scaled-down preview frame */}
+      <div
+        className="relative overflow-hidden bg-white"
+        style={{ height: PREVIEW_VIEWPORT_HEIGHT }}
+      >
+        {/* The scaled wrapper. pointer-events-none ensures nested FAQ / Booking
+            buttons don't intercept clicks — the whole card handles the click. */}
+        <div
+          aria-hidden
+          className="pointer-events-none origin-top-right select-none"
+          style={{
+            width: SCALE_SOURCE_WIDTH,
+            transform: `scale(${SCALE_FACTOR})`,
+          }}
+        >
+          {sectionsToShow.map((section) => (
+            <SectionRenderer key={section.id} section={section} />
+          ))}
+        </div>
+
+        {/* Hover affordance: brand-tinted "معاينة" badge on hover */}
+        <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-white/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[11px] font-medium text-white shadow-md">
+            معاينة كاملة
+          </span>
+        </div>
+      </div>
+
+      <span className="absolute -top-3 -right-3 rounded bg-brand px-2 py-1 text-[10px] font-bold text-white shadow-md">
         {tagAr}
       </span>
-    </button>
+    </div>
   );
 }
 
