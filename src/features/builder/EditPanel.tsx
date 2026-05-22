@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { PRIMITIVE_SCHEMAS } from "@/features/primitives/schemas";
 import { getPreset } from "@/features/sections/registry";
 import { Form } from "@/features/sections/schema/Form";
@@ -37,16 +38,22 @@ export function EditPanel() {
   const updateSection = useBuilderStore((s) => s.updateSection);
   const updatePrimitive = useBuilderStore((s) => s.updatePrimitive);
 
-  // Primitive lookup (only when a primitive is selected).
-  const primInfo = useBuilderStore((s) => {
-    if (s.selection.kind !== "primitive") return undefined;
-    const { sectionId, primitiveId } = s.selection;
-    const sec = s.design.sections.find((x) => x.id === sectionId);
-    if (!sec || sec.type !== "canvas") return undefined;
-    const prim = sec.props.primitives.find((p) => p.id === primitiveId);
-    if (!prim) return undefined;
-    return { canvasSectionId: sec.id, primitive: prim };
-  });
+  // Primitive lookup (only when a primitive is selected). Wrap in
+  // `useShallow` so the returned `{ canvasSectionId, primitive }` is
+  // compared field-by-field — otherwise a fresh object on every store
+  // update re-renders EditPanel constantly and can echo into the autosave
+  // loop.
+  const primInfo = useBuilderStore(
+    useShallow((s) => {
+      if (s.selection.kind !== "primitive") return undefined;
+      const { sectionId, primitiveId } = s.selection;
+      const sec = s.design.sections.find((x) => x.id === sectionId);
+      if (!sec || sec.type !== "canvas") return undefined;
+      const prim = sec.props.primitives.find((p) => p.id === primitiveId);
+      if (!prim) return undefined;
+      return { canvasSectionId: sec.id, primitive: prim };
+    }),
+  );
 
   let heading = "اختر قسمًا للتعديل";
   if (selection.kind === "primitive" && primInfo) {
@@ -143,6 +150,10 @@ function PrimitiveForm({
     if (primitive.type === "heading") {
       if (typeof next.level === "string") next.level = Number(next.level);
     }
+    if (primitive.type === "list") {
+      if (typeof next.fontSize === "string")
+        next.fontSize = Number(next.fontSize);
+    }
     onChange(next);
   };
 
@@ -220,5 +231,7 @@ function primitiveLabel(type: Primitive["type"]): string {
       return "الزر";
     case "image":
       return "الصورة";
+    case "list":
+      return "القائمة";
   }
 }

@@ -186,12 +186,20 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     ),
 
   updateSection: (sectionId, updater) =>
-    set((state) =>
-      applyChange(state, (d) => ({
+    set((state) => {
+      // Short-circuit when the updater returns the same reference: prevents
+      // a no-op call from churning the design reference, which would
+      // otherwise wake every subscriber (autosave, EditPanel, …) and could
+      // chain into an update loop.
+      const target = state.design.sections.find((s) => s.id === sectionId);
+      if (!target) return state;
+      const next = updater(target);
+      if (next === target) return state;
+      return applyChange(state, (d) => ({
         ...d,
-        sections: d.sections.map((s) => (s.id === sectionId ? updater(s) : s)),
-      })),
-    ),
+        sections: d.sections.map((s) => (s.id === sectionId ? next : s)),
+      }));
+    }),
 
   reorderSections: (fromIndex, toIndex) =>
     set((state) =>

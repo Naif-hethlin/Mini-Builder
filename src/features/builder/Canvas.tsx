@@ -11,8 +11,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { MousePointerClick } from "lucide-react";
-import { EmptyState } from "@/shared/ui/EmptyState";
+import { Sparkles } from "lucide-react";
+import { createCanvas } from "@/features/sections/Canvas/defaults";
 import { SortableSection } from "./SortableSection";
 import type { DeviceMode } from "./state/types";
 import {
@@ -106,13 +106,39 @@ export function Canvas() {
 }
 
 function CanvasEmpty() {
+  const addSection = useBuilderStore((s) => s.addSection);
+  const setSelection = useBuilderStore((s) => s.setSelection);
+
+  const startFreeCanvas = () => {
+    const canvas = createCanvas();
+    addSection(canvas);
+    setSelection({ kind: "section", sectionId: canvas.id });
+  };
+
   return (
-    <EmptyState
-      icon={MousePointerClick}
-      title="صفحتك فارغة"
-      description="اضغط على أي قسم في المكتبة على اليمين لإضافته. تقدر بعدها تعدل، ترتب، أو تنسخ أي قسم."
-      dashed={false}
-      className="m-6 border-0 shadow-none"
-    />
+    <div className="m-6 flex flex-col items-center gap-4 rounded-2xl bg-white px-6 py-16 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-light text-brand">
+        <Sparkles size={26} />
+      </div>
+      <div className="max-w-md">
+        <h3 className="text-lg font-bold text-stone-900">
+          ابدأ من لوحة بيضاء
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-stone-500">
+          ابدأ بلوحة حرّة وأضف بداخلها نصوصاً، أزراراً، صوراً وقوائم
+          واسحبهم بأي مكان — أو اختر قسماً جاهزاً من المكتبة على اليمين.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={startFreeCanvas}
+          className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-brand/30 hover:bg-brand-dark"
+        >
+          <Sparkles size={14} />
+          ابدأ بلوحة حرّة
+        </button>
+      </div>
+    </div>
   );
 }

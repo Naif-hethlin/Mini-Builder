@@ -66,5 +66,23 @@ export function createPrimitive(type: PrimitiveType): Primitive {
           action: { kind: "none" },
         },
       };
+    case "list":
+      return {
+        id: newId(),
+        type: "list",
+        x: 40,
+        y: 40,
+        w: 320,
+        props: {
+          items: [
+            { id: newId(), text: "عنصر أول" },
+            { id: newId(), text: "عنصر ثانٍ" },
+            { id: newId(), text: "عنصر ثالث" },
+          ],
+          style: "bullet",
+          fontSize: 16,
+          color: "#1c1917",
+        },
+      };
   }
 }

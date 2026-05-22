@@ -1,5 +1,6 @@
 import {
   Image as ImageIcon,
+  List as ListIcon,
   MousePointerClick,
   Type,
   TypeOutline,
@@ -22,4 +23,5 @@ export const PRIMITIVE_PRESETS: PrimitivePresetMeta[] = [
   { type: "text", label: "نص", Icon: Type },
   { type: "button", label: "زر", Icon: MousePointerClick },
   { type: "image", label: "صورة", Icon: ImageIcon },
+  { type: "list", label: "قائمة", Icon: ListIcon },
 ];

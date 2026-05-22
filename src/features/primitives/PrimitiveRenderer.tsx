@@ -4,6 +4,7 @@ import TextRender from "./Text/Render";
 import HeadingRender from "./Heading/Render";
 import ButtonRender from "./Button/Render";
 import ImageRender from "./Image/Render";
+import ListRender from "./List/Render";
 
 /**
  * Renders a Primitive inside a Canvas section.
@@ -55,6 +56,12 @@ export function PrimitiveRenderer({
       return (
         <div style={style}>
           <ImageRender props={primitive.props} />
+        </div>
+      );
+    case "list":
+      return (
+        <div style={style}>
+          <ListRender props={primitive.props} />
         </div>
       );
   }

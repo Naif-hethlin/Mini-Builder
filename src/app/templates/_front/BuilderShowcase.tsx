@@ -14,21 +14,22 @@ import {
   Lock,
   Scissors,
   Send,
+  Sparkles,
   Type,
   Upload,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
 import {
   useProjects,
   type ProjectTemplateType,
 } from "@/features/projects";
-import { TemplatePreviewModal } from "./TemplatePreviewModal";
+import { SectionRenderer } from "@/features/sections/SectionRenderer";
+import { starterDesignFor } from "@/features/sections/starters";
 
 // =============================================================================
 // Builder Showcase — the /templates page.
@@ -124,7 +125,12 @@ export function BuilderShowcase() {
         onScratch={startScratch}
         onTemplates={() => setChooserOpen(true)}
       />
-      <Main onPublish={startScratch} />
+      <Main
+        previewing={previewing}
+        onPublish={startScratch}
+        onUseTemplate={startFromTemplate}
+        onExitPreview={() => setPreviewing(null)}
+      />
 
       <TemplatePickerModal
         open={chooserOpen}
@@ -132,15 +138,6 @@ export function BuilderShowcase() {
         onPick={(template) => {
           setChooserOpen(false);
           setPreviewing(template);
-        }}
-      />
-
-      <TemplatePreviewModal
-        template={previewing}
-        onClose={() => setPreviewing(null)}
-        onConfirm={(template) => {
-          setPreviewing(null);
-          startFromTemplate(template);
         }}
       />
     </div>
@@ -376,7 +373,17 @@ function ToolTile({
 // Main — top bar + blueprint canvas with auto-play demo
 // =============================================================================
 
-function Main({ onPublish }: { onPublish: () => void }) {
+function Main({
+  previewing,
+  onPublish,
+  onUseTemplate,
+  onExitPreview,
+}: {
+  previewing: ProjectTemplateType | null;
+  onPublish: () => void;
+  onUseTemplate: (t: ProjectTemplateType) => void;
+  onExitPreview: () => void;
+}) {
   const publishRef = useRef<HTMLButtonElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
@@ -385,8 +392,19 @@ function Main({ onPublish }: { onPublish: () => void }) {
   const [ripple, setRipple] = useState(false);
   const [publishActive, setPublishActive] = useState(false);
 
-  // Demo orchestrator — cycles forever.
+  // Build the preview design only when a template is actively chosen.
+  const previewDesign = useMemo(
+    () => (previewing ? starterDesignFor(previewing) : null),
+    [previewing],
+  );
+
+  // Demo orchestrator — cycles forever, but only when no template is being
+  // previewed. Re-keys on `previewing` so entering/leaving preview cleanly
+  // starts/stops the loop. The loop body resets `dropped`/`cursor`/
+  // `publishActive` on its first tick, so we don't need a separate reset
+  // when entering preview mode (preview-mode rendering ignores them anyway).
   useEffect(() => {
+    if (previewing) return;
     let cancelled = false;
     const sleep = (ms: number) =>
       new Promise<void>((r) => setTimeout(r, ms));
@@ -479,8 +497,7 @@ function Main({ onPublish }: { onPublish: () => void }) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [previewing]);
 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col">
@@ -489,33 +506,69 @@ function Main({ onPublish }: { onPublish: () => void }) {
         <div className="flex items-center gap-3 text-sm font-semibold">
           <span className="text-stone-500">مساحة العمل</span>
           <ChevronLeft size={16} className="text-stone-300" />
-          <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-3 py-1.5 text-brand">
-            <Home size={14} />
-            الصفحة الرئيسية
-          </span>
+          {previewing ? (
+            <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-3 py-1.5 text-brand">
+              <Sparkles size={14} />
+              معاينة قالب — {templateName(previewing)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-3 py-1.5 text-brand">
+              <Home size={14} />
+              الصفحة الرئيسية
+            </span>
+          )}
         </div>
 
         <div className="flex gap-3">
-          <button
-            type="button"
-            className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100"
-          >
-            معاينة
-          </button>
-          <button
-            type="button"
-            ref={publishRef}
-            onClick={onPublish}
-            className={cn(
-              "group inline-flex items-center gap-2 rounded-xl px-6 py-2 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition-all",
-              publishActive
-                ? "scale-105 bg-brand"
-                : "bg-stone-900 hover:bg-stone-800",
-            )}
-          >
-            نشر الموقع
-            <Send size={16} className="transition-transform group-hover:-translate-y-0.5" />
-          </button>
+          {previewing ? (
+            <>
+              <button
+                type="button"
+                onClick={onExitPreview}
+                className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100"
+              >
+                <X size={16} />
+                إغلاق المعاينة
+              </button>
+              <button
+                type="button"
+                onClick={() => onUseTemplate(previewing)}
+                className="group inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2 text-sm font-bold text-white shadow-lg shadow-brand/30 transition-all hover:bg-brand-dark"
+              >
+                استخدم هذا القالب
+                <ArrowLeft
+                  size={16}
+                  className="transition-transform group-hover:-translate-x-0.5"
+                />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-sm font-bold text-stone-600 transition-colors hover:bg-stone-100"
+              >
+                معاينة
+              </button>
+              <button
+                type="button"
+                ref={publishRef}
+                onClick={onPublish}
+                className={cn(
+                  "group inline-flex items-center gap-2 rounded-xl px-6 py-2 text-sm font-bold text-white shadow-lg shadow-stone-900/20 transition-all",
+                  publishActive
+                    ? "scale-105 bg-brand"
+                    : "bg-stone-900 hover:bg-stone-800",
+                )}
+              >
+                نشر الموقع
+                <Send
+                  size={16}
+                  className="transition-transform group-hover:-translate-y-0.5"
+                />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -537,21 +590,33 @@ function Main({ onPublish }: { onPublish: () => void }) {
             </div>
           </div>
 
-          {/* Canvas content */}
+          {/* Canvas content — either the auto-build demo or, when the user
+              has picked a template from the chooser, the real starter
+              design rendered inline so they see the actual site. */}
           <div
             ref={canvasRef}
-            className="canvas-scroll relative flex flex-1 scroll-smooth flex-col gap-6 overflow-y-auto bg-white p-6 md:p-10"
+            className="canvas-scroll relative flex flex-1 scroll-smooth flex-col overflow-y-auto bg-white"
           >
-            {dropped.length === 0 ? <EmptyState /> : null}
-            {dropped.map((d) => (
-              <DroppedElement key={d.id} type={d.type} />
-            ))}
+            {previewing && previewDesign ? (
+              <div className="divide-y divide-stone-100">
+                {previewDesign.sections.map((section) => (
+                  <SectionRenderer key={section.id} section={section} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
+                {dropped.length === 0 ? <EmptyState /> : null}
+                {dropped.map((d) => (
+                  <DroppedElement key={d.id} type={d.type} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Demo cursor */}
-      {cursor && (
+      {cursor && !previewing && (
         <div
           aria-hidden
           style={{
@@ -863,7 +928,7 @@ function TemplatePickerModal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-[180] flex items-center justify-center p-4 transition-all"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label="اختر قالباً"
@@ -872,21 +937,18 @@ function TemplatePickerModal({
         type="button"
         aria-label="إغلاق"
         onClick={onClose}
-        className="absolute inset-0 bg-stone-900/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-stone-900/50"
       />
 
-      <div className="relative z-10 flex w-full max-w-[460px] flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl transition-all">
+      <div className="relative z-10 flex w-full max-w-[460px] flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl">
         {/* Close (top-left in RTL — matches the source mockup) */}
         <button
           type="button"
           aria-label="إغلاق"
           onClick={onClose}
-          className="group absolute top-4 left-4 z-10 rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-200"
+          className="absolute top-4 left-4 z-10 rounded-full p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-200"
         >
-          <X
-            size={18}
-            className="flex transition-transform duration-300 group-hover:rotate-90"
-          />
+          <X size={18} />
         </button>
 
         {/* Header */}
@@ -912,14 +974,14 @@ function TemplatePickerModal({
                 type="button"
                 onClick={() => onPick(c.id)}
                 className={cn(
-                  "group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2",
+                  "group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white hover:shadow-md focus:outline-none focus:ring-2",
                   t.borderHover,
                   t.focusRing,
                 )}
               >
                 <div
                   className={cn(
-                    "flex h-20 w-full shrink-0 items-center justify-center transition-colors duration-300",
+                    "flex h-20 w-full shrink-0 items-center justify-center",
                     t.bg,
                     t.bgHover,
                   )}
@@ -927,10 +989,7 @@ function TemplatePickerModal({
                   <c.Icon
                     size={28}
                     strokeWidth={1.75}
-                    className={cn(
-                      "drop-shadow-sm transition-transform duration-300 group-hover:scale-110",
-                      t.iconText,
-                    )}
+                    className={cn("drop-shadow-sm", t.iconText)}
                   />
                 </div>
                 <div className="flex w-full flex-1 flex-col items-center justify-start bg-white p-3 text-center">

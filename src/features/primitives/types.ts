@@ -48,13 +48,20 @@ export type ImagePrimitiveProps = {
   action: PrimitiveAction; // images can be linked too
 };
 
+export type ListPrimitiveProps = {
+  items: Array<{ id: string; text: string }>;
+  style: "bullet" | "number" | "check";
+  fontSize: number;
+  color: string;
+};
+
 // ----- Discriminated union -----------------------------------------------
 
 type Geometry = {
   x: number;
   y: number;
   w: number;
-  h?: number; // images use it; text/heading/button height auto
+  h?: number; // images use it; text/heading/button/list height auto
 };
 
 export type Primitive = Geometry &
@@ -63,6 +70,7 @@ export type Primitive = Geometry &
     | { id: string; type: "heading"; props: HeadingPrimitiveProps }
     | { id: string; type: "button"; props: ButtonPrimitiveProps }
     | { id: string; type: "image"; props: ImagePrimitiveProps }
+    | { id: string; type: "list"; props: ListPrimitiveProps }
   );
 
 export type PrimitiveType = Primitive["type"];

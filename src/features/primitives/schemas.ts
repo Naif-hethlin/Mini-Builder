@@ -1,4 +1,5 @@
 import type { FieldSchema } from "@/features/sections/schema/types";
+import { newId } from "@/shared/lib/id";
 import type { PrimitiveType } from "./types";
 
 /**
@@ -112,9 +113,48 @@ const imageSchema: FieldSchema[] = [
   },
 ];
 
+const listSchema: FieldSchema[] = [
+  {
+    kind: "list",
+    key: "items",
+    label: "العناصر",
+    itemSchema: [{ kind: "text", key: "text", label: "نص العنصر" }],
+    createItem: () => ({ id: newId(), text: "عنصر جديد" }),
+    itemTitle: (item) =>
+      (item.text as string)?.trim().slice(0, 40) || "(فارغ)",
+    min: 1,
+    max: 30,
+  },
+  {
+    kind: "select",
+    key: "style",
+    label: "نمط القائمة",
+    options: [
+      { value: "bullet", label: "نقاط •" },
+      { value: "number", label: "أرقام 1.2.3" },
+      { value: "check", label: "صح ✓" },
+    ],
+  },
+  {
+    kind: "select",
+    key: "fontSize",
+    label: "حجم الخط",
+    options: [
+      { value: "12", label: "12px" },
+      { value: "14", label: "14px" },
+      { value: "16", label: "16px" },
+      { value: "18", label: "18px" },
+      { value: "20", label: "20px" },
+      { value: "24", label: "24px" },
+    ],
+  },
+  { kind: "text", key: "color", label: "اللون (HEX أو CSS)" },
+];
+
 export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {
   text: textSchema,
   heading: headingSchema,
   button: buttonSchema,
   image: imageSchema,
+  list: listSchema,
 };
