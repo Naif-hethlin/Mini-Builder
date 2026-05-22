@@ -3,6 +3,7 @@ import type {
   PageDesign,
   Section,
 } from "@/features/builder/state/types";
+import { explodeSection, isExplodable } from "@/features/builder/explode";
 import type { ProjectTemplateType } from "@/features/projects/types";
 
 import { createHeader } from "./Header/defaults";
@@ -17,9 +18,19 @@ import { createBooking } from "./Booking/defaults";
 import { createMenu } from "./Menu/defaults";
 import { createPortfolio } from "./Portfolio/defaults";
 
+/**
+ * Auto-explode every preset section as we seed the starter — the user
+ * lands directly in a fully-editable free-canvas layout where every
+ * heading / paragraph / button / image / card background is its own
+ * draggable primitive, instead of frozen inside a preset's responsive
+ * frame. Non-explodable types (Gallery, Booking, Menu, etc.) pass
+ * through untouched.
+ */
 const wrap = (sections: Section[]): PageDesign => ({
   version: 1,
-  sections,
+  sections: sections.map((s) =>
+    isExplodable(s) ? (explodeSection(s) ?? s) : s,
+  ),
 });
 
 // =============================================================================
