@@ -30,12 +30,17 @@ import {
   useProjects,
   type ProjectTemplateType,
 } from "@/features/projects";
+import { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 type Workspace = "fresh" | "templates";
 
 export function BlueprintBuilder() {
   const router = useRouter();
   const [workspace, setWorkspace] = useState<Workspace>("fresh");
+  // null = no preview open; otherwise the templateType being previewed
+  const [previewing, setPreviewing] = useState<ProjectTemplateType | null>(
+    null,
+  );
 
   const startProject = async (input: {
     name: string;
@@ -84,16 +89,23 @@ export function BlueprintBuilder() {
           />
           <TemplatesWorkspace
             active={workspace === "templates"}
-            onSelect={(template) =>
-              startProject({
-                name: templateName(template),
-                templateType: template,
-              })
-            }
+            onSelect={(template) => setPreviewing(template)}
             onShowMore={() => toast.info("المزيد من القوالب قريبًا")}
           />
         </div>
       </main>
+
+      <TemplatePreviewModal
+        template={previewing}
+        onClose={() => setPreviewing(null)}
+        onConfirm={(template) => {
+          setPreviewing(null);
+          startProject({
+            name: templateName(template),
+            templateType: template,
+          });
+        }}
+      />
     </div>
   );
 }
@@ -473,7 +485,7 @@ function TemplatesWorkspace({
             قوالب جاهزة
           </h4>
           <p className="mt-1 text-xs text-stone-500">
-            اضغط على قالب لبدء مشروعك بمحتواه
+            اضغط على قالب لمعاينته كاملًا قبل البدء
           </p>
         </div>
         <div className="space-y-3 overflow-y-auto p-4">
