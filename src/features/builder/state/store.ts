@@ -51,8 +51,9 @@ function deepClone<T>(value: T): T {
 // =============================================================================
 
 export type BuilderState = {
-  // --- which project this store is currently editing ---
+  // --- which project + page this store is currently editing ---
   projectId: string | null;
+  pageId: string | null;
 
   // --- design state (tracked by undo/redo, exported to JSON) ---
   design: PageDesign;
@@ -67,11 +68,11 @@ export type BuilderState = {
 
   // --- project lifecycle ---
   /**
-   * Load a project's design into the builder. Replaces design AND clears
+   * Load a project + page into the builder. Replaces design AND clears
    * undo/redo history (the loaded state is the new baseline). Selection
    * is reset to "none".
    */
-  loadProject: (projectId: string, design: PageDesign) => void;
+  loadPage: (projectId: string, pageId: string, design: PageDesign) => void;
 
   // --- section actions ---
   addSection: (section: Section) => void;
@@ -113,6 +114,7 @@ export type BuilderState = {
 export const useBuilderStore = create<BuilderState>((set, get) => ({
   // initial state
   projectId: null,
+  pageId: null,
   design: EMPTY_DESIGN,
   past: [],
   future: [],
@@ -121,9 +123,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   language: "ar",
   mobileTab: "canvas",
 
-  loadProject: (projectId, design) =>
+  loadPage: (projectId, pageId, design) =>
     set({
       projectId,
+      pageId,
       design,
       past: [],
       future: [],
@@ -239,6 +242,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 // =============================================================================
 
 export const selectProjectId = (s: BuilderState) => s.projectId;
+export const selectPageId = (s: BuilderState) => s.pageId;
 export const selectSections = (s: BuilderState) => s.design.sections;
 export const selectSelection = (s: BuilderState) => s.selection;
 export const selectDeviceMode = (s: BuilderState) => s.deviceMode;

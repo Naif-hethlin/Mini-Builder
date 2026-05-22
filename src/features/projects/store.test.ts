@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import { useProjects } from "./store";
 
 describe("useProjects", () => {
-  it("creates a project with defaults", () => {
+  it("creates a project with a home page", () => {
     const project = useProjects.getState().create({ name: "متجري" });
     expect(project.id).toBeTruthy();
     expect(project.name).toBe("متجري");
-    expect(project.design.sections).toEqual([]);
+    expect(project.pages).toHaveLength(1);
+    expect(project.pages[0].isHome).toBe(true);
+    expect(project.pages[0].slug).toBe("home");
+    expect(project.pages[0].design.sections).toEqual([]);
     expect(project.createdAt).toBe(project.updatedAt);
   });
 
@@ -40,12 +43,73 @@ describe("useProjects", () => {
     expect(fresh.updatedAt).toBeGreaterThan(initial);
   });
 
-  it("updateDesign no-ops when reference is unchanged", () => {
+  it("updatePageDesign no-ops when reference is unchanged", () => {
     const project = useProjects.getState().create({ name: "x" });
+    const page = project.pages[0];
     const before = useProjects.getState().get(project.id)!.updatedAt;
-    useProjects.getState().updateDesign(project.id, project.design);
+    useProjects
+      .getState()
+      .updatePageDesign(project.id, page.id, page.design);
     const after = useProjects.getState().get(project.id)!.updatedAt;
     expect(after).toBe(before);
+  });
+
+  it("addPage appends a new page with a unique slug", () => {
+    const project = useProjects.getState().create({ name: "x" });
+    useProjects.getState().addPage(project.id, { name: "من نحن" });
+    const fresh = useProjects.getState().get(project.id)!;
+    expect(fresh.pages).toHaveLength(2);
+    expect(fresh.pages[1].name).toBe("من نحن");
+    expect(fresh.pages[1].isHome).toBe(false);
+  });
+
+  it("removePage refuses to delete the only page", () => {
+    const project = useProjects.getState().create({ name: "x" });
+    useProjects.getState().removePage(project.id, project.pages[0].id);
+    expect(
+      useProjects.getState().get(project.id)?.pages,
+    ).toHaveLength(1);
+  });
+
+  it("removing the home page promotes the next one", () => {
+    const project = useProjects.getState().create({ name: "x" });
+    const second = useProjects.getState().addPage(project.id);
+    const home = project.pages[0];
+    useProjects.getState().removePage(project.id, home.id);
+    const fresh = useProjects.getState().get(project.id)!;
+    expect(fresh.pages).toHaveLength(1);
+    expect(fresh.pages[0].id).toBe(second!.id);
+    expect(fresh.pages[0].isHome).toBe(true);
+  });
+
+  it("setPageSlug rejects collisions", () => {
+    const project = useProjects.getState().create({ name: "x" });
+    const second = useProjects.getState().addPage(project.id);
+    const result = useProjects
+      .getState()
+      .setPageSlug(project.id, second!.id, "home");
+    expect(result.ok).toBe(false);
+  });
+
+  it("ensureV2 migrates a legacy single-design project on hydrate", () => {
+    const legacy = {
+      "p-1": {
+        id: "p-1",
+        name: "legacy",
+        design: { version: 1, sections: [] },
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    };
+    window.localStorage.setItem(
+      "rekaz-builder/projects/v1",
+      JSON.stringify(legacy),
+    );
+    useProjects.getState().hydrate();
+    const project = useProjects.getState().get("p-1")!;
+    expect(project.pages).toHaveLength(1);
+    expect(project.pages[0].isHome).toBe(true);
+    expect(project.pages[0].slug).toBe("home");
   });
 
   it("remove deletes the project", () => {

@@ -23,8 +23,9 @@ export function Overview() {
 
   const bookings = useBookings((s) => s.byProject[id] ?? []);
   const project = useProjects((s) => s.projects[id]);
-  const liveStatus =
-    project && project.design.sections.length > 0 ? "نشط" : "مسودة";
+  const totalSections =
+    project?.pages.reduce((acc, p) => acc + p.design.sections.length, 0) ?? 0;
+  const liveStatus = totalSections > 0 ? "نشط" : "مسودة";
 
   const sparkData = MOCK_ANALYTICS.visits.spark.map((v) => ({ v }));
 
@@ -79,7 +80,7 @@ export function Overview() {
           value={liveStatus}
           delta={
             project
-              ? `${project.design.sections.length} قسم منشور`
+              ? `${totalSections} قسم في ${project.pages.length} صفحة`
               : "—"
           }
           accent={liveStatus === "نشط" ? "green" : "stone"}

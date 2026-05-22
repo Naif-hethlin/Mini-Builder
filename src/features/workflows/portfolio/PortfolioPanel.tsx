@@ -20,13 +20,20 @@ import type {
 export function PortfolioPanel({ projectId }: { projectId: string }) {
   const project = useProjects((s) => s.projects[projectId]);
 
-  const section = project?.design.sections.find(
-    (s) => s.type === "portfolio",
-  ) as Extract<Section, { type: "portfolio" }> | undefined;
+  const found = project?.pages
+    .flatMap((page) =>
+      page.design.sections.map((section) => ({ page, section })),
+    )
+    .find(({ section }) => section.type === "portfolio");
+
+  const section = found?.section as
+    | Extract<Section, { type: "portfolio" }>
+    | undefined;
+  const hostPage = found?.page;
 
   if (!project) return null;
 
-  if (!section) {
+  if (!section || !hostPage) {
     return (
       <div className="rounded-2xl border-2 border-dashed border-stone-200 bg-white p-10 text-center">
         <p className="text-sm font-medium text-stone-700">
@@ -48,14 +55,16 @@ export function PortfolioPanel({ projectId }: { projectId: string }) {
 
   const setProps = (mutator: (p: PortfolioProps) => PortfolioProps) => {
     const nextDesign = {
-      ...project.design,
-      sections: project.design.sections.map((s) =>
+      ...hostPage.design,
+      sections: hostPage.design.sections.map((s) =>
         s.id === section.id && s.type === "portfolio"
           ? { ...s, props: mutator(s.props) }
           : s,
       ),
     };
-    useProjects.getState().updateDesign(projectId, nextDesign);
+    useProjects
+      .getState()
+      .updatePageDesign(projectId, hostPage.id, nextDesign);
   };
 
   const addItem = () =>

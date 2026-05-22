@@ -17,6 +17,7 @@ afterEach(async () => {
   useBookings.setState({ byProject: {}, hydrated: false });
   useBuilderStore.setState({
     projectId: null,
+    pageId: null,
     design: { version: 1, sections: [] },
     past: [],
     future: [],

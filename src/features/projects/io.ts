@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { useProjects } from "./store";
+import { newId } from "@/shared/lib/id";
 import type { PageDesign } from "@/features/builder/state/types";
-import type { Project } from "./types";
+import { useProjects } from "./store";
+import type { Page, Project } from "./types";
 
-// Soft schema — exhaustively validating every section variant would mean
-// duplicating the entire types file in Zod. We just confirm the shape is
-// "version 1 + array of sections with id/type/props".
+// Soft schema — exhaustive section validation would duplicate the whole
+// types file in Zod. We confirm "version 1 + array of sections with
+// id/type/props".
 const SectionShape = z
   .object({
     id: z.string(),
@@ -19,8 +20,17 @@ const DesignSchema = z.object({
   sections: z.array(SectionShape),
 });
 
+const PageSchema = z.object({
+  id: z.string().optional(),
+  slug: z.string(),
+  name: z.string(),
+  order: z.number(),
+  isHome: z.boolean(),
+  design: DesignSchema,
+});
+
 // =============================================================================
-// Export — trigger a browser download of a single project as JSON.
+// Export — multi-page payload.
 // =============================================================================
 
 export function exportProjectFile(project: Project) {
@@ -30,7 +40,7 @@ export function exportProjectFile(project: Project) {
   const payload = {
     name: project.name,
     templateType: project.templateType,
-    design: project.design,
+    pages: project.pages.map(({ id: _id, ...rest }) => rest),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
@@ -46,7 +56,7 @@ export function exportProjectFile(project: Project) {
 }
 
 // =============================================================================
-// Import — read a JSON file, validate, create a new project, return it.
+// Import — accepts three shapes: v2 (pages[]), v1 (design), bare PageDesign.
 // =============================================================================
 
 export type ImportResult =
@@ -65,25 +75,64 @@ export async function importProjectFile(file: File): Promise<ImportResult> {
   if (!raw || typeof raw !== "object") {
     return { ok: false, error: "محتوى الملف غير معروف." };
   }
-
-  // Support two shapes: a full project payload (our exportProjectFile output),
-  // or a bare PageDesign (legacy export).
   const obj = raw as Record<string, unknown>;
-  const designRaw = "design" in obj ? obj.design : obj;
-  const parsed = DesignSchema.safeParse(designRaw);
-  if (!parsed.success) {
-    return { ok: false, error: "هيكل التصميم غير متوافق مع الإصدار الحالي." };
-  }
 
-  const design = parsed.data as PageDesign;
   const name =
-    (typeof obj.name === "string" && obj.name) || file.name.replace(/\.json$/i, "");
+    (typeof obj.name === "string" && obj.name) ||
+    file.name.replace(/\.json$/i, "");
   const templateType =
     obj.templateType === "barber" ||
     obj.templateType === "coffee" ||
     obj.templateType === "photography"
       ? obj.templateType
       : undefined;
+
+  // v2 shape — { name, templateType, pages: Page[] }
+  if (Array.isArray(obj.pages)) {
+    const pages: Page[] = [];
+    for (const rawPage of obj.pages as unknown[]) {
+      const parsed = PageSchema.safeParse(rawPage);
+      if (!parsed.success) {
+        return {
+          ok: false,
+          error: "هيكل إحدى الصفحات غير متوافق مع الإصدار الحالي.",
+        };
+      }
+      pages.push({
+        ...parsed.data,
+        id: parsed.data.id ?? newId(),
+        // Cast: Zod gives us section.type as plain string after the soft
+        // validation; we trust the data and let the discriminated union take.
+        design: parsed.data.design as unknown as Page["design"],
+      });
+    }
+    if (pages.length === 0) {
+      return { ok: false, error: "الملف لا يحتوي على صفحات." };
+    }
+    if (!pages.some((p) => p.isHome)) pages[0].isHome = true;
+
+    // Create an empty project then patch it directly — `create` always
+    // seeds a home page, but we want the imported pages instead.
+    const store = useProjects.getState();
+    const project = store.create({ name, templateType });
+    const map = store.projects;
+    const patched: Project = { ...project, pages };
+    useProjects.setState({
+      projects: { ...map, [project.id]: patched },
+    });
+    return { ok: true, project: patched };
+  }
+
+  // v1 or bare-design shape — single design becomes the home page.
+  const designRaw = "design" in obj ? obj.design : obj;
+  const parsed = DesignSchema.safeParse(designRaw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "هيكل التصميم غير متوافق مع الإصدار الحالي.",
+    };
+  }
+  const design = parsed.data as PageDesign;
 
   const project = useProjects.getState().create({
     name,

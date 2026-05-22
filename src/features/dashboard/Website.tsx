@@ -20,7 +20,9 @@ export function Website() {
   }, []);
 
   const project = useProjects((s) => s.projects[id]);
-  const sectionCount = project?.design.sections.length ?? 0;
+  const sectionCount =
+    project?.pages.reduce((acc, p) => acc + p.design.sections.length, 0) ?? 0;
+  const pageCount = project?.pages.length ?? 0;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -28,7 +30,7 @@ export function Website() {
         <h1 className="text-2xl font-bold text-stone-900">إدارة الموقع</h1>
         <p className="mt-1 text-sm text-stone-500">
           {sectionCount > 0
-            ? `موقعك يحتوي حالياً على ${sectionCount} قسم.`
+            ? `موقعك يحتوي حالياً على ${sectionCount} قسم في ${pageCount} صفحة.`
             : "موقعك فارغ — أضف أقساماً من المحرر."}
         </p>
       </div>

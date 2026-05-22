@@ -12,13 +12,21 @@ import type {
 export function MenuPanel({ projectId }: { projectId: string }) {
   const project = useProjects((s) => s.projects[projectId]);
 
-  const menuSection = project?.design.sections.find(
-    (s) => s.type === "menu",
-  ) as Extract<Section, { type: "menu" }> | undefined;
+  // Find the first Menu section across all pages of the project.
+  const found = project?.pages
+    .flatMap((page) =>
+      page.design.sections.map((section) => ({ page, section })),
+    )
+    .find(({ section }) => section.type === "menu");
+
+  const menuSection = found?.section as
+    | Extract<Section, { type: "menu" }>
+    | undefined;
+  const hostPage = found?.page;
 
   if (!project) return null;
 
-  if (!menuSection) {
+  if (!menuSection || !hostPage) {
     return (
       <EmptyState
         href={`/builder/${projectId}`}
@@ -30,14 +38,16 @@ export function MenuPanel({ projectId }: { projectId: string }) {
 
   const setProps = (mutator: (p: MenuProps) => MenuProps) => {
     const nextDesign = {
-      ...project.design,
-      sections: project.design.sections.map((s) =>
+      ...hostPage.design,
+      sections: hostPage.design.sections.map((s) =>
         s.id === menuSection.id && s.type === "menu"
           ? { ...s, props: mutator(s.props) }
           : s,
       ),
     };
-    useProjects.getState().updateDesign(projectId, nextDesign);
+    useProjects
+      .getState()
+      .updatePageDesign(projectId, hostPage.id, nextDesign);
   };
 
   const addItem = () =>
@@ -171,3 +181,6 @@ function EmptyState({
     </div>
   );
 }
+
+// Local re-export to keep prior imports clean.
+export {};

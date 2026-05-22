@@ -1,4 +1,9 @@
-export type { Project, ProjectMeta, ProjectTemplateType } from "./types";
+export type {
+  Page,
+  Project,
+  ProjectMeta,
+  ProjectTemplateType,
+} from "./types";
 export {
   useProjects,
   selectProjectsList,

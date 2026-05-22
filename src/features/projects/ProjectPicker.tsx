@@ -37,7 +37,7 @@ export function ProjectPicker({
   // Subscribe to projects so the list updates after import/delete.
   const projectsMap = useProjects((s) => s.projects);
   const list: ProjectMeta[] = Object.values(projectsMap)
-    .map(({ design: _d, ...meta }) => meta)
+    .map(({ pages: _pages, ...meta }) => meta)
     .sort((a, b) => b.updatedAt - a.updatedAt);
 
   useEffect(() => {

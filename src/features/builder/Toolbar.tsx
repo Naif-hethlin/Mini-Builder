@@ -25,6 +25,7 @@ import {
   exportProjectFile,
   useProjects,
 } from "@/features/projects";
+import { PageSwitcher } from "./PageSwitcher";
 import type { DeviceMode } from "./state/types";
 import {
   selectCanRedo,
@@ -95,14 +96,18 @@ export function Toolbar() {
           المنشئ
         </span>
         {projectId && (
-          <Link
-            href={`/dashboard/${projectId}`}
-            title="لوحة التحكم"
-            className="ms-2 hidden h-7 items-center gap-1.5 rounded-md border border-stone-200 px-2 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand sm:inline-flex"
-          >
-            <LayoutDashboard size={12} />
-            لوحة التحكم
-          </Link>
+          <>
+            <Link
+              href={`/dashboard/${projectId}`}
+              title="لوحة التحكم"
+              className="ms-2 hidden h-7 items-center gap-1.5 rounded-md border border-stone-200 px-2 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand sm:inline-flex"
+            >
+              <LayoutDashboard size={12} />
+              لوحة التحكم
+            </Link>
+            <span className="mx-1 hidden h-5 w-px bg-stone-200 sm:inline-block" />
+            <PageSwitcher projectId={projectId} />
+          </>
         )}
       </div>
 

@@ -55,14 +55,15 @@ describe("useBuilderStore", () => {
     expect(useBuilderStore.getState().design.sections[1].id).toBe(a.id);
   });
 
-  it("loadProject seeds the design and resets history", () => {
+  it("loadPage seeds the design and resets history", () => {
     useBuilderStore.getState().addSection(createHero());
     const design = {
       version: 1 as const,
       sections: [createHero()],
     };
-    useBuilderStore.getState().loadProject("new-id", design);
+    useBuilderStore.getState().loadPage("new-id", "page-1", design);
     expect(useBuilderStore.getState().projectId).toBe("new-id");
+    expect(useBuilderStore.getState().pageId).toBe("page-1");
     expect(useBuilderStore.getState().past).toEqual([]);
     expect(useBuilderStore.getState().future).toEqual([]);
     expect(useBuilderStore.getState().selection.kind).toBe("none");
