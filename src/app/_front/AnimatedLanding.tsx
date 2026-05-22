@@ -92,7 +92,7 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
 
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-6 text-center">
         <Link
-          href="/login"
+          href="/templates"
           className="group relative mb-10 inline-flex animate-fade-in-up items-center fade-in-start"
         >
           {/* Soft morph halo behind the wordmark — visual interest without
@@ -126,7 +126,7 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
 
         <div className="animate-fade-in-up fade-in-start [animation-delay:300ms]">
           <Link
-            href="/login"
+            href="/templates"
             className="group inline-flex items-center gap-3 rounded-full bg-brand px-8 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(232,93,93,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(232,93,93,0.5)]"
           >
             <span>ابدأ الآن</span>
@@ -218,7 +218,7 @@ function WhyRekazSection({
 
         <div className="mt-12 text-center">
           <Link
-            href="/login"
+            href="/templates"
             className="group mx-auto inline-flex items-center gap-3 rounded-full bg-brand px-8 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(232,93,93,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(232,93,93,0.5)]"
           >
             <span>ابدأ الآن مجاناً</span>

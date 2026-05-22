@@ -2,7 +2,7 @@
 
 import { ChevronDown, LogIn, LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { refreshCurrentUser, useCurrentUser } from "./useCurrentUser";
@@ -14,7 +14,6 @@ import { refreshCurrentUser, useCurrentUser } from "./useCurrentUser";
  */
 export function UserMenu() {
   const router = useRouter();
-  const pathname = usePathname() ?? "/";
   const { user, loading } = useCurrentUser();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,7 +36,7 @@ export function UserMenu() {
   if (!user) {
     return (
       <Link
-        href={`/login?next=${encodeURIComponent(pathname)}`}
+        href="/templates"
         className="inline-flex h-8 items-center gap-1.5 rounded-full border border-stone-200 px-3 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand"
       >
         <LogIn size={12} />

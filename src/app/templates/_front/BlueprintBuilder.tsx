@@ -33,10 +33,29 @@ export function BlueprintBuilder() {
   const router = useRouter();
   const [workspace, setWorkspace] = useState<Workspace>("fresh");
 
-  const startProject = (input: {
+  const startProject = async (input: {
     name: string;
     templateType?: ProjectTemplateType;
   }) => {
+    // Try server first — when logged in this gives a persistent,
+    // cross-device project. Anonymous users fall back to localStorage.
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(input),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { ok: boolean; project: { id: string } };
+        if (data.ok) {
+          router.push(`/builder/${data.project.id}`);
+          return;
+        }
+      }
+    } catch {
+      // network down → local fallback
+    }
     useProjects.getState().hydrate();
     const project = useProjects.getState().create(input);
     router.push(`/builder/${project.id}`);

@@ -1,12 +1,12 @@
 // Route: /templates
 //
-// Blueprint-style starter picker. Toggles between two workspaces:
-//   - "fresh"     → freeform blueprint canvas + element toolbox.
-//   - "templates" → preset starter cards (barber / coffee / photography).
-//
-// Selecting any path creates a project in localStorage and routes into
-// /builder/[id].
+// Blueprint-style starter picker with an auth overlay stacked on top.
+// First-time visitors get the login/signup card; signed-in users (or
+// those who picked "browse without login") see the BlueprintBuilder
+// directly.
 
+import { Toaster } from "sonner";
+import { AuthOverlay } from "@/features/auth/AuthOverlay";
 import { BlueprintBuilder } from "./_front/BlueprintBuilder";
 
 export const metadata = {
@@ -16,5 +16,16 @@ export const metadata = {
 };
 
 export default function TemplatesPage() {
-  return <BlueprintBuilder />;
+  return (
+    <>
+      <BlueprintBuilder />
+      <AuthOverlay />
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        duration={3000}
+      />
+    </>
+  );
 }
