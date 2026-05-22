@@ -2,6 +2,7 @@
 
 import {
   ColorField,
+  ImageUrlField,
   LinkField,
   ListField,
   SelectField,
@@ -38,9 +39,17 @@ export function Form({
         switch (field.kind) {
           case "text":
           case "url":
-          case "image-url":
             return (
               <TextField
+                key={field.key}
+                field={field}
+                value={(current as string) ?? ""}
+                onChange={(v) => set(field.key, v)}
+              />
+            );
+          case "image-url":
+            return (
+              <ImageUrlField
                 key={field.key}
                 field={field}
                 value={(current as string) ?? ""}

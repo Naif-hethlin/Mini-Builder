@@ -1,8 +1,17 @@
 "use client";
 
-import { ChevronDown, GripVertical, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  GripVertical,
+  ImagePlus,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import type { ReactElement } from "react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/shared/lib/cn";
 import type { FieldSchema, FormValue } from "./types";
 
@@ -24,7 +33,7 @@ export function TextField({
   value,
   onChange,
 }: {
-  field: Extract<FieldSchema, { kind: "text" | "url" | "image-url" }>;
+  field: Extract<FieldSchema, { kind: "text" | "url" }>;
   value: string;
   onChange: (next: string) => void;
 }) {
@@ -106,6 +115,192 @@ export function SelectField({
           className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-stone-400"
         />
       </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Image URL field — upload-from-PC + URL input + live preview.
+//
+// Uploaded files are resized client-side (max 1600px on the long edge,
+// JPEG q=0.85) and stored as data URLs so the design JSON stays
+// self-contained — no server / object-store dependency.
+// =============================================================================
+
+const MAX_IMAGE_DIMENSION = 1600;
+const MAX_FILE_SIZE_MB = 12;
+const JPEG_QUALITY = 0.85;
+
+async function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("لم نتمكن من قراءة الملف"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("ملف الصورة تالف"));
+    img.src = src;
+  });
+}
+
+/**
+ * Read a file → data URL, then downscale via <canvas> if it exceeds the
+ * max dimension. PNGs with transparency are re-encoded as JPEG to shrink
+ * size — fine for photo content, less ideal for logos. Acceptable trade
+ * since the field is mostly used for photo backgrounds.
+ */
+async function uploadToDataUrl(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("الملف ليس صورة");
+  }
+  if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+    throw new Error(`الحجم أكبر من ${MAX_FILE_SIZE_MB} ميجا`);
+  }
+
+  const initialDataUrl = await readFileAsDataUrl(file);
+  const img = await loadImage(initialDataUrl);
+
+  // Already small enough → store as-is to preserve format/quality.
+  if (
+    img.width <= MAX_IMAGE_DIMENSION &&
+    img.height <= MAX_IMAGE_DIMENSION
+  ) {
+    return initialDataUrl;
+  }
+
+  const scale = MAX_IMAGE_DIMENSION / Math.max(img.width, img.height);
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return initialDataUrl;
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+}
+
+export function ImageUrlField({
+  field,
+  value,
+  onChange,
+}: {
+  field: Extract<FieldSchema, { kind: "image-url" }>;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const id = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const dataUrl = await uploadToDataUrl(file);
+      onChange(dataUrl);
+      toast.success("تم رفع الصورة");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "تعذّر رفع الصورة";
+      toast.error(message);
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const isDataUrl = value.startsWith("data:");
+  const hasValue = value.length > 0;
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className={fieldLabel}>
+        {field.label}
+      </label>
+
+      {/* Live preview / drop target */}
+      <div
+        className={cn(
+          "relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-stone-300 bg-stone-50",
+          hasValue && "border-solid border-stone-200 bg-white",
+        )}
+      >
+        {hasValue ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt="معاينة"
+              className="h-full w-full object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              aria-label="إزالة الصورة"
+              title="إزالة الصورة"
+              className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900/80 text-white shadow-md hover:bg-stone-900"
+            >
+              <X size={14} />
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-stone-400">
+            <ImagePlus size={28} strokeWidth={1.5} />
+            <span className="text-[11px] font-medium">لا توجد صورة</span>
+          </div>
+        )}
+
+        {busy && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs font-bold text-brand">
+            جاري الرفع…
+          </div>
+        )}
+      </div>
+
+      {/* Upload button + hidden file input */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+      <button
+        type="button"
+        onClick={() => fileRef.current?.click()}
+        disabled={busy}
+        className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white text-sm font-bold text-stone-700 transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <Upload size={14} />
+        {hasValue ? "استبدل الصورة" : "رفع من جهازك"}
+      </button>
+
+      {/* URL input — hidden behind a disclosure when a data URL is set so
+          the giant base64 string doesn't fill the panel. */}
+      <details className="group">
+        <summary className="flex cursor-pointer items-center justify-between text-[11px] font-medium text-stone-500 hover:text-stone-700">
+          <span>{isDataUrl ? "أو الصق رابطاً" : "أو الصق رابط صورة"}</span>
+          <ChevronDown
+            size={12}
+            className="transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <input
+          id={id}
+          type="url"
+          value={isDataUrl ? "" : value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder ?? "https://…"}
+          className={cn(inputBase, "mt-2 h-9 text-xs")}
+        />
+      </details>
     </div>
   );
 }
