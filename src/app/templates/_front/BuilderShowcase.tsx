@@ -398,14 +398,18 @@ function Main({ onPublish }: { onPublish: () => void }) {
       await sleep(1500);
 
       while (!cancelled) {
-        // Reset
+        // Reset (clear any previously-dropped elements + sit cursor off-screen).
         setDropped([]);
         setPublishActive(false);
         setCursor({ x: window.innerWidth + 100, y: window.innerHeight + 100 });
         await sleep(500);
         if (cancelled) return;
 
-        // For each step: move to tile, click, drop element
+        // Local counter — using state would trigger a re-render that
+        // restarts this effect. The counter just drives the visual drop
+        // offset; the real dropped state is appended via setDropped.
+        let added = 0;
+
         for (const type of SEQUENCE) {
           const tile = document.querySelector(
             `[data-tool="tool-${type}"]`,
@@ -426,7 +430,8 @@ function Main({ onPublish }: { onPublish: () => void }) {
           // Move cursor to canvas drop area
           if (canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
-            const dropY = rect.top + Math.min(rect.height - 80, 120 + dropped.length * 40);
+            const dropY =
+              rect.top + Math.min(rect.height - 80, 120 + added * 40);
             const dropX = rect.left + rect.width / 2;
             setCursor({ x: dropX, y: dropY });
             await sleep(450);
@@ -438,6 +443,7 @@ function Main({ onPublish }: { onPublish: () => void }) {
             ...prev,
             { id: `${type}-${Date.now()}-${Math.random()}`, type },
           ]);
+          added += 1;
 
           // Scroll canvas to bottom so the new element is visible
           await sleep(50);
@@ -469,7 +475,8 @@ function Main({ onPublish }: { onPublish: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [dropped.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col">
@@ -546,7 +553,11 @@ function Main({ onPublish }: { onPublish: () => void }) {
           style={{
             transform: `translate(${cursor.x}px, ${cursor.y}px)`,
           }}
-          className="pointer-events-none fixed top-0 start-0 z-[9999] flex h-8 w-8 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out"
+          // NOTE: left-0 (not start-0). The cursor uses absolute pixel
+          // translate() based on getBoundingClientRect coords, which are
+          // measured from the viewport's LEFT edge. start-0 would anchor
+          // it to the right edge in RTL and park it off-screen.
+          className="pointer-events-none fixed top-0 left-0 z-[9999] flex h-8 w-8 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out"
         >
           <svg
             width="28"
