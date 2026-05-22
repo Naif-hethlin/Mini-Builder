@@ -3,6 +3,7 @@ import {
   Image as ImageIcon,
   List as ListIcon,
   MousePointerClick,
+  Smile,
   Square,
   Triangle,
   Type,
@@ -58,4 +59,5 @@ export const PRIMITIVE_PRESETS: PrimitivePresetMeta[] = [
     Icon: Triangle,
     propsOverride: { kind: "triangle" },
   },
+  { id: "icon", type: "icon", label: "أيقونة", Icon: Smile },
 ];

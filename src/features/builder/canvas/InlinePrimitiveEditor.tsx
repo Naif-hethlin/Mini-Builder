@@ -73,13 +73,14 @@ export function InlinePrimitiveEditor({
       );
     case "image":
     case "shape":
+    case "icon":
       return <PrimitiveRenderer primitive={primitive} positioned={false} />;
   }
 }
 
 /** Returns true if the primitive supports inline content editing. */
 export function isInlineEditable(type: Primitive["type"]): boolean {
-  return type !== "image" && type !== "shape";
+  return type !== "image" && type !== "shape" && type !== "icon";
 }
 
 // -----------------------------------------------------------------------------

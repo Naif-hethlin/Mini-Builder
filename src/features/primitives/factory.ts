@@ -99,5 +99,19 @@ export function createPrimitive(type: PrimitiveType): Primitive {
           borderWidth: 0,
         },
       };
+    case "icon":
+      return {
+        id: newId(),
+        type: "icon",
+        x: 40,
+        y: 40,
+        w: 64,
+        h: 64,
+        props: {
+          name: "lucide:sparkles",
+          color: "#e85d5d",
+          strokeWidth: 2,
+        },
+      };
   }
 }
