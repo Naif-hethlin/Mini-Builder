@@ -23,10 +23,25 @@ const SCHEMA = [
   // the old shape, backfill, drop old cols, then enforce NOT NULL + UNIQUE.
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;`,
-  `UPDATE users
-     SET phone = COALESCE(phone, username, id::text),
-         name  = COALESCE(name, username, 'user')
-   WHERE phone IS NULL OR name IS NULL;`,
+  // Only attempt to backfill from `username` if that legacy column still
+  // exists — on fresh DBs (or after a prior migration ran) it doesn't,
+  // and referencing it would throw.
+  `DO $$ BEGIN
+     IF EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'users' AND column_name = 'username'
+     ) THEN
+       UPDATE users
+         SET phone = COALESCE(phone, username, id::text),
+             name  = COALESCE(name, username, 'user')
+         WHERE phone IS NULL OR name IS NULL;
+     ELSE
+       UPDATE users
+         SET phone = COALESCE(phone, id::text),
+             name  = COALESCE(name, 'user')
+         WHERE phone IS NULL OR name IS NULL;
+     END IF;
+   END $$;`,
   `ALTER TABLE users DROP COLUMN IF EXISTS username;`,
   `ALTER TABLE users DROP COLUMN IF EXISTS password_hash;`,
   `DO $$ BEGIN
@@ -37,8 +52,7 @@ const SCHEMA = [
    EXCEPTION WHEN others THEN NULL; END $$;`,
   `DO $$ BEGIN
      ALTER TABLE users ADD CONSTRAINT users_phone_unique UNIQUE (phone);
-   EXCEPTION WHEN duplicate_object THEN NULL;
-            WHEN unique_violation THEN NULL; END $$;`,
+   EXCEPTION WHEN others THEN NULL; END $$;`,
 
   // ---- projects ----
   `CREATE TABLE IF NOT EXISTS projects (
