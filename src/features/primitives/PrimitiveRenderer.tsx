@@ -23,10 +23,14 @@ export function PrimitiveRenderer({
   primitive: Primitive;
   positioned: boolean;
 }) {
+  // NOTE: `left` (not `insetInlineStart`). The primitive's `x` is captured
+  // in viewport-relative pixels (matches `e.clientX`), so it must anchor
+  // to the LEFT edge even when the page is RTL. `insetInlineStart` would
+  // flip the X axis in RTL and make drags read as inverted.
   const style: CSSProperties = positioned
     ? {
         position: "absolute",
-        insetInlineStart: `${primitive.x}px`,
+        left: `${primitive.x}px`,
         top: `${primitive.y}px`,
         width: `${primitive.w}px`,
         ...(primitive.h !== undefined ? { height: `${primitive.h}px` } : {}),

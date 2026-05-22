@@ -184,9 +184,13 @@ function DraggablePrimitive({
   const liveX = primitive.x + (drag?.dx ?? 0);
   const liveY = primitive.y + (drag?.dy ?? 0);
 
+  // NOTE: `left` (not `insetInlineStart`). The primitive's `x` is measured
+  // in viewport-relative pixels (it tracks `e.clientX`), so it must anchor
+  // to the LEFT edge even on this RTL page — otherwise drags read as
+  // inverted (drag right, move left).
   const style: CSSProperties = {
     position: "absolute",
-    insetInlineStart: `${liveX}px`,
+    left: `${liveX}px`,
     top: `${liveY}px`,
     width: `${primitive.w}px`,
     ...(primitive.h !== undefined ? { height: `${primitive.h}px` } : {}),
