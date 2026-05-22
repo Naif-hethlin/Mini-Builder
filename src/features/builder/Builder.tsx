@@ -16,13 +16,13 @@ import { Toolbar } from "./Toolbar";
 /**
  * Top-level orchestrator for the entire builder UI.
  *
- * Layout:
- *   - Always: Toolbar at the top.
- *   - Desktop (≥md): all three panels (Sidebar | Canvas | EditPanel) visible.
- *   - Mobile  (<md): only ONE panel visible, switched via MobileTabs bottom bar.
- *
- * The `mobileTab` value from the store drives which panel is visible on mobile.
- * On md+, the `md:block` utility overrides the `hidden` and shows all three.
+ * Layout (matching the redesigned mock):
+ *   - Outer chrome: slate-50 page with p-3 / gap-3, panels are floating
+ *     white cards with rounded-2xl + soft shadow.
+ *   - Desktop (≥md): Toolbar at the top, then a flex row of
+ *     Sidebar (320px) | Canvas (fluid) | EditPanel (280px).
+ *   - Mobile  (<md):  only ONE inner panel is visible, switched via
+ *     MobileTabs at the bottom; Toolbar stays.
  */
 export function Builder({ projectId }: { projectId: string }) {
   const mobileTab = useBuilderStore(selectMobileTab);
@@ -31,53 +31,52 @@ export function Builder({ projectId }: { projectId: string }) {
 
   return (
     <ConfirmProvider>
-    <div className="flex h-screen flex-col bg-stone-50">
-      <Toolbar />
+      <div className="flex h-screen w-screen flex-col gap-3 overflow-hidden bg-slate-50 p-3 text-slate-800 antialiased selection:bg-brand-light selection:text-brand-dark">
+        <Toolbar />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* SIDEBAR — fixed width on md+, full width on mobile when active */}
-        <div
-          className={cn(
-            "h-full w-full flex-shrink-0 md:block md:w-72 lg:w-80",
-            mobileTab === "library" ? "block" : "hidden",
-          )}
-        >
-          <Sidebar />
+        <div className="flex flex-1 gap-3 overflow-hidden">
+          {/* SIDEBAR — fixed 320px on md+, full width on mobile when active */}
+          <div
+            className={cn(
+              "h-full w-full shrink-0 md:block md:w-[320px]",
+              mobileTab === "library" ? "block" : "hidden",
+            )}
+          >
+            <Sidebar />
+          </div>
+
+          {/* CANVAS — fluid */}
+          <div
+            className={cn(
+              "h-full min-w-0 flex-1 md:block",
+              mobileTab === "canvas" ? "block" : "hidden",
+            )}
+          >
+            <Canvas />
+          </div>
+
+          {/* EDIT PANEL — fixed 280px on md+ */}
+          <div
+            className={cn(
+              "h-full w-full shrink-0 md:block md:w-[280px]",
+              mobileTab === "editor" ? "block" : "hidden",
+            )}
+          >
+            <EditPanel />
+          </div>
         </div>
 
-        {/* CANVAS — takes all remaining space on md+, full width on mobile when active */}
-        <div
-          className={cn(
-            "h-full flex-1 md:block",
-            mobileTab === "canvas" ? "block" : "hidden",
-          )}
-        >
-          <Canvas />
-        </div>
+        <MobileTabs />
 
-        {/* EDIT PANEL — fixed width on md+, full width on mobile when active */}
-        <div
-          className={cn(
-            "h-full w-full flex-shrink-0 md:block md:w-80 lg:w-96",
-            mobileTab === "editor" ? "block" : "hidden",
-          )}
-        >
-          <EditPanel />
-        </div>
+        <OnboardingTour />
+
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          duration={3000}
+        />
       </div>
-
-      <MobileTabs />
-
-      <OnboardingTour />
-
-      {/* Toaster is the global toast renderer — `toast(...)` from anywhere shows here. */}
-      <Toaster
-        position="bottom-right"
-        richColors
-        closeButton
-        duration={3000}
-      />
-    </div>
     </ConfirmProvider>
   );
 }

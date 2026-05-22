@@ -2,15 +2,20 @@
 
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { AlertCircle, MousePointer2, Sliders, X } from "lucide-react";
 import { PRIMITIVE_SCHEMAS } from "@/features/primitives/schemas";
 import { getPreset } from "@/features/sections/registry";
 import { Form } from "@/features/sections/schema/Form";
+import { cn } from "@/shared/lib/cn";
 import { ActionField } from "./ActionField";
 import { useProjects } from "@/features/projects";
 import { useParams } from "next/navigation";
 import type { Primitive } from "@/features/primitives/types";
 import type { Section } from "./state/types";
 import { selectSelection, useBuilderStore } from "./state/store";
+
+const PANEL_CLASS =
+  "bg-white rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100";
 
 /**
  * Right-side panel — schema-driven editor.
@@ -62,40 +67,75 @@ export function EditPanel() {
     heading = `إعدادات ${labelOf(section.type)}`;
   }
 
+  const setSelection = useBuilderStore((s) => s.setSelection);
+  const hasSelection = selection.kind !== "none";
+
   return (
-    <aside className="flex h-full w-full flex-col overflow-hidden border-r border-stone-200 bg-white">
-      <div className="border-b border-stone-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-stone-900">الإعدادات</h2>
-        <p className="mt-0.5 text-xs text-stone-500">{heading}</p>
+    <aside
+      className={cn(
+        "relative flex h-full w-full flex-col overflow-hidden",
+        PANEL_CLASS,
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-slate-50 p-4">
+        <h2 className="flex items-center gap-2 text-base font-bold text-slate-800">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600">
+            <Sliders size={16} />
+          </span>
+          الخصائص
+        </h2>
+        <button
+          type="button"
+          aria-label="إلغاء التحديد"
+          title="إلغاء التحديد"
+          onClick={() => setSelection({ kind: "none" })}
+          disabled={!hasSelection}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      {hasSelection && (
+        <div className="border-b border-slate-50 px-4 py-2 text-xs font-medium text-slate-500">
+          {heading}
+        </div>
+      )}
+
+      <div className="flex-1 overflow-auto">
         {selection.kind === "primitive" && primInfo ? (
-          <PrimitiveForm
-            canvasSectionId={primInfo.canvasSectionId}
-            primitive={primInfo.primitive}
-            onChange={(nextProps) =>
-              updatePrimitive(
-                primInfo.canvasSectionId,
-                primInfo.primitive.id,
-                (p) =>
-                  ({ ...p, props: nextProps }) as Primitive,
-              )
-            }
-          />
+          <div className="p-4">
+            <PrimitiveForm
+              canvasSectionId={primInfo.canvasSectionId}
+              primitive={primInfo.primitive}
+              onChange={(nextProps) =>
+                updatePrimitive(
+                  primInfo.canvasSectionId,
+                  primInfo.primitive.id,
+                  (p) =>
+                    ({ ...p, props: nextProps }) as Primitive,
+                )
+              }
+            />
+          </div>
         ) : !section ? (
           <EmptyHint />
         ) : (
-          <SectionForm
-            section={section}
-            onChange={(nextProps) =>
-              updateSection(
-                section.id,
-                (s) =>
-                  ({ ...s, props: nextProps as Section["props"] }) as Section,
-              )
-            }
-          />
+          <div className="p-4">
+            <SectionForm
+              section={section}
+              onChange={(nextProps) =>
+                updateSection(
+                  section.id,
+                  (s) =>
+                    ({
+                      ...s,
+                      props: nextProps as Section["props"],
+                    }) as Section,
+                )
+              }
+            />
+          </div>
         )}
       </div>
     </aside>
@@ -180,11 +220,21 @@ function PrimitiveForm({
 
 function EmptyHint() {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-stone-200 p-6 text-center">
-      <p className="text-sm font-medium text-stone-700">لم يتم اختيار شيء</p>
-      <p className="mt-1 text-xs text-stone-500">
-        اضغط على قسم في المعاينة لتعديله، أو أضف لوحة حرّة وضع داخلها
-        نصوصاً وأزراراً وصوراً تتحرك بحرية.
+    <div className="flex flex-1 flex-col items-center justify-center bg-slate-50/30 p-6 text-center">
+      <div className="relative mb-6">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-white text-slate-400 shadow-sm">
+          <MousePointer2 size={36} strokeWidth={1.5} />
+        </div>
+        <div className="absolute -bottom-1 -end-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-amber-100 text-amber-500 shadow-sm">
+          <AlertCircle size={16} fill="currentColor" stroke="white" />
+        </div>
+      </div>
+      <h3 className="mb-2 text-base font-bold text-slate-700">
+        لم يتم تحديد عنصر
+      </h3>
+      <p className="px-2 text-xs font-medium leading-relaxed text-slate-500">
+        انقر على أي عنصر داخل مساحة العمل لتعديل خصائصه، ألوانه،
+        ومحتواه من هنا.
       </p>
     </div>
   );

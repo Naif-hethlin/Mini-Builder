@@ -1,6 +1,13 @@
 "use client";
 
-import { Layers, Search, Shapes, X } from "lucide-react";
+import {
+  HandMetal,
+  LayoutTemplate,
+  Puzzle,
+  Search,
+  Shapes,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -20,86 +27,136 @@ import type { Primitive } from "@/features/primitives/types";
 
 type Tab = "elements" | "sections";
 
-const TAB_META: Array<{ id: Tab; label: string; Icon: typeof Layers }> = [
-  { id: "elements", label: "العناصر", Icon: Shapes },
-  { id: "sections", label: "الأقسام", Icon: Layers },
+const TAB_META: Array<{ id: Tab; label: string; Icon: typeof Puzzle }> = [
+  { id: "elements", label: "العناصر", Icon: Puzzle },
+  { id: "sections", label: "الأقسام الجاهزة", Icon: LayoutTemplate },
 ];
+
+const PANEL_CLASS =
+  "bg-white rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100";
 
 const CANVAS_VERTICAL_PADDING = 80;
 
 export function Sidebar() {
   const [tab, setTab] = useState<Tab>("elements");
+  const [query, setQuery] = useState("");
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-hidden border-l border-stone-200 bg-white">
-      <div className="border-b border-stone-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-stone-900">المكتبة</h2>
-        <p className="mt-0.5 text-xs text-stone-500">
-          اسحب عنصرًا حرًا للوحة، أو اختر قسمًا جاهزًا.
-        </p>
-      </div>
+    <aside
+      className={cn(
+        "relative flex h-full w-full flex-col overflow-hidden",
+        PANEL_CLASS,
+      )}
+    >
+      {/* Header — icon chip + title + search */}
+      <div className="border-b border-slate-50 p-4">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-base font-bold text-slate-800">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light text-brand">
+              <Shapes size={18} />
+            </span>
+            مكتبة العناصر
+          </h2>
+        </div>
 
-      <div className="flex shrink-0 gap-1 border-b border-stone-100 bg-stone-50 px-2 py-2">
-        {TAB_META.map(({ id, label, Icon }) => {
-          const active = tab === id;
-          return (
+        <div className="group relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-brand"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث عن عنصر…"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pe-9 ps-3 text-sm font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+          />
+          {query && (
             <button
-              key={id}
               type="button"
-              onClick={() => setTab(id)}
-              className={cn(
-                "inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-                active
-                  ? "bg-white text-stone-900 shadow-sm ring-1 ring-stone-200"
-                  : "text-stone-500 hover:bg-white/60 hover:text-stone-700",
-              )}
+              aria-label="مسح"
+              onClick={() => setQuery("")}
+              className="absolute start-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700"
             >
-              <Icon size={13} />
-              {label}
+              <X size={11} />
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
-      {tab === "elements" ? <ElementsPanel /> : <SectionsPanel />}
-
-      <div className="border-t border-stone-100 bg-stone-50 px-3 py-2 text-[10px] leading-relaxed text-stone-500">
-        ⌘+Z تراجع · ⌘+S حفظ · ⌘+D تكرار · Del حذف · أسهم لترتيب الأقسام
+      {/* Tabs */}
+      <div className="px-4 py-3">
+        <div className="flex gap-1 rounded-xl border border-slate-200/50 bg-slate-100/80 p-1">
+          {TAB_META.map(({ id, label, Icon }) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={cn(
+                  "inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm transition-all",
+                  active
+                    ? "border border-slate-100 bg-white font-bold text-brand shadow-sm"
+                    : "font-semibold text-slate-500 hover:bg-white/50 hover:text-slate-800",
+                )}
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {tab === "elements" ? (
+        <ElementsPanel query={query} />
+      ) : (
+        <SectionsPanel query={query} />
+      )}
     </aside>
   );
 }
 
 // =============================================================================
-// Elements tab — free primitives (Heading / Text / Button / Image / List).
-//
-// One click adds the chosen primitive to a Canvas section: either the latest
-// existing canvas, or a fresh canvas appended to the page. The primitive is
-// placed below any existing content, the canvas height auto-grows to fit,
-// and the new primitive is selected so the EditPanel opens for it.
+// Elements tab — free primitives.
 // =============================================================================
 
-function ElementsPanel() {
-  const handleAdd = (type: PrimitivePresetMeta["type"]) => {
-    addPrimitiveToBuilder(type);
-  };
+function ElementsPanel({ query }: { query: string }) {
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return PRIMITIVE_PRESETS;
+    return PRIMITIVE_PRESETS.filter(
+      (p) =>
+        p.label.toLowerCase().includes(q) || p.type.toLowerCase().includes(q),
+    );
+  }, [query]);
 
   return (
-    <div className="flex-1 overflow-auto p-3">
-      <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 p-3 text-[11px] leading-relaxed text-stone-500">
-        اضغط على أي عنصر لإضافته للوحة. تقدر تسحبه بعدها لأي مكان داخل
-        اللوحة.
+    <div className="flex-1 space-y-5 overflow-y-auto px-4 pb-4">
+      {/* Indigo info banner */}
+      <div className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-indigo-100/60 bg-indigo-50 p-3">
+        <div className="absolute -end-2 -top-2 h-12 w-12 rounded-full bg-indigo-500/10 blur-xl" />
+        <HandMetal size={20} className="z-10 shrink-0 text-indigo-500" />
+        <p className="z-10 pt-0.5 text-xs font-medium leading-relaxed text-indigo-800">
+          اضغط على أي عنصر لإضافته للوحة، ثم اسحبه لأي مكان داخل
+          مساحة العمل.
+        </p>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {PRIMITIVE_PRESETS.map((preset) => (
-          <ElementTile
-            key={preset.type}
-            preset={preset}
-            onClick={() => handleAdd(preset.type)}
-          />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <EmptyResults query={query} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map((preset) => (
+            <ElementTile
+              key={preset.type}
+              preset={preset}
+              onClick={() => addPrimitiveToBuilder(preset.type)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -117,12 +174,13 @@ function ElementTile({
       type="button"
       onClick={onClick}
       title={`أضف ${label}`}
-      className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white p-4 text-center transition-colors hover:border-brand hover:bg-brand-light/40 focus-visible:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1"
+      className="group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/40 hover:shadow-[0_8px_20px_rgb(232,93,93,0.06)]"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-stone-50 text-stone-500 transition-colors group-hover:bg-white group-hover:text-brand">
-        <Icon size={18} />
-      </span>
-      <span className="text-xs font-semibold text-stone-700 group-hover:text-brand">
+      <div className="absolute inset-0 bg-gradient-to-b from-brand-light/0 to-brand-light/50 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-500 transition-all group-hover:bg-white group-hover:text-brand group-hover:shadow-sm">
+        <Icon size={22} strokeWidth={1.75} />
+      </div>
+      <span className="relative z-10 text-xs font-bold text-slate-700 transition-colors group-hover:text-brand-dark">
         {label}
       </span>
     </button>
@@ -130,12 +188,11 @@ function ElementTile({
 }
 
 // =============================================================================
-// Sections tab — preset sections (Hero, Features, Gallery, …).
+// Sections tab — preset sections.
 // =============================================================================
 
-function SectionsPanel() {
+function SectionsPanel({ query }: { query: string }) {
   const addSection = useBuilderStore((s) => s.addSection);
-  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -149,54 +206,24 @@ function SectionsPanel() {
   }, [query]);
 
   return (
-    <>
-      <div className="border-b border-stone-100 px-3 py-2">
-        <div className="relative">
-          <Search
-            size={12}
-            className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-stone-400"
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث عن قسم…"
-            className="h-9 w-full rounded-lg border border-stone-200 bg-stone-50 ps-7 pe-8 text-xs focus:border-brand focus:bg-white focus:outline focus:outline-2 focus:outline-brand/30"
-          />
-          {query && (
-            <button
-              type="button"
-              aria-label="مسح"
-              onClick={() => setQuery("")}
-              className="absolute end-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-stone-400 hover:bg-stone-100 hover:text-stone-700"
-            >
-              <X size={10} />
-            </button>
-          )}
+    <div className="flex-1 overflow-y-auto px-4 pb-4">
+      {filtered.length === 0 ? (
+        <EmptyResults query={query} />
+      ) : (
+        <div className="grid grid-cols-1 gap-2">
+          {filtered.map((preset) => (
+            <SectionTile
+              key={preset.type}
+              preset={preset}
+              onClick={() => {
+                addSection(preset.createDefault());
+                toast.success(`أضيف ${preset.label}`);
+              }}
+            />
+          ))}
         </div>
-      </div>
-
-      <div className="flex-1 overflow-auto p-3">
-        {filtered.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-stone-200 p-6 text-center text-xs text-stone-500">
-            لا نتائج لـ &quot;{query}&quot;
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2">
-            {filtered.map((preset) => (
-              <SectionTile
-                key={preset.type}
-                preset={preset}
-                onClick={() => {
-                  addSection(preset.createDefault());
-                  toast.success(`أضيف ${preset.label}`);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+      )}
+    </div>
   );
 }
 
@@ -213,14 +240,14 @@ function SectionTile({
       type="button"
       onClick={onClick}
       title={preset.description}
-      className="group rounded-xl border border-stone-200 bg-white p-2 text-start transition-all hover:border-brand hover:shadow-sm focus-visible:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1"
+      className="group rounded-xl border border-slate-100 bg-white p-2 text-start transition-all hover:border-brand/40 hover:shadow-[0_8px_20px_rgb(232,93,93,0.06)] focus-visible:border-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1"
     >
       <Thumbnail />
       <div className="mt-2 px-0.5">
-        <p className="text-sm font-medium text-stone-900 group-hover:text-brand">
+        <p className="text-sm font-medium text-slate-900 group-hover:text-brand-dark">
           {preset.label}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-xs text-stone-500">
+        <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
           {preset.description}
         </p>
       </div>
@@ -228,19 +255,23 @@ function SectionTile({
   );
 }
 
+function EmptyResults({ query }: { query: string }) {
+  return (
+    <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center text-xs text-slate-500">
+      لا نتائج لـ &quot;{query}&quot;
+    </div>
+  );
+}
+
 // =============================================================================
-// Add-primitive helper — the heart of the Elementor-style flow. Reads the
-// current design, picks a canvas to host the primitive (creating one when
-// needed), positions it below existing content, auto-grows the canvas to fit,
-// and selects the new primitive.
+// Add-primitive helper — unchanged behaviour (auto-creates / appends to a
+// canvas section, stacks under existing content, auto-grows height).
 // =============================================================================
 
 function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
   const store = useBuilderStore.getState();
   const sections = store.design.sections;
 
-  // Prefer the LAST canvas section so primitives accumulate where the user
-  // is already working. If there isn't one, create a canvas at the end.
   const lastCanvas = [...sections]
     .reverse()
     .find((s): s is Section & { type: "canvas" } => s.type === "canvas");
@@ -260,8 +291,6 @@ function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
 
   const primitive = createPrimitive(type);
 
-  // Stack the new primitive below existing content (instead of overlapping
-  // at the default 40,40). Width stays at the factory default.
   const maxBottom = existingPrimitives.reduce((m, p) => {
     const guessedHeight = p.h ?? estimatePrimitiveHeight(p);
     return Math.max(m, p.y + guessedHeight);
@@ -270,7 +299,6 @@ function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
 
   store.addPrimitive(canvasId, primitive);
 
-  // Auto-grow the canvas height so the new primitive isn't clipped.
   const neededHeight =
     primitive.y +
     (primitive.h ?? estimatePrimitiveHeight(primitive)) +
@@ -290,9 +318,6 @@ function addPrimitiveToBuilder(type: PrimitivePresetMeta["type"]) {
   toast.success(`أضيف ${primitiveLabelFor(type)}`);
 }
 
-// Best-effort height when the primitive doesn't carry an explicit `h`. The
-// canvas auto-grow uses this just to leave enough room before the next item;
-// the real rendered height is whatever the browser layouts to.
 function estimatePrimitiveHeight(p: Primitive): number {
   switch (p.type) {
     case "heading":
