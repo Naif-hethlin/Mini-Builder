@@ -237,6 +237,11 @@ function DraggablePrimitive({
           moved: false,
         });
       }}
+      // The browser fires a synthetic click after pointerup; without this,
+      // it bubbles to the parent SortableSection's onClick and overwrites
+      // the primitive selection with a section selection — i.e. clicking
+      // an image inside a canvas would select the canvas instead.
+      onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => {
         if (!isInlineEditable(primitive.type)) return;
         e.stopPropagation();
