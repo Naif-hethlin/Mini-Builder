@@ -45,6 +45,11 @@ export type FieldSchema =
       label: string;
     }
   | {
+      kind: "icon";
+      key: string;
+      label: string;
+    }
+  | {
       kind: "select";
       key: string;
       label: string;

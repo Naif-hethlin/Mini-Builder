@@ -62,6 +62,13 @@ export type ShapePrimitiveProps = {
   borderWidth: number;
 };
 
+export type IconPrimitiveProps = {
+  /** Icon name in the curated library — see Icon/library.ts. */
+  name: string;
+  color: string;
+  strokeWidth: number;
+};
+
 // ----- Discriminated union -----------------------------------------------
 
 type Geometry = {
@@ -79,6 +86,7 @@ export type Primitive = Geometry &
     | { id: string; type: "image"; props: ImagePrimitiveProps }
     | { id: string; type: "list"; props: ListPrimitiveProps }
     | { id: string; type: "shape"; props: ShapePrimitiveProps }
+    | { id: string; type: "icon"; props: IconPrimitiveProps }
   );
 
 export type PrimitiveType = Primitive["type"];

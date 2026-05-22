@@ -2,6 +2,7 @@
 
 import {
   ColorField,
+  IconField,
   ImageUrlField,
   LinkField,
   ListField,
@@ -77,6 +78,15 @@ export function Form({
           case "color":
             return (
               <ColorField
+                key={field.key}
+                field={field}
+                value={(current as string) ?? ""}
+                onChange={(v) => set(field.key, v)}
+              />
+            );
+          case "icon":
+            return (
+              <IconField
                 key={field.key}
                 field={field}
                 value={(current as string) ?? ""}

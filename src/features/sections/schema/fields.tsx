@@ -13,6 +13,13 @@ import type { ReactElement } from "react";
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/cn";
+import { Icon as IconifyIcon } from "@iconify/react";
+import {
+  ICON_CATEGORIES,
+  normalizeIconName,
+  searchIcons,
+} from "@/features/primitives/Icon/library";
+import { useEffect } from "react";
 import type { FieldSchema, FormValue } from "./types";
 
 // =============================================================================
@@ -507,6 +514,217 @@ function ColorPopover({
         </div>
       </div>
     </>
+  );
+}
+
+// =============================================================================
+// Icon picker — backed by Iconify (~200K icons across many collections).
+//
+// Empty query → grid of curated suggestions grouped by category.
+// Non-empty query → debounced fetch to https://api.iconify.design/search.
+//
+// Stores the Iconify icon id (e.g. "lucide:sparkles", "mdi:home") in the
+// form value. The renderer hands the same id to <IconifyIcon /> which
+// streams the SVG from the Iconify CDN on first use and caches it.
+// =============================================================================
+
+const SEARCH_DEBOUNCE_MS = 220;
+
+export function IconField({
+  field,
+  value,
+  onChange,
+}: {
+  field: Extract<FieldSchema, { kind: "icon" }>;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<string[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const normalizedValue = normalizeIconName(value);
+
+  // Debounced Iconify search whenever `query` changes. The synchronous
+  // state changes (set loading on, clear results/errors) happen in the
+  // input's onChange handler so this effect only kicks off the async
+  // fetch and writes its result back — no setState-in-effect-body lint.
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      searchIcons(q, 80, controller.signal)
+        .then((icons) => {
+          setResults(icons);
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (controller.signal.aborted) return;
+          setError(err instanceof Error ? err.message : "تعذّر البحث");
+          setLoading(false);
+        });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [query]);
+
+  const handleQueryChange = (next: string) => {
+    setQuery(next);
+    if (next.trim()) {
+      // Active query → flip into loading mode immediately so the user
+      // sees feedback before the debounced fetch fires.
+      setLoading(true);
+      setError(null);
+    } else {
+      setResults(null);
+      setLoading(false);
+      setError(null);
+    }
+  };
+
+  return (
+    <div className="relative space-y-1.5">
+      <label htmlFor={id} className={fieldLabel}>
+        {field.label}
+      </label>
+
+      <button
+        id={id}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex h-10 w-full items-center gap-3 rounded-xl border border-stone-200 bg-white px-3 text-start text-sm transition-colors hover:border-brand focus:outline focus:outline-2 focus:outline-brand/30",
+          open && "border-brand",
+        )}
+      >
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-stone-50 text-stone-700">
+          <IconifyIcon icon={normalizedValue} width={16} height={16} />
+        </span>
+        <span className="flex-1 truncate font-mono text-[11px] text-stone-700">
+          {normalizedValue}
+        </span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "shrink-0 text-stone-400 transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="إغلاق"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-30 cursor-default bg-transparent"
+          />
+          <div className="absolute z-40 mt-1 max-h-[460px] w-full overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl">
+            {/* Search */}
+            <div className="border-b border-stone-100 p-2">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                placeholder="ابحث في 200,000+ أيقونة…"
+                autoFocus
+                className={cn(inputBase, "h-9 text-xs")}
+              />
+            </div>
+
+            <div className="max-h-[380px] overflow-y-auto p-2">
+              {query.trim() ? (
+                loading ? (
+                  <p className="px-2 py-6 text-center text-xs text-stone-500">
+                    جاري البحث…
+                  </p>
+                ) : error ? (
+                  <p className="px-2 py-6 text-center text-xs text-rose-600">
+                    {error}
+                  </p>
+                ) : !results || results.length === 0 ? (
+                  <p className="px-2 py-6 text-center text-xs text-stone-500">
+                    لا نتائج لـ &quot;{query}&quot;
+                  </p>
+                ) : (
+                  <IconGrid
+                    names={results}
+                    activeName={normalizedValue}
+                    onPick={(n) => {
+                      onChange(n);
+                      setOpen(false);
+                    }}
+                  />
+                )
+              ) : (
+                ICON_CATEGORIES.map((cat) => (
+                  <div key={cat.id} className="mb-3 last:mb-0">
+                    <p className="mb-1.5 px-1 text-[10px] font-bold uppercase tracking-wide text-stone-500">
+                      {cat.label}
+                    </p>
+                    <IconGrid
+                      names={cat.icons}
+                      activeName={normalizedValue}
+                      onPick={(n) => {
+                        onChange(n);
+                        setOpen(false);
+                      }}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer attribution / hint */}
+            <div className="border-t border-stone-100 bg-slate-50 px-3 py-1.5 text-[10px] text-slate-500">
+              {results
+                ? `${results.length} نتيجة من Iconify`
+                : "اكتب اسماً للبحث في كل المكتبات"}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function IconGrid({
+  names,
+  activeName,
+  onPick,
+}: {
+  names: string[];
+  activeName: string;
+  onPick: (name: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-8 gap-1">
+      {names.map((name) => {
+        const active = name === activeName;
+        return (
+          <button
+            key={name}
+            type="button"
+            onClick={() => onPick(name)}
+            aria-label={name}
+            title={name}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md text-stone-600 transition-colors hover:bg-brand-light hover:text-brand",
+              active && "bg-brand-light text-brand ring-2 ring-brand",
+            )}
+          >
+            <IconifyIcon icon={name} width={16} height={16} />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

@@ -353,6 +353,8 @@ function estimatePrimitiveHeight(p: Primitive): number {
       return Math.max(80, p.props.items.length * (p.props.fontSize + 8) + 16);
     case "shape":
       return p.h ?? 140;
+    case "icon":
+      return p.h ?? 64;
   }
 }
 

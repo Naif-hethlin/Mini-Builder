@@ -178,6 +178,23 @@ const shapeSchema: FieldSchema[] = [
   { kind: "color", key: "borderColor", label: "لون الحد" },
 ];
 
+const iconSchema: FieldSchema[] = [
+  { kind: "icon", key: "name", label: "الأيقونة" },
+  { kind: "color", key: "color", label: "اللون" },
+  {
+    kind: "select",
+    key: "strokeWidth",
+    label: "سُمك الخط",
+    options: [
+      { value: "1", label: "رفيع" },
+      { value: "1.5", label: "متوسط" },
+      { value: "2", label: "افتراضي" },
+      { value: "2.5", label: "سميك" },
+      { value: "3", label: "أكثر سُمكاً" },
+    ],
+  },
+];
+
 export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {
   text: textSchema,
   heading: headingSchema,
@@ -185,4 +202,5 @@ export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {
   image: imageSchema,
   list: listSchema,
   shape: shapeSchema,
+  icon: iconSchema,
 };
