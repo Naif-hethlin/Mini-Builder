@@ -2,18 +2,45 @@ import "server-only";
 import { query } from "./db";
 
 /**
- * Idempotent schema setup. Runs on first DB access (see ensureMigrated).
- * Add new tables / columns here using CREATE … IF NOT EXISTS or ALTER …
- * IF NOT EXISTS so re-running is always safe.
+ * Idempotent schema setup. Runs on first DB access. Re-running is safe.
+ *
+ * Auth model: signup = phone + name. Login = phone only.
+ * No password, no email, no recovery — explicit user spec.
  */
 const SCHEMA = [
   `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
+
+  // ---- users table (target shape; nullable cols + ALTERs below handle
+  //      upgrading from the earlier username/password_hash schema).
   `CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    phone TEXT,
+    name TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );`,
+
+  // Forward migration: add the new cols if the table was created with
+  // the old shape, backfill, drop old cols, then enforce NOT NULL + UNIQUE.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;`,
+  `UPDATE users
+     SET phone = COALESCE(phone, username, id::text),
+         name  = COALESCE(name, username, 'user')
+   WHERE phone IS NULL OR name IS NULL;`,
+  `ALTER TABLE users DROP COLUMN IF EXISTS username;`,
+  `ALTER TABLE users DROP COLUMN IF EXISTS password_hash;`,
+  `DO $$ BEGIN
+     ALTER TABLE users ALTER COLUMN phone SET NOT NULL;
+   EXCEPTION WHEN others THEN NULL; END $$;`,
+  `DO $$ BEGIN
+     ALTER TABLE users ALTER COLUMN name SET NOT NULL;
+   EXCEPTION WHEN others THEN NULL; END $$;`,
+  `DO $$ BEGIN
+     ALTER TABLE users ADD CONSTRAINT users_phone_unique UNIQUE (phone);
+   EXCEPTION WHEN duplicate_object THEN NULL;
+            WHEN unique_violation THEN NULL; END $$;`,
+
+  // ---- projects ----
   `CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

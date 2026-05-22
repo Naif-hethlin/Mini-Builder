@@ -3,7 +3,7 @@ import { signup } from "@/lib/auth";
 import { setSession } from "@/lib/session";
 
 export async function POST(req: Request) {
-  let body: { username?: string; password?: string };
+  let body: { phone?: string; name?: string };
   try {
     body = await req.json();
   } catch {
@@ -12,10 +12,10 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const username = String(body.username ?? "");
-  const password = String(body.password ?? "");
+  const phone = String(body.phone ?? "");
+  const name = String(body.name ?? "");
 
-  const result = await signup(username, password);
+  const result = await signup(phone, name);
   if (!result.ok) {
     return NextResponse.json(result, { status: 400 });
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Lock, User } from "lucide-react";
+import { ArrowLeft, Phone, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/shared/ui/Logo";
@@ -13,13 +13,13 @@ const SKIP_KEY = "rekaz-builder/auth/skipped";
 type Mode = "login" | "signup";
 
 /**
- * Full-screen auth gate. Sits on top of any page (typically /templates).
- * If the user isn't signed in AND hasn't explicitly "browsed without
- * login" this session, the overlay covers the page. After signup / login
- * / skip → overlay fades.
+ * Full-screen auth gate stacked on top of /templates.
  *
- * Skip persists in sessionStorage so it doesn't keep nagging across
- * route changes in the same tab.
+ *  - signup: phone + name (no password, no email)
+ *  - login : phone only (server looks up by phone, no secret check)
+ *
+ * "تصفح بدون تسجيل" persists a flag in sessionStorage so the overlay
+ * stays dismissed for the rest of the tab session.
  */
 export function AuthOverlay() {
   const { user, loading } = useCurrentUser();
@@ -27,8 +27,8 @@ export function AuthOverlay() {
   const [hydrated, setHydrated] = useState(false);
 
   const [mode, setMode] = useState<Mode>("login");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,11 +53,13 @@ export function AuthOverlay() {
     setBusy(true);
     setError(null);
     try {
+      const body =
+        mode === "signup" ? { phone, name } : { phone };
       const res = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -66,7 +68,7 @@ export function AuthOverlay() {
       }
       toast.success(mode === "signup" ? "تم إنشاء الحساب" : "أهلاً بعودتك");
       await refreshCurrentUser();
-      // overlay will hide automatically once useCurrentUser flips to a user
+      // overlay hides automatically once useCurrentUser flips to a user
     } catch {
       setError("تعذر الاتصال بالخادم");
     } finally {
@@ -126,39 +128,44 @@ export function AuthOverlay() {
               </h1>
               <p className="mt-1 text-sm text-stone-500">
                 {mode === "login"
-                  ? "أهلاً بك في ركاز 👋"
-                  : "اسم مستخدم وكلمة مرور — هذا كل ما نطلبه."}
+                  ? "ادخل رقم الهاتف اللي سجّلت فيه — لا نطلب كلمة مرور."
+                  : "اسمك ورقمك فقط — ولا نحتاج بريد ولا كلمة مرور."}
               </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
+              {mode === "signup" && (
+                <Field
+                  icon={<User size={14} />}
+                  label="الاسم"
+                  type="text"
+                  autoComplete="name"
+                  value={name}
+                  onChange={setName}
+                  autoFocus
+                  minLength={2}
+                  maxLength={64}
+                  required
+                  placeholder="اسمك الكامل"
+                  dir="auto"
+                />
+              )}
+
               <Field
-                icon={<User size={14} />}
-                label="اسم المستخدم"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={setUsername}
-                autoFocus
-                minLength={3}
-                maxLength={32}
-                pattern="[a-zA-Z0-9_.\-]+"
+                icon={<Phone size={14} />}
+                label="رقم الهاتف"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={setPhone}
+                autoFocus={mode === "login"}
+                minLength={8}
+                maxLength={20}
                 required
-                placeholder="username"
-              />
-              <Field
-                icon={<Lock size={14} />}
-                label="كلمة المرور"
-                type="password"
-                autoComplete={
-                  mode === "signup" ? "new-password" : "current-password"
-                }
-                value={password}
-                onChange={setPassword}
-                minLength={6}
-                required
-                placeholder="••••••••"
+                placeholder="05xxxxxxxx"
+                dir="ltr"
               />
 
               {error && (
@@ -186,7 +193,10 @@ export function AuthOverlay() {
                 {mode === "login" ? "ما عندك حساب؟" : "عندك حساب بالفعل؟"}{" "}
                 <button
                   type="button"
-                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                  onClick={() => {
+                    setMode(mode === "login" ? "signup" : "login");
+                    setError(null);
+                  }}
                   className="font-semibold text-brand hover:underline"
                 >
                   {mode === "login" ? "سجّل الآن" : "سجّل دخول"}
@@ -210,10 +220,6 @@ export function AuthOverlay() {
               تصفح بدون تسجيل
               <ArrowLeft size={14} className="text-stone-400" />
             </button>
-
-            <p className="mt-6 text-center text-[11px] leading-relaxed text-stone-400">
-              لا نطلب بريداً — كلمة المرور غير قابلة للاسترجاع، احفظها لنفسك.
-            </p>
           </div>
         </motion.div>
       )}
@@ -228,25 +234,27 @@ function Field({
   value,
   onChange,
   autoComplete,
+  inputMode,
   autoFocus,
   minLength,
   maxLength,
-  pattern,
   required,
   placeholder,
+  dir,
 }: {
   icon: React.ReactNode;
   label: string;
-  type: "text" | "password";
+  type: "text" | "tel";
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
+  inputMode?: "tel" | "text";
   autoFocus?: boolean;
   minLength?: number;
   maxLength?: number;
-  pattern?: string;
   required?: boolean;
   placeholder?: string;
+  dir?: "ltr" | "rtl" | "auto";
 }) {
   return (
     <div>
@@ -262,12 +270,13 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
+          inputMode={inputMode}
           autoFocus={autoFocus}
           minLength={minLength}
           maxLength={maxLength}
-          pattern={pattern}
           required={required}
           placeholder={placeholder}
+          dir={dir}
           className="w-full rounded-xl border border-stone-200 bg-white py-3 ps-10 pe-4 outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </div>

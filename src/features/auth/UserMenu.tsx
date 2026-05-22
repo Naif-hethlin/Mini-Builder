@@ -63,9 +63,9 @@ export function UserMenu() {
         className="inline-flex h-8 items-center gap-1.5 rounded-full bg-stone-100 px-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200"
       >
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
-          {user.username.slice(0, 1).toUpperCase()}
+          {user.name.slice(0, 1).toUpperCase()}
         </span>
-        <span className="max-w-[100px] truncate">{user.username}</span>
+        <span className="max-w-[100px] truncate">{user.name}</span>
         <ChevronDown size={11} className="text-stone-400" />
       </button>
 
@@ -73,8 +73,9 @@ export function UserMenu() {
         <div className="absolute end-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl">
           <div className="border-b border-stone-100 px-3 py-2 text-xs">
             <p className="text-stone-500">مسجّل دخول كـ</p>
-            <p className="truncate font-medium text-stone-900">
-              {user.username}
+            <p className="truncate font-medium text-stone-900">{user.name}</p>
+            <p className="truncate font-mono text-[10px] text-stone-400">
+              {user.phone}
             </p>
           </div>
           <button

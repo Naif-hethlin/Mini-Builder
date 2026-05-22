@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 export type CurrentUser = {
   id: string;
-  username: string;
+  phone: string;
+  name: string;
 };
 
 let cached: { user: CurrentUser | null } | null = null;
