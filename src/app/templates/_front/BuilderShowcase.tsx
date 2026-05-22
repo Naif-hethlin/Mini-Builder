@@ -2,17 +2,21 @@
 
 import {
   ArrowLeft,
+  Camera,
   Check,
   ChevronLeft,
+  Coffee,
   Globe,
   Home,
   Image as ImageIcon,
   Images,
   LayoutGrid,
   Lock,
+  Scissors,
   Send,
   Type,
   Upload,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -788,27 +792,64 @@ function TemplatePickerModal({
     id: ProjectTemplateType;
     title: string;
     subtitle: string;
-    accent: string;
+    Icon: LucideIcon;
+    tone: "amber" | "orange" | "purple";
   }> = [
     {
       id: "barber",
       title: "صالون الحلاقة",
       subtitle: "حجوزات، خدمات، فريق العمل",
-      accent: "from-amber-50 to-orange-50",
+      Icon: Scissors,
+      tone: "amber",
     },
     {
       id: "coffee",
       title: "مقهى الأحلام",
       subtitle: "قائمة الطعام، صور، توصيل",
-      accent: "from-orange-50 to-amber-50",
+      Icon: Coffee,
+      tone: "orange",
     },
     {
       id: "photography",
       title: "عدسة الإبداع",
       subtitle: "بورتفوليو، باقات، تواصل",
-      accent: "from-purple-50 to-pink-50",
+      Icon: Camera,
+      tone: "purple",
     },
   ];
+
+  const TONE: Record<
+    "amber" | "orange" | "purple",
+    {
+      bg: string;
+      bgHover: string;
+      iconText: string;
+      borderHover: string;
+      focusRing: string;
+    }
+  > = {
+    amber: {
+      bg: "bg-amber-50",
+      bgHover: "group-hover:bg-amber-100",
+      iconText: "text-amber-500",
+      borderHover: "hover:border-amber-200",
+      focusRing: "focus:ring-amber-500",
+    },
+    orange: {
+      bg: "bg-orange-50",
+      bgHover: "group-hover:bg-orange-100",
+      iconText: "text-orange-500",
+      borderHover: "hover:border-orange-200",
+      focusRing: "focus:ring-orange-500",
+    },
+    purple: {
+      bg: "bg-purple-50",
+      bgHover: "group-hover:bg-purple-100",
+      iconText: "text-purple-500",
+      borderHover: "hover:border-purple-200",
+      focusRing: "focus:ring-purple-500",
+    },
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -821,45 +862,88 @@ function TemplatePickerModal({
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[180] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-[180] flex items-center justify-center p-4 transition-all"
+      role="dialog"
+      aria-modal="true"
+      aria-label="اختر قالباً"
+    >
       <button
         type="button"
         aria-label="إغلاق"
         onClick={onClose}
-        className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-stone-900/40 backdrop-blur-[2px]"
       />
-      <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-2xl">
-        <div className="mb-4 text-center">
-          <p className="text-xs font-medium text-brand">اختر قالباً</p>
-          <h2 className="mt-1 text-xl font-bold text-stone-900">
+
+      <div className="relative z-10 flex w-full max-w-[460px] flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl transition-all">
+        {/* Close (top-left in RTL — matches the source mockup) */}
+        <button
+          type="button"
+          aria-label="إغلاق"
+          onClick={onClose}
+          className="group absolute top-4 left-4 z-10 rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-200"
+        >
+          <X
+            size={18}
+            className="flex transition-transform duration-300 group-hover:rotate-90"
+          />
+        </button>
+
+        {/* Header */}
+        <div className="px-6 pt-8 pb-5 text-center">
+          <span className="mb-2 block text-[11px] font-bold tracking-wide text-brand">
+            اختر قالباً
+          </span>
+          <h2 className="mb-2 text-xl font-bold text-stone-800">
             أي عمل تبني له موقعاً؟
           </h2>
-          <p className="mt-1 text-sm text-stone-500">
+          <p className="text-xs text-stone-500">
             معاينة كاملة قبل تثبيت اختيارك.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {choices.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => onPick(c.id)}
-              className="group overflow-hidden rounded-2xl border border-stone-200 text-start transition-all hover:border-brand hover:shadow-md"
-            >
-              <div
+
+        {/* Choices */}
+        <div className="grid grid-cols-3 gap-3 px-6 pb-8">
+          {choices.map((c) => {
+            const t = TONE[c.tone];
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onPick(c.id)}
                 className={cn(
-                  "h-24 bg-gradient-to-br",
-                  c.accent,
+                  "group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2",
+                  t.borderHover,
+                  t.focusRing,
                 )}
-              />
-              <div className="p-3">
-                <h3 className="text-sm font-bold text-stone-900 group-hover:text-brand">
-                  {c.title}
-                </h3>
-                <p className="mt-0.5 text-xs text-stone-500">{c.subtitle}</p>
-              </div>
-            </button>
-          ))}
+              >
+                <div
+                  className={cn(
+                    "flex h-20 w-full shrink-0 items-center justify-center transition-colors duration-300",
+                    t.bg,
+                    t.bgHover,
+                  )}
+                >
+                  <c.Icon
+                    size={28}
+                    strokeWidth={1.75}
+                    className={cn(
+                      "drop-shadow-sm transition-transform duration-300 group-hover:scale-110",
+                      t.iconText,
+                    )}
+                  />
+                </div>
+                <div className="flex w-full flex-1 flex-col items-center justify-start bg-white p-3 text-center">
+                  <h3 className="mb-1.5 text-sm font-bold text-stone-800">
+                    {c.title}
+                  </h3>
+                  <p className="text-[10px] leading-relaxed text-stone-500">
+                    {c.subtitle}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
