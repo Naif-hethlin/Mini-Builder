@@ -117,16 +117,35 @@ export function LoginForm() {
         return;
       }
 
-      useProjects.getState().hydrate();
-      const project = useProjects.getState().create(
+      // Create the project on the server so it's tied to this user's
+      // account and survives logout / cross-device.
+      const createBody =
         starter.kind === "scratch"
           ? { name: "مشروعي الأول" }
           : {
               name: STARTER_NAMES[starter.template],
               templateType: starter.template,
-            },
-      );
-      router.push(`/builder/${project.id}`);
+            };
+      const createRes = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(createBody),
+      });
+      const created = await createRes.json();
+      if (!createRes.ok || !created.ok) {
+        setError(created.error || "تعذر إنشاء المشروع");
+        return;
+      }
+      // Hydrate into the local store so the builder feels instant.
+      useProjects.getState().hydrate();
+      useProjects.setState({
+        projects: {
+          ...useProjects.getState().projects,
+          [created.project.id]: created.project,
+        },
+      });
+      router.push(`/builder/${created.project.id}`);
     } catch {
       setError("تعذر الاتصال بالخادم");
     } finally {
