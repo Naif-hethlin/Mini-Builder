@@ -51,10 +51,21 @@ export function MobileTabs() {
                 : "text-slate-500 active:bg-slate-50",
             )}
           >
-            <Icon size={20} strokeWidth={isActive ? 2.25 : 1.75} />
+            {/* pointer-events-none on the icon + label so the button is
+                always the click target — otherwise a tap landing on the
+                SVG/span reports the inner node to assistive tech and any
+                "elementFromPoint" debugging shows the SVG, not the
+                tab. Click still bubbles to the parent <button>, so the
+                React handler fires either way; this just keeps the
+                target semantically clean. */}
+            <Icon
+              size={20}
+              strokeWidth={isActive ? 2.25 : 1.75}
+              className="pointer-events-none"
+            />
             <span
               className={cn(
-                "text-[11px]",
+                "pointer-events-none text-[11px]",
                 isActive ? "font-bold" : "font-semibold",
               )}
             >

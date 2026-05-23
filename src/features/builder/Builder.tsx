@@ -95,6 +95,10 @@ export function Builder({ projectId }: { projectId: string }) {
           richColors
           closeButton
           duration={3000}
+          // On phones the default 16px bottom offset puts toasts under
+          // the MobileTabs strip (~56px tall) and under iPhone's home
+          // indicator (~34px safe-area). Push them above both.
+          mobileOffset={{ bottom: "calc(80px + env(safe-area-inset-bottom))" }}
         />
       </div>
     </ConfirmProvider>
