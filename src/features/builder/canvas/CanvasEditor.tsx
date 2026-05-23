@@ -66,7 +66,11 @@ export function CanvasEditor({
   return (
     <div className={`relative ${BG_CLASS[props.background]}`}>
       <div
-        className="relative overflow-hidden"
+        // overflow-x-auto so primitives positioned past the visible
+        // canvas (e.g. when an exploded section sized for 1200px lands
+        // in a narrower viewport) stay reachable via horizontal scroll
+        // instead of being clipped off.
+        className="relative overflow-x-auto overflow-y-hidden"
         style={{ minHeight: props.height }}
       >
         {props.primitives.length === 0 && (
