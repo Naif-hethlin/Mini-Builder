@@ -104,7 +104,17 @@ export function EditPanel() {
 
       <div className="flex-1 overflow-auto">
         {selection.kind === "primitive" && primInfo ? (
-          <div className="p-4">
+          <div className="space-y-5 p-4">
+            <GeometryForm
+              primitive={primInfo.primitive}
+              onChange={(patch) =>
+                updatePrimitive(
+                  primInfo.canvasSectionId,
+                  primInfo.primitive.id,
+                  (p) => ({ ...p, ...patch }) as Primitive,
+                )
+              }
+            />
             <PrimitiveForm
               canvasSectionId={primInfo.canvasSectionId}
               primitive={primInfo.primitive}
@@ -231,6 +241,144 @@ function PrimitiveForm({
         />
       )}
     </div>
+  );
+}
+
+// =============================================================================
+// Geometry form — width / height / rotation controls common to every
+// primitive type, rendered above the per-type props schema.
+// =============================================================================
+
+function GeometryForm({
+  primitive,
+  onChange,
+}: {
+  primitive: Primitive;
+  onChange: (patch: Partial<Primitive>) => void;
+}) {
+  const rotation = primitive.rotation ?? 0;
+  const hasH = primitive.h !== undefined;
+
+  const setNumber = (key: "x" | "y" | "w" | "h" | "rotation") =>
+    (raw: string) => {
+      const v = Number(raw);
+      if (Number.isNaN(v)) return;
+      onChange({ [key]: v } as Partial<Primitive>);
+    };
+
+  return (
+    <details
+      className="group rounded-xl border border-slate-200 bg-slate-50/60 p-3"
+      open
+    >
+      <summary className="flex cursor-pointer items-center justify-between text-xs font-bold text-slate-700">
+        <span>الموضع والحجم والدوران</span>
+        <span className="text-[10px] font-medium text-slate-400 transition-transform group-open:rotate-90">
+          ▸
+        </span>
+      </summary>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <NumberField
+          label="العرض (Width)"
+          value={primitive.w}
+          onChange={setNumber("w")}
+          min={20}
+        />
+        <NumberField
+          label="الارتفاع (Height)"
+          value={hasH ? primitive.h! : 0}
+          placeholder={hasH ? undefined : "تلقائي"}
+          onChange={setNumber("h")}
+          min={hasH ? 20 : 0}
+        />
+        <NumberField
+          label="X"
+          value={primitive.x}
+          onChange={setNumber("x")}
+        />
+        <NumberField
+          label="Y"
+          value={primitive.y}
+          onChange={setNumber("y")}
+        />
+      </div>
+
+      <div className="mt-3">
+        <label className="mb-1 flex items-center justify-between text-xs font-medium text-slate-700">
+          <span>الدوران (Rotation)</span>
+          <span className="font-mono text-[11px] text-slate-500">
+            {rotation}°
+          </span>
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={-180}
+            max={180}
+            step={1}
+            value={rotation}
+            onChange={(e) => onChange({ rotation: Number(e.target.value) })}
+            className="flex-1 accent-brand"
+          />
+          <input
+            type="number"
+            value={rotation}
+            min={-180}
+            max={180}
+            step={1}
+            onChange={(e) => setNumber("rotation")(e.target.value)}
+            className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center text-xs"
+          />
+        </div>
+        <div className="mt-2 flex gap-1">
+          {[0, 45, 90, 180, -45, -90].map((deg) => (
+            <button
+              key={deg}
+              type="button"
+              onClick={() => onChange({ rotation: deg })}
+              className={cn(
+                "h-7 flex-1 rounded-md text-[10px] font-bold transition-colors",
+                rotation === deg
+                  ? "bg-brand text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-100",
+              )}
+            >
+              {deg}°
+            </button>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function NumberField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  min,
+}: {
+  label: string;
+  value: number;
+  onChange: (raw: string) => void;
+  placeholder?: string;
+  min?: number;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-medium text-slate-700">
+        {label}
+      </span>
+      <input
+        type="number"
+        value={value}
+        placeholder={placeholder}
+        min={min}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs"
+      />
+    </label>
   );
 }
 

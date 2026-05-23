@@ -100,6 +100,9 @@ type Geometry = {
   y: number;
   w: number;
   h?: number; // images + shapes use it; text/heading/button/list height auto
+  /** Rotation in degrees, applied via CSS transform around the primitive's
+   *  center. Optional — defaults to 0. Common to every primitive type. */
+  rotation?: number;
 };
 
 export type Primitive = Geometry &

@@ -97,6 +97,8 @@ const buttonSchema: FieldSchema[] = [
       { value: "lg", label: "كبير" },
     ],
   },
+  { kind: "color", key: "bgColor", label: "لون الخلفية" },
+  { kind: "color", key: "textColor", label: "لون النص" },
 ];
 
 const imageSchema: FieldSchema[] = [

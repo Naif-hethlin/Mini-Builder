@@ -212,6 +212,7 @@ function DraggablePrimitive({
   // in viewport-relative pixels (it tracks `e.clientX`), so it must anchor
   // to the LEFT edge even on this RTL page — otherwise drags read as
   // inverted (drag right, move left).
+  const rotation = primitive.rotation ?? 0;
   const style: CSSProperties = {
     position: "absolute",
     left: `${liveX}px`,
@@ -220,6 +221,9 @@ function DraggablePrimitive({
     ...(primitive.h !== undefined ? { height: `${primitive.h}px` } : {}),
     cursor: isEditing ? "text" : drag ? "grabbing" : "grab",
     touchAction: "none",
+    ...(rotation !== 0
+      ? { transform: `rotate(${rotation}deg)`, transformOrigin: "center center" }
+      : {}),
   };
 
   return (
