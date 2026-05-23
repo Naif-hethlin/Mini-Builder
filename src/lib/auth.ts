@@ -13,26 +13,40 @@ export type AuthResult =
   | { ok: true; user: AuthUser }
   | { ok: false; error: string };
 
-/** Normalize Arabic-Indic digits and strip everything that isn't a digit
- *  or a leading +. Stores phones in a canonical form so the same number
- *  written different ways still matches. */
-function normalizePhone(raw: string): string {
+/** Canonicalize to the Saudi local-mobile form: 05xxxxxxxx (10 digits,
+ *  starts with 05). Accepts +966/00966/966/5xxxx variants and folds
+ *  them down to one DB key so the same number written different ways
+ *  never creates two accounts.
+ *
+ *  Rules:
+ *   - Arabic-Indic digits → ASCII, strip all non-digits.
+ *   - Drop a leading "00" or "+966" prefix.
+ *   - If the result is 9 digits starting with "5", re-add the local "0". */
+export function normalizePhone(raw: string): string {
   const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
-  const trimmed = raw.trim();
-  let out = "";
-  for (const ch of trimmed) {
+  let digits = "";
+  for (const ch of raw.trim()) {
     const ai = arabicDigits.indexOf(ch);
-    if (ai !== -1) out += String(ai);
-    else if (ch >= "0" && ch <= "9") out += ch;
-    else if (ch === "+" && out === "") out += ch;
+    if (ai !== -1) digits += String(ai);
+    else if (ch >= "0" && ch <= "9") digits += ch;
   }
-  return out;
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("966") && digits.length >= 11) {
+    digits = digits.slice(3);
+  }
+  if (digits.length === 9 && digits.startsWith("5")) {
+    digits = "0" + digits;
+  }
+  return digits;
 }
 
 function isValidPhone(p: string): boolean {
-  // Accept 8–15 digits (E.164 max is 15). Optional leading +.
-  return /^\+?\d{8,15}$/.test(p);
+  // Saudi mobile: exactly 10 digits starting with 05.
+  return /^05\d{8}$/.test(p);
 }
+
+const PHONE_FORMAT_ERROR =
+  "رقم الجوال لازم يبدأ بـ 05 ويتكوّن من 10 أرقام";
 
 export async function signup(
   rawPhone: string,
@@ -42,7 +56,7 @@ export async function signup(
   const phone = normalizePhone(rawPhone);
   const name = rawName.trim();
   if (!isValidPhone(phone)) {
-    return { ok: false, error: "رقم الهاتف غير صالح" };
+    return { ok: false, error: PHONE_FORMAT_ERROR };
   }
   if (name.length < 2) {
     return { ok: false, error: "الاسم قصير جدًا" };
@@ -55,7 +69,7 @@ export async function signup(
   if (exists.rowCount > 0) {
     return {
       ok: false,
-      error: "رقم الهاتف مسجّل بالفعل — استخدم تسجيل الدخول",
+      error: "رقم الجوال مسجّل بالفعل — استخدم تسجيل الدخول",
     };
   }
 
@@ -71,7 +85,7 @@ export async function login(rawPhone: string): Promise<AuthResult> {
   await ensureMigrated();
   const phone = normalizePhone(rawPhone);
   if (!isValidPhone(phone)) {
-    return { ok: false, error: "رقم الهاتف غير صالح" };
+    return { ok: false, error: PHONE_FORMAT_ERROR };
   }
   const result = await query<AuthUser>(
     "SELECT id, phone, name, created_at FROM users WHERE phone = $1 LIMIT 1",

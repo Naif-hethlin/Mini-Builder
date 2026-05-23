@@ -54,6 +54,32 @@ const SCHEMA = [
      ALTER TABLE users ADD CONSTRAINT users_phone_unique UNIQUE (phone);
    EXCEPTION WHEN others THEN NULL; END $$;`,
 
+  // Re-canonicalize legacy phones to the Saudi local form (05xxxxxxxx).
+  // Done in SQL so the migration is self-contained and idempotent.
+  //
+  // If a row's canonical form would collide with another existing row,
+  // we leave that row alone — we never auto-merge two accounts since
+  // that would silently re-parent the wrong user's projects.
+  `CREATE OR REPLACE FUNCTION rekaz_canon_phone(p TEXT) RETURNS TEXT AS $func$
+   DECLARE d TEXT;
+   BEGIN
+     d := regexp_replace(COALESCE(p, ''), '[^0-9]', '', 'g');
+     IF left(d, 2) = '00' THEN d := substring(d FROM 3); END IF;
+     IF left(d, 3) = '966' AND length(d) >= 11 THEN d := substring(d FROM 4); END IF;
+     IF length(d) = 9 AND left(d, 1) = '5' THEN d := '0' || d; END IF;
+     RETURN d;
+   END;
+   $func$ LANGUAGE plpgsql IMMUTABLE;`,
+  `UPDATE users u
+     SET phone = rekaz_canon_phone(u.phone)
+   WHERE u.phone IS NOT NULL
+     AND u.phone <> rekaz_canon_phone(u.phone)
+     AND NOT EXISTS (
+       SELECT 1 FROM users u2
+       WHERE u2.id <> u.id
+         AND u2.phone = rekaz_canon_phone(u.phone)
+     );`,
+
   // ---- projects ----
   `CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

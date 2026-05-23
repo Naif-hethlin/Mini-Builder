@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Phone, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/shared/ui/Logo";
@@ -27,6 +28,7 @@ export function AuthOverlay({
    *  flash the page underneath while useCurrentUser is still fetching. */
   initialAuthed?: boolean;
 } = {}) {
+  const router = useRouter();
   const { user, loading } = useCurrentUser();
 
   const [mode, setMode] = useState<Mode>("login");
@@ -53,6 +55,13 @@ export function AuthOverlay({
     e.preventDefault();
     setBusy(true);
     setError(null);
+    // Mirror the server validator so we surface a clear message before the
+    // round-trip. Canonical form is 05xxxxxxxx (Saudi mobile).
+    if (!/^05\d{8}$/.test(phone)) {
+      setError("رقم الجوال لازم يبدأ بـ 05 ويتكوّن من 10 أرقام");
+      setBusy(false);
+      return;
+    }
     try {
       const body =
         mode === "signup" ? { phone, name } : { phone };
@@ -68,8 +77,18 @@ export function AuthOverlay({
         return;
       }
       toast.success(mode === "signup" ? "تم إنشاء الحساب" : "أهلاً بعودتك");
+
+      // Returning visitor → straight to their dashboard (most-recent
+      // project). If they somehow have no project yet, fall back to
+      // /templates so they can start one.
+      // Fresh signups always stay on /templates; the overlay hides
+      // itself once useCurrentUser flips to a user, revealing the
+      // BuilderShowcase underneath.
+      if (mode === "login" && data.projectId) {
+        router.push(`/dashboard/${data.projectId}`);
+        return;
+      }
       await refreshCurrentUser();
-      // overlay hides automatically once useCurrentUser flips to a user
     } catch {
       setError("تعذر الاتصال بالخادم");
     } finally {
@@ -155,15 +174,19 @@ export function AuthOverlay({
 
               <Field
                 icon={<Phone size={14} />}
-                label="رقم الهاتف"
+                label="رقم الجوال"
                 type="tel"
                 autoComplete="tel"
-                inputMode="tel"
+                inputMode="numeric"
                 value={phone}
-                onChange={setPhone}
+                // Force digits-only as the user types so they can't
+                // submit "+966…" or "0501-234567" — server expects
+                // exactly "05xxxxxxxx".
+                onChange={(v) => setPhone(v.replace(/\D/g, "").slice(0, 10))}
                 autoFocus={mode === "login"}
-                minLength={8}
-                maxLength={20}
+                minLength={10}
+                maxLength={10}
+                pattern="05[0-9]{8}"
                 required
                 placeholder="05xxxxxxxx"
                 dir="ltr"
@@ -239,6 +262,7 @@ function Field({
   autoFocus,
   minLength,
   maxLength,
+  pattern,
   required,
   placeholder,
   dir,
@@ -249,10 +273,11 @@ function Field({
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
-  inputMode?: "tel" | "text";
+  inputMode?: "tel" | "text" | "numeric";
   autoFocus?: boolean;
   minLength?: number;
   maxLength?: number;
+  pattern?: string;
   required?: boolean;
   placeholder?: string;
   dir?: "ltr" | "rtl" | "auto";
@@ -275,6 +300,7 @@ function Field({
           autoFocus={autoFocus}
           minLength={minLength}
           maxLength={maxLength}
+          pattern={pattern}
           required={required}
           placeholder={placeholder}
           dir={dir}
