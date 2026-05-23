@@ -79,7 +79,7 @@ export function Customers() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="ابحث بالاسم أو الجوال…"
-            className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pe-9 ps-3 text-sm font-medium placeholder:text-stone-400 focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+            className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pe-9 ps-3 text-base font-medium placeholder:text-stone-400 focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
           />
         </div>
       )}

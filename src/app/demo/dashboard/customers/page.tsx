@@ -37,7 +37,7 @@ export default function CustomersPage() {
             <input
               type="text"
               placeholder="ابحث باسم أو رقم..."
-              className="w-64 rounded-xl border border-stone-200 bg-white py-2 pe-9 ps-3 text-sm placeholder:text-stone-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              className="w-64 rounded-xl border border-stone-200 bg-white py-2 pe-9 ps-3 text-base placeholder:text-stone-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 sm:text-sm"
             />
           </div>
         </div>

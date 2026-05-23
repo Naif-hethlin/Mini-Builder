@@ -178,7 +178,7 @@ export function PortfolioPanel({ projectId }: { projectId: string }) {
                 onChange={(e) =>
                   updateItem(item.id, "imageUrl", e.target.value)
                 }
-                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-xs focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-xs"
               />
               <input
                 type="text"
@@ -187,7 +187,7 @@ export function PortfolioPanel({ projectId }: { projectId: string }) {
                 onChange={(e) =>
                   updateItem(item.id, "title", e.target.value)
                 }
-                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
               />
               <input
                 type="text"
@@ -196,7 +196,7 @@ export function PortfolioPanel({ projectId }: { projectId: string }) {
                 onChange={(e) =>
                   updateItem(item.id, "category", e.target.value)
                 }
-                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-xs focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+                className="block h-9 w-full rounded-lg border border-stone-200 bg-white px-2 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-xs"
               />
             </div>
           </div>

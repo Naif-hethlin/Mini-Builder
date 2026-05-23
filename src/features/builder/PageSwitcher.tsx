@@ -248,14 +248,14 @@ function PageSettingsDialog({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+              className="mt-1 block h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
             />
           </div>
           <div>
             <label className="text-xs font-medium text-stone-700">
               الـ slug في الرابط
             </label>
-            <div className="mt-1 flex h-10 items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 text-sm focus-within:border-brand">
+            <div className="mt-1 flex h-10 items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 text-base focus-within:border-brand sm:text-sm">
               <span className="text-stone-400">/</span>
               <input
                 type="text"
