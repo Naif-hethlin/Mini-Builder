@@ -37,7 +37,7 @@ export function DemoSidebar() {
         </span>
         <div className="leading-tight">
           <p className="text-sm font-bold text-stone-900">صالون أصايل</p>
-          <p className="text-[10px] text-stone-500">عرض تجريبي</p>
+          <p className="text-[10px] text-stone-500">عميل افتراضي على ركاز</p>
         </div>
       </div>
 

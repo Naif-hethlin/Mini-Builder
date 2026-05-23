@@ -23,9 +23,11 @@ export default function DemoDashboardLayout({
               <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-light text-brand">
                 <Eye size={14} />
               </span>
-              <span className="truncate font-bold">عرض تجريبي للوحة التحكم</span>
+              <span className="truncate font-bold">
+                هكذا تبدو لوحتك بعد التسجيل في ركاز
+              </span>
               <span className="hidden text-stone-500 lg:inline">
-                — هذه أرقام وهمية. وقّع ودخّل بيانات حقيقية في دقيقة.
+                — نموذج صالون افتراضي بأرقام تجريبية ليطلع الزائر على الميزات.
               </span>
             </div>
             <div className="flex shrink-0 items-center gap-2">
