@@ -986,10 +986,19 @@ function explodeContact(p: ContactProps): {
   const innerW = CANVAS_W - padX * 2;
   const cardH = 540;
   const y = 60;
+  const gap = 16;
 
-  // Container card backdrop (white, soft border)
+  // Two stand-alone panels (no container behind them) so the layout
+  // doesn't look lopsided when the page bg matches white.
+  const leftW = Math.floor((innerW - gap) * 5 / 12);
+  const rightX = padX + leftW + gap;
+  const rightW = innerW - leftW - gap;
+  const leftPad = 36;
+
+  // Right panel — cream form card (rendered before so the brand panel
+  // doesn't sit on top of it visually; primitive z-order = render order).
   primitives.push({
-    ...shape(padX, y, innerW, cardH, "rounded-rect", "#ffffff"),
+    ...shape(rightX, y, rightW, cardH, "rounded-rect", "#ffffff"),
     props: {
       kind: "rounded-rect",
       fillColor: "#ffffff",
@@ -997,12 +1006,6 @@ function explodeContact(p: ContactProps): {
       borderWidth: 1,
     },
   } as Primitive);
-
-  // ── Left brand panel (≈ 5/12 of inner width) ────────────────────────
-  const leftW = Math.floor(innerW * 5 / 12);
-  const rightX = padX + leftW;
-  const rightW = innerW - leftW;
-  const leftPad = 36;
 
   // Brand-coral panel background (rounded only on the start side via
   // a slightly inset rect — close enough for the explode preview)
@@ -1016,31 +1019,13 @@ function explodeContact(p: ContactProps): {
     },
   } as Primitive);
 
-  // Eyebrow chip
-  primitives.push({
-    ...shape(padX + leftPad, y + leftPad, 130, 26, "rounded-rect", "#ffffff"),
-    props: {
-      kind: "rounded-rect",
-      fillColor: "#ffffff",
-      borderColor: "#000",
-      borderWidth: 0,
-    },
-  } as Primitive);
-  primitives.push(
-    text(padX + leftPad, y + leftPad + 6, 130, "تواصل معنا", {
-      fontSize: 11,
-      weight: "bold",
-      align: "center",
-      color: "#e85d5d",
-    }),
-  );
-
-  // Title + subtitle on the brand panel
+  // Title + subtitle directly on the brand panel — no eyebrow chip
+  // (the chip used to duplicate the title text and float oddly).
   if (p.title) {
     primitives.push(
       heading(
         padX + leftPad,
-        y + leftPad + 56,
+        y + leftPad,
         leftW - leftPad * 2,
         p.title,
         2,
@@ -1053,7 +1038,7 @@ function explodeContact(p: ContactProps): {
     primitives.push(
       text(
         padX + leftPad,
-        y + leftPad + 130,
+        y + leftPad + 80,
         leftW - leftPad * 2,
         p.subtitle,
         { fontSize: 15, color: "#fdeeea" },
