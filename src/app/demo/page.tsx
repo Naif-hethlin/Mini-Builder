@@ -11,7 +11,7 @@
 // user could produce with the builder if they assembled the same sections.
 
 import Link from "next/link";
-import { ArrowLeft, Eye, Sparkles } from "lucide-react";
+import { ArrowLeft, Eye, LayoutDashboard, Sparkles } from "lucide-react";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
 import { rekazDemoDesign } from "@/features/sections/rekazDemo";
 
@@ -60,17 +60,26 @@ export default function DemoPage() {
               — هذا الموقع كاملاً مبني بسحب وإفلات داخل ركاز.
             </span>
           </div>
-          <Link
-            href="/templates"
-            className="group inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white shadow-sm shadow-brand/30 transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-5 sm:text-sm"
-          >
-            <Sparkles size={14} />
-            <span>ابنِ موقعك أنت</span>
-            <ArrowLeft
-              size={14}
-              className="transition-transform group-hover:-translate-x-0.5"
-            />
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href="/demo/dashboard"
+              className="hidden items-center gap-1.5 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-700 transition-colors hover:border-brand hover:text-brand sm:inline-flex"
+            >
+              <LayoutDashboard size={13} />
+              لوحة التحكم
+            </Link>
+            <Link
+              href="/templates"
+              className="group inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white shadow-sm shadow-brand/30 transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-5 sm:text-sm"
+            >
+              <Sparkles size={14} />
+              <span>ابنِ موقعك أنت</span>
+              <ArrowLeft
+                size={14}
+                className="transition-transform group-hover:-translate-x-0.5"
+              />
+            </Link>
+          </div>
         </div>
       </div>
 
