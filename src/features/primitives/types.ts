@@ -31,6 +31,10 @@ export type HeadingPrimitiveProps = {
   level: 1 | 2 | 3 | 4;
   color: string;
   align: "start" | "center" | "end";
+  /** Override the default weight for this level. */
+  weight?: "medium" | "semibold" | "bold" | "extrabold";
+  /** Override letter-spacing. Default "tight" matches the preset Hero. */
+  tracking?: "normal" | "tight" | "tighter";
 };
 
 export type ButtonPrimitiveProps = {
@@ -38,6 +42,11 @@ export type ButtonPrimitiveProps = {
   variant: "solid" | "outline" | "ghost";
   size: "sm" | "md" | "lg";
   action: PrimitiveAction;
+  /** Background color for `solid`, border + text color for `outline` /
+   *  `ghost`. Defaults to the brand coral. */
+  bgColor?: string;
+  /** Text color. Defaults follow the variant. */
+  textColor?: string;
 };
 
 export type ImagePrimitiveProps = {
