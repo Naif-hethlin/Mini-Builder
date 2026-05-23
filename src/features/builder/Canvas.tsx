@@ -23,10 +23,8 @@ import {
   Smartphone,
   Tablet,
 } from "lucide-react";
-import { toast } from "sonner";
 import { createCanvas } from "@/features/sections/Canvas/defaults";
 import { cn } from "@/shared/lib/cn";
-import { explodeSection, isExplodable } from "./explode";
 import { SortableSection } from "./SortableSection";
 import type { DeviceMode } from "./state/types";
 import {
@@ -55,21 +53,6 @@ export function Canvas() {
   const reorderSections = useBuilderStore((s) => s.reorderSections);
   const removeSection = useBuilderStore((s) => s.removeSection);
   const duplicateSection = useBuilderStore((s) => s.duplicateSection);
-  const updateSection = useBuilderStore((s) => s.updateSection);
-
-  const handleExplode = (sectionId: string) => {
-    const target = sections.find((s) => s.id === sectionId);
-    if (!target) return;
-    const replaced = explodeSection(target);
-    if (!replaced) {
-      toast.info("هذا القسم لا يدعم التفكيك بعد");
-      return;
-    }
-    // Keep the original id so existing selection / autosave stays consistent.
-    updateSection(sectionId, () => ({ ...replaced, id: sectionId }));
-    setSelection({ kind: "section", sectionId });
-    toast.success("تم تفكيك القسم — اسحب أي عنصر بحرية");
-  };
 
   // 6px activation distance — clicks still register as clicks, only meaningful
   // drags trigger reorder.
@@ -133,7 +116,6 @@ export function Canvas() {
                         selected={section.id === selectedId}
                         canMoveUp={index > 0}
                         canMoveDown={index < sections.length - 1}
-                        canExplode={isExplodable(section)}
                         onSelect={() =>
                           setSelection({
                             kind: "section",
@@ -144,7 +126,6 @@ export function Canvas() {
                         onMoveDown={() => reorderSections(index, index + 1)}
                         onDuplicate={() => duplicateSection(section.id)}
                         onDelete={() => removeSection(section.id)}
-                        onExplode={() => handleExplode(section.id)}
                       />
                     ))}
                   </div>

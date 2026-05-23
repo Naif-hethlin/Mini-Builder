@@ -8,7 +8,6 @@ import {
   Copy,
   GripVertical,
   Trash2,
-  Wand2,
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
@@ -29,25 +28,21 @@ export function SortableSection({
   selected,
   canMoveUp,
   canMoveDown,
-  canExplode = false,
   onSelect,
   onMoveUp,
   onMoveDown,
   onDuplicate,
   onDelete,
-  onExplode,
 }: {
   section: Section;
   selected: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
-  canExplode?: boolean;
   onSelect: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  onExplode?: () => void;
 }) {
   const {
     attributes,
@@ -135,13 +130,6 @@ export function SortableSection({
           onClick={onMoveDown}
           disabled={!canMoveDown}
         />
-        {canExplode && onExplode && (
-          <ToolbarButton
-            icon={<Wand2 size={14} />}
-            label="تفكيك إلى لوحة حرة"
-            onClick={onExplode}
-          />
-        )}
         <ToolbarButton
           icon={<Copy size={14} />}
           label="نسخ"
