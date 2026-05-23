@@ -164,14 +164,34 @@ function DraggablePrimitive({
     null,
   );
 
+  // Live resize state — populated while the user drags one of the eight
+  // bounding-box handles. Same one-listener-per-drag pattern as move.
+  const resizeRef = useRef<{
+    anchor: ResizeAnchor;
+    startX: number;
+    startY: number;
+    origW: number;
+    origH: number;
+    origLeft: number;
+    origTop: number;
+  } | null>(null);
+  const [liveResize, setLiveResize] = useState<{
+    w: number;
+    h: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
   // Inline-edit state — toggled by click-while-selected or double-click.
   // Gated by `selected` in render so deselecting elsewhere implicitly
   // exits edit mode without an effect-driven setState.
   const [editing, setEditing] = useState(false);
   const isEditing = editing && selected;
 
-  const liveX = primitive.x + (dxState?.dx ?? 0);
-  const liveY = primitive.y + (dxState?.dy ?? 0);
+  const liveX = liveResize?.x ?? primitive.x + (dxState?.dx ?? 0);
+  const liveY = liveResize?.y ?? primitive.y + (dxState?.dy ?? 0);
+  const liveW = liveResize?.w ?? primitive.w;
+  const liveH = liveResize?.h ?? primitive.h;
 
   // NOTE: `left` (not `insetInlineStart`). The primitive's `x` is measured
   // in viewport-relative pixels (it tracks `e.clientX`), so it must anchor
@@ -182,13 +202,93 @@ function DraggablePrimitive({
     position: "absolute",
     left: `${liveX}px`,
     top: `${liveY}px`,
-    width: `${primitive.w}px`,
-    ...(primitive.h !== undefined ? { height: `${primitive.h}px` } : {}),
+    width: `${liveW}px`,
+    ...(liveH !== undefined ? { height: `${liveH}px` } : {}),
     cursor: isEditing ? "text" : dxState ? "grabbing" : "grab",
     touchAction: "none",
     ...(rotation !== 0
       ? { transform: `rotate(${rotation}deg)`, transformOrigin: "center center" }
       : {}),
+  };
+
+  const startResize = (anchor: ResizeAnchor, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    // Don't let the underlying move-drag fire when the user grabs a handle.
+    e.stopPropagation();
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    // Snapshot the primitive's current geometry. If h is missing we seed it
+    // from the rendered box so the user can shrink/grow it freely.
+    const measuredH =
+      primitive.h ??
+      ref.current?.getBoundingClientRect().height ??
+      primitive.w;
+
+    resizeRef.current = {
+      anchor,
+      startX: e.clientX,
+      startY: e.clientY,
+      origW: primitive.w,
+      origH: measuredH,
+      origLeft: primitive.x,
+      origTop: primitive.y,
+    };
+    setLiveResize({
+      w: primitive.w,
+      h: measuredH,
+      x: primitive.x,
+      y: primitive.y,
+    });
+
+    // Latest computed geometry — kept in scope of this drag so onUp can
+    // commit the final value without racing the React state batch.
+    let last = {
+      w: primitive.w,
+      h: measuredH,
+      x: primitive.x,
+      y: primitive.y,
+    };
+
+    const onMove = (ev: PointerEvent) => {
+      const r = resizeRef.current;
+      if (!r) return;
+      last = applyResize(r, ev.clientX, ev.clientY);
+      setLiveResize(last);
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+    const onUp = () => {
+      const r = resizeRef.current;
+      cleanup();
+      resizeRef.current = null;
+      setLiveResize(null);
+      if (!r) return;
+      updatePrimitive(
+        sectionId,
+        primitive.id,
+        (p) =>
+          ({
+            ...p,
+            w: last.w,
+            h: last.h,
+            x: last.x,
+            y: last.y,
+          }) as Primitive,
+      );
+    };
+    const onCancel = () => {
+      cleanup();
+      resizeRef.current = null;
+      setLiveResize(null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -304,19 +404,101 @@ function DraggablePrimitive({
       )}
 
       {selected && !isEditing && (
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            removePrimitive(sectionId, primitive.id);
-          }}
-          aria-label="حذف"
-          className="absolute -top-3 -end-3 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
-        >
-          <Trash2 size={12} />
-        </button>
+        <>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              removePrimitive(sectionId, primitive.id);
+            }}
+            aria-label="حذف"
+            className="absolute -top-3 -end-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+          >
+            <Trash2 size={12} />
+          </button>
+
+          {RESIZE_HANDLES.map(({ anchor, className, cursor }) => (
+            <span
+              key={anchor}
+              role="presentation"
+              onPointerDown={(e) => startResize(anchor, e)}
+              className={cn(
+                "absolute z-10 h-2.5 w-2.5 rounded-sm border border-brand bg-white shadow-sm",
+                className,
+              )}
+              style={{ cursor, touchAction: "none" }}
+            />
+          ))}
+        </>
       )}
     </div>
   );
+}
+
+// =============================================================================
+// Resize math — eight anchor points around the primitive's bounding box.
+// =============================================================================
+
+type ResizeAnchor = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
+const MIN_RESIZE = 20;
+
+const RESIZE_HANDLES: ReadonlyArray<{
+  anchor: ResizeAnchor;
+  className: string;
+  cursor: string;
+}> = [
+  { anchor: "nw", className: "-top-1.5 -left-1.5", cursor: "nwse-resize" },
+  { anchor: "n", className: "-top-1.5 left-1/2 -translate-x-1/2", cursor: "ns-resize" },
+  { anchor: "ne", className: "-top-1.5 -right-1.5", cursor: "nesw-resize" },
+  { anchor: "e", className: "top-1/2 -right-1.5 -translate-y-1/2", cursor: "ew-resize" },
+  { anchor: "se", className: "-bottom-1.5 -right-1.5", cursor: "nwse-resize" },
+  { anchor: "s", className: "-bottom-1.5 left-1/2 -translate-x-1/2", cursor: "ns-resize" },
+  { anchor: "sw", className: "-bottom-1.5 -left-1.5", cursor: "nesw-resize" },
+  { anchor: "w", className: "top-1/2 -left-1.5 -translate-y-1/2", cursor: "ew-resize" },
+];
+
+function applyResize(
+  r: {
+    anchor: ResizeAnchor;
+    startX: number;
+    startY: number;
+    origW: number;
+    origH: number;
+    origLeft: number;
+    origTop: number;
+  },
+  clientX: number,
+  clientY: number,
+): { w: number; h: number; x: number; y: number } {
+  const dx = clientX - r.startX;
+  const dy = clientY - r.startY;
+
+  let w = r.origW;
+  let h = r.origH;
+  let x = r.origLeft;
+  let y = r.origTop;
+
+  // Horizontal: anchors on the east edge grow width with +dx; west-edge
+  // anchors shrink width AND move left.
+  if (r.anchor === "ne" || r.anchor === "e" || r.anchor === "se") {
+    w = Math.max(MIN_RESIZE, r.origW + dx);
+  } else if (r.anchor === "nw" || r.anchor === "w" || r.anchor === "sw") {
+    const nextW = Math.max(MIN_RESIZE, r.origW - dx);
+    x = r.origLeft + (r.origW - nextW);
+    w = nextW;
+  }
+
+  // Vertical: south-edge anchors grow height with +dy; north-edge anchors
+  // shrink height AND move top down.
+  if (r.anchor === "sw" || r.anchor === "s" || r.anchor === "se") {
+    h = Math.max(MIN_RESIZE, r.origH + dy);
+  } else if (r.anchor === "nw" || r.anchor === "n" || r.anchor === "ne") {
+    const nextH = Math.max(MIN_RESIZE, r.origH - dy);
+    y = r.origTop + (r.origH - nextH);
+    h = nextH;
+  }
+
+  return { w: Math.round(w), h: Math.round(h), x: Math.round(x), y: Math.round(y) };
 }
