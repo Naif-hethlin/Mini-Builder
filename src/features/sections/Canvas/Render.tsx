@@ -19,7 +19,18 @@ const BG_CLASS: Record<CanvasProps["background"], string> = {
  * `primitive.action` (navigate / scroll / link / payment / booking)
  * fires on click in the runtime (/preview, /sites). No-action primitives
  * pass through unchanged.
+ *
+ * IMPORTANT: the desktop frame is constrained to CANVAS_DESIGN_WIDTH
+ * (1280px) and centered. The builder positions primitives inside a
+ * 1280px-wide canvas, so their `left: 80px` etc. is measured from the
+ * left edge of THAT box. If we let the runtime canvas stretch to full
+ * viewport, the same coordinates land flush-left on a 1920px screen —
+ * the form drifts off-center, the heading still looks centered (it's
+ * positioned at x = (1280 - w)/2), and the whole composition reads
+ * "broken." Same width here = same layout there.
  */
+const CANVAS_DESIGN_WIDTH = 1280;
+
 export default function CanvasRender({ props }: { props: CanvasProps }) {
   return (
     <section className={`relative ${BG_CLASS[props.background]}`}>
@@ -32,10 +43,11 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
         ))}
       </div>
 
-      {/* Desktop absolute */}
+      {/* Desktop absolute — centered 1280px box matches the builder canvas
+          width so absolute coordinates land where the user placed them. */}
       <div
-        className="relative hidden overflow-hidden md:block"
-        style={{ height: props.height }}
+        className="relative mx-auto hidden overflow-hidden md:block"
+        style={{ height: props.height, maxWidth: CANVAS_DESIGN_WIDTH }}
       >
         {props.primitives.map((p) => (
           <PrimitiveActionWrapper key={p.id} action={p.action}>
