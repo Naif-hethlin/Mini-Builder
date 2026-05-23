@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, MapPin, Phone, Send } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ContactProps } from "@/features/builder/state/types";
@@ -19,46 +19,65 @@ export default function ContactRender({ props }: { props: ContactProps }) {
   };
 
   return (
-    <section className="bg-white px-6 py-16 md:px-10">
-      <div className="mx-auto max-w-5xl">
+    <section className="bg-white px-6 py-20 md:px-10">
+      <div className="mx-auto max-w-6xl">
         {(props.title || props.subtitle) && (
-          <div className="mb-10 text-center">
+          <div className="mb-12 text-center">
+            <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-light text-brand">
+              <MessageCircle size={22} />
+            </span>
             {props.title && (
-              <h2 className="text-3xl font-bold tracking-tight text-stone-900">
+              <h2 className="text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
                 {props.title}
               </h2>
             )}
             {props.subtitle && (
-              <p className="mt-2 text-sm text-stone-500">{props.subtitle}</p>
+              <p className="mx-auto mt-3 max-w-xl text-base text-stone-500">
+                {props.subtitle}
+              </p>
             )}
           </div>
         )}
 
-        <div className="grid gap-8 md:grid-cols-[1fr,1.5fr]">
-          {/* Info column */}
-          <div className="space-y-4 text-sm">
+        <div className="grid gap-8 md:grid-cols-[1fr_1.5fr]">
+          {/* Info column — icon tiles with hover lift */}
+          <div className="space-y-3">
             {props.email && (
-              <InfoRow icon={<Mail size={16} />} label="البريد">
-                {props.email}
-              </InfoRow>
+              <InfoTile
+                icon={<Mail size={18} />}
+                tone="amber"
+                label="البريد الإلكتروني"
+                value={props.email}
+                href={`mailto:${props.email}`}
+              />
             )}
             {props.phone && (
-              <InfoRow icon={<Phone size={16} />} label="الهاتف">
-                {props.phone}
-              </InfoRow>
+              <InfoTile
+                icon={<Phone size={18} />}
+                tone="emerald"
+                label="الهاتف"
+                value={props.phone}
+                href={`tel:${props.phone}`}
+              />
             )}
             {props.address && (
-              <InfoRow icon={<MapPin size={16} />} label="العنوان">
-                {props.address}
-              </InfoRow>
+              <InfoTile
+                icon={<MapPin size={18} />}
+                tone="sky"
+                label="العنوان"
+                value={props.address}
+              />
             )}
           </div>
 
           {/* Form column */}
           <form
             onSubmit={handleSubmit}
-            className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-5"
+            className="space-y-3 rounded-3xl border border-stone-200 bg-white p-7 shadow-[0_2px_20px_rgb(0,0,0,0.04)]"
           >
+            <p className="mb-4 text-sm font-bold text-stone-900">
+              أرسل لنا رسالة
+            </p>
             <Field
               type="text"
               placeholder="الاسم"
@@ -82,10 +101,13 @@ export default function ContactRender({ props }: { props: ContactProps }) {
             />
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-brand-dark to-brand px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand/40"
             >
-              <Send size={14} />
-              إرسال
+              إرسال الرسالة
+              <Send
+                size={14}
+                className="transition-transform group-hover:-translate-x-0.5"
+              />
             </button>
           </form>
         </div>
@@ -94,26 +116,51 @@ export default function ContactRender({ props }: { props: ContactProps }) {
   );
 }
 
-function InfoRow({
+const TONES = {
+  amber: { bg: "bg-amber-50", icon: "text-amber-600" },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600" },
+  sky: { bg: "bg-sky-50", icon: "text-sky-600" },
+} as const;
+
+function InfoTile({
   icon,
+  tone,
   label,
-  children,
+  value,
+  href,
 }: {
   icon: React.ReactNode;
+  tone: keyof typeof TONES;
   label: string;
-  children: React.ReactNode;
+  value: string;
+  href?: string;
 }) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4">
-      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-md bg-brand-light text-brand">
+  const t = TONES[tone];
+  const inner = (
+    <>
+      <div
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${t.bg} ${t.icon}`}
+      >
         {icon}
       </div>
-      <div>
-        <p className="text-xs text-stone-500">{label}</p>
-        <p className="text-sm font-medium text-stone-900">{children}</p>
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-stone-500">{label}</p>
+        <p className="mt-0.5 truncate text-sm font-bold text-stone-900 group-hover:text-brand-dark">
+          {value}
+        </p>
       </div>
-    </div>
+    </>
   );
+  const className =
+    "group flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md";
+  if (href) {
+    return (
+      <a href={href} className={className}>
+        {inner}
+      </a>
+    );
+  }
+  return <div className={className}>{inner}</div>;
 }
 
 function Field({
@@ -132,7 +179,7 @@ function Field({
   textarea?: boolean;
 }) {
   const base =
-    "block w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30";
+    "block w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-brand focus:bg-white focus:outline focus:outline-2 focus:outline-brand/30 transition-colors";
   if (textarea) {
     return (
       <textarea
@@ -141,7 +188,7 @@ function Field({
         placeholder={placeholder}
         required={required}
         onChange={(e) => onChange(e.target.value)}
-        className={`${base} py-2`}
+        className={`${base} py-2.5`}
       />
     );
   }
