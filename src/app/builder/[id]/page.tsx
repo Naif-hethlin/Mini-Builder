@@ -6,7 +6,7 @@
 import { Builder } from "@/features/builder/Builder";
 
 export const metadata = {
-  title: "المنشئ — ركاز",
+  title: "البناء — ركاز",
 };
 
 export default async function BuilderPage({
