@@ -7,6 +7,8 @@ import ImageRender from "./Image/Render";
 import ListRender from "./List/Render";
 import ShapeRender from "./Shape/Render";
 import IconRender from "./Icon/Render";
+import InputRender from "./Input/Render";
+import QARender from "./QA/Render";
 
 /**
  * Renders a Primitive inside a Canvas section.
@@ -80,6 +82,18 @@ export function PrimitiveRenderer({
       return (
         <div style={style}>
           <IconRender props={primitive.props} />
+        </div>
+      );
+    case "input":
+      return (
+        <div style={style}>
+          <InputRender props={primitive.props} />
+        </div>
+      );
+    case "qa":
+      return (
+        <div style={style}>
+          <QARender props={primitive.props} />
         </div>
       );
   }

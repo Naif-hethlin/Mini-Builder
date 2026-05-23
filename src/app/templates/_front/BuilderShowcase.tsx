@@ -56,7 +56,14 @@ const STEP_AFTER_CLICK = 400;
 const STEP_BEFORE_PUBLISH = 900;
 const STEP_AFTER_LOOP = 4000;
 
-export function BuilderShowcase() {
+export function BuilderShowcase({
+  suspended = false,
+}: {
+  /** True when the page is gated behind the auth overlay — we stop the
+   *  cursor demo, drop the canvas content, and render a calm placeholder
+   *  so the overlay covers nothing distracting. */
+  suspended?: boolean;
+} = {}) {
   const router = useRouter();
   const [previewing, setPreviewing] = useState<ProjectTemplateType | null>(
     null,
@@ -127,6 +134,7 @@ export function BuilderShowcase() {
       />
       <Main
         previewing={previewing}
+        suspended={suspended}
         onPublish={startScratch}
         onUseTemplate={startFromTemplate}
         onExitPreview={() => setPreviewing(null)}
@@ -375,11 +383,13 @@ function ToolTile({
 
 function Main({
   previewing,
+  suspended = false,
   onPublish,
   onUseTemplate,
   onExitPreview,
 }: {
   previewing: ProjectTemplateType | null;
+  suspended?: boolean;
   onPublish: () => void;
   onUseTemplate: (t: ProjectTemplateType) => void;
   onExitPreview: () => void;
@@ -399,12 +409,22 @@ function Main({
   );
 
   // Demo orchestrator — cycles forever, but only when no template is being
-  // previewed. Re-keys on `previewing` so entering/leaving preview cleanly
-  // starts/stops the loop. The loop body resets `dropped`/`cursor`/
+  // previewed, the page isn't gated behind the auth overlay, and we're on
+  // a screen wide enough for the cursor + dropped cards to make sense.
+  // Re-keys on `previewing` + `suspended` so entering/leaving either state
+  // cleanly starts/stops the loop. The loop body resets `dropped`/`cursor`/
   // `publishActive` on its first tick, so we don't need a separate reset
   // when entering preview mode (preview-mode rendering ignores them anyway).
   useEffect(() => {
-    if (previewing) return;
+    if (previewing || suspended) return;
+    // Skip the demo entirely on phone-sized screens — the layout stacks
+    // there and the dropped-card animations look broken.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches
+    ) {
+      return;
+    }
     let cancelled = false;
     const sleep = (ms: number) =>
       new Promise<void>((r) => setTimeout(r, ms));
@@ -497,7 +517,7 @@ function Main({
     return () => {
       cancelled = true;
     };
-  }, [previewing]);
+  }, [previewing, suspended]);
 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col">
@@ -620,8 +640,10 @@ function Main({
         </div>
       </div>
 
-      {/* Demo cursor */}
-      {cursor && !previewing && (
+      {/* Demo cursor — desktop only. The auto-play looks awkward on phones
+          (the SVG appears huge over a stacked layout) and is hidden behind
+          the auth overlay via z-index when the page is suspended. */}
+      {cursor && !previewing && !suspended && (
         <div
           aria-hidden
           style={{
@@ -631,7 +653,12 @@ function Main({
           // translate() based on getBoundingClientRect coords, which are
           // measured from the viewport's LEFT edge. start-0 would anchor
           // it to the right edge in RTL and park it off-screen.
-          className="pointer-events-none fixed top-0 left-0 z-[9999] flex h-8 w-8 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out"
+          //
+          // z-[100] sits BELOW the auth overlay (z-[200]) so a stray
+          // cursor frame can never appear over the login form, and
+          // `hidden sm:flex` keeps it off phones where the showcase
+          // layout stacks and the cursor coords don't make sense.
+          className="pointer-events-none fixed top-0 left-0 z-[100] hidden h-8 w-8 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:flex"
         >
           <svg
             width="28"

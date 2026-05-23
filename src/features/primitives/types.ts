@@ -56,10 +56,25 @@ export type ListPrimitiveProps = {
 };
 
 export type ShapePrimitiveProps = {
-  kind: "circle" | "square" | "triangle";
+  /** Shape kind — see Shape/library.ts for the full set. Stored as string
+   *  so the library can grow without forcing consumers to update. */
+  kind: string;
   fillColor: string;
   borderColor: string;
   borderWidth: number;
+};
+
+export type InputPrimitiveProps = {
+  label: string;
+  placeholder: string;
+  required: boolean;
+  fieldType: "text" | "email" | "tel" | "number" | "textarea";
+};
+
+export type QAPrimitiveProps = {
+  question: string;
+  answer: string;
+  defaultOpen: boolean;
 };
 
 export type IconPrimitiveProps = {
@@ -87,6 +102,8 @@ export type Primitive = Geometry &
     | { id: string; type: "list"; props: ListPrimitiveProps }
     | { id: string; type: "shape"; props: ShapePrimitiveProps }
     | { id: string; type: "icon"; props: IconPrimitiveProps }
+    | { id: string; type: "input"; props: InputPrimitiveProps }
+    | { id: string; type: "qa"; props: QAPrimitiveProps }
   );
 
 export type PrimitiveType = Primitive["type"];

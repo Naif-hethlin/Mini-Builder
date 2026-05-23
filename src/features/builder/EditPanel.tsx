@@ -202,6 +202,14 @@ function PrimitiveForm({
       if (typeof next.strokeWidth === "string")
         next.strokeWidth = Number(next.strokeWidth);
     }
+    if (primitive.type === "input") {
+      if (typeof next.required === "string")
+        next.required = next.required === "true";
+    }
+    if (primitive.type === "qa") {
+      if (typeof next.defaultOpen === "string")
+        next.defaultOpen = next.defaultOpen === "true";
+    }
     onChange(next);
   };
 
@@ -297,5 +305,9 @@ function primitiveLabel(type: Primitive["type"]): string {
       return "الشكل";
     case "icon":
       return "الأيقونة";
+    case "input":
+      return "حقل الإدخال";
+    case "qa":
+      return "السؤال والجواب";
   }
 }

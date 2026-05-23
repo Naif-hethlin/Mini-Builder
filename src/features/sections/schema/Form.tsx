@@ -7,6 +7,7 @@ import {
   LinkField,
   ListField,
   SelectField,
+  ShapeField,
   TextField,
   TextareaField,
   ToggleableLinkField,
@@ -87,6 +88,15 @@ export function Form({
           case "icon":
             return (
               <IconField
+                key={field.key}
+                field={field}
+                value={(current as string) ?? ""}
+                onChange={(v) => set(field.key, v)}
+              />
+            );
+          case "shape":
+            return (
+              <ShapeField
                 key={field.key}
                 field={field}
                 value={(current as string) ?? ""}

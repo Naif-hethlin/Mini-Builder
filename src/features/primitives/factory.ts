@@ -113,5 +113,32 @@ export function createPrimitive(type: PrimitiveType): Primitive {
           strokeWidth: 2,
         },
       };
+    case "input":
+      return {
+        id: newId(),
+        type: "input",
+        x: 40,
+        y: 40,
+        w: 320,
+        props: {
+          label: "الاسم",
+          placeholder: "اكتب اسمك هنا…",
+          required: false,
+          fieldType: "text",
+        },
+      };
+    case "qa":
+      return {
+        id: newId(),
+        type: "qa",
+        x: 40,
+        y: 40,
+        w: 360,
+        props: {
+          question: "سؤال جديد؟",
+          answer: "الإجابة هنا.",
+          defaultOpen: false,
+        },
+      };
   }
 }

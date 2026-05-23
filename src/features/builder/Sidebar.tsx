@@ -355,6 +355,10 @@ function estimatePrimitiveHeight(p: Primitive): number {
       return p.h ?? 140;
     case "icon":
       return p.h ?? 64;
+    case "input":
+      return 64;
+    case "qa":
+      return p.props.defaultOpen ? 120 : 52;
   }
 }
 
