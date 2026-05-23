@@ -4,12 +4,7 @@ import { newId } from "@/shared/lib/id";
 import type { PageDesign } from "@/features/builder/state/types";
 import { starterDesignFor } from "@/features/sections/starters";
 import { loadAll, saveAll } from "./storage";
-import type {
-  Page,
-  Project,
-  ProjectMeta,
-  ProjectTemplateType,
-} from "./types";
+import type { Page, Project, ProjectMeta, ProjectTemplateType } from "./types";
 
 const EMPTY_DESIGN: PageDesign = { version: 1, sections: [] };
 
@@ -41,18 +36,71 @@ function makeHomePage(design: PageDesign = EMPTY_DESIGN): Page {
  * v2: { id, name, pages: [{ slug:"home", design, ... }], ... }
  * Tolerates both on read, always emits v2 on write.
  */
-function ensureV2(raw: Record<string, unknown>): Project {
-  if (Array.isArray(raw.pages)) {
-    return raw as unknown as Project;
+function safeTime(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : Date.now();
+}
+
+function safeDesign(value: unknown): PageDesign {
+  if (
+    value &&
+    typeof value === "object" &&
+    Array.isArray((value as PageDesign).sections)
+  ) {
+    return value as PageDesign;
   }
-  const legacyDesign = (raw.design as PageDesign | undefined) ?? EMPTY_DESIGN;
+  return EMPTY_DESIGN;
+}
+
+function normalizePages(rawPages: unknown, legacyDesign: PageDesign): Page[] {
+  if (!Array.isArray(rawPages)) return [makeHomePage(legacyDesign)];
+
+  const pages = rawPages
+    .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
+    .map((p, i) => ({
+      id: typeof p.id === "string" ? p.id : newId(),
+      slug:
+        typeof p.slug === "string" && p.slug.trim() ? p.slug : `page-${i + 1}`,
+      name: typeof p.name === "string" && p.name.trim() ? p.name : "صفحة",
+      order: typeof p.order === "number" ? p.order : i,
+      isHome: p.isHome === true,
+      design: safeDesign(p.design),
+    }))
+    .sort((a, b) => a.order - b.order)
+    .map((p, i) => ({ ...p, order: i }));
+
+  if (pages.length === 0) return [makeHomePage(legacyDesign)];
+
+  if (!pages.some((p) => p.isHome)) {
+    pages[0] = { ...pages[0], isHome: true, slug: pages[0].slug || "home" };
+  } else {
+    let sawHome = false;
+    for (let i = 0; i < pages.length; i += 1) {
+      if (!pages[i].isHome) continue;
+      if (!sawHome) {
+        sawHome = true;
+      } else {
+        pages[i] = { ...pages[i], isHome: false };
+      }
+    }
+  }
+
+  return pages;
+}
+
+export function normalizeProject(raw: Record<string, unknown>): Project {
+  const legacyDesign = safeDesign(raw.design);
   return {
-    id: raw.id as string,
+    id: typeof raw.id === "string" ? raw.id : nanoid(),
     name: (raw.name as string) ?? "مشروع",
     templateType: raw.templateType as ProjectTemplateType | undefined,
-    pages: [makeHomePage(legacyDesign)],
-    createdAt: (raw.createdAt as number) ?? Date.now(),
-    updatedAt: (raw.updatedAt as number) ?? Date.now(),
+    pages: normalizePages(raw.pages, legacyDesign),
+    slug: typeof raw.slug === "string" ? raw.slug : null,
+    published: raw.published === true,
+    publishedAt: raw.publishedAt == null ? null : safeTime(raw.publishedAt),
+    createdAt: safeTime(raw.createdAt),
+    updatedAt: safeTime(raw.updatedAt),
   };
 }
 
@@ -76,6 +124,7 @@ export type ProjectsState = {
   hydrate: () => void;
   list: () => ProjectMeta[];
   get: (id: string) => Project | undefined;
+  upsert: (project: Project | Record<string, unknown>) => Project;
 
   // project lifecycle
   create: (input?: CreateInput) => Project;
@@ -112,7 +161,7 @@ export const useProjects = create<ProjectsState>((set, get) => ({
     const raw = loadAll();
     const projects: Record<string, Project> = {};
     for (const [id, p] of Object.entries(raw)) {
-      projects[id] = ensureV2(p as unknown as Record<string, unknown>);
+      projects[id] = normalizeProject(p as unknown as Record<string, unknown>);
     }
     set({ projects, hydrated: true });
   },
@@ -123,6 +172,14 @@ export const useProjects = create<ProjectsState>((set, get) => ({
       .sort((a, b) => b.updatedAt - a.updatedAt),
 
   get: (id) => get().projects[id],
+
+  upsert: (project) => {
+    const normalized = normalizeProject(project as Record<string, unknown>);
+    const projects = { ...get().projects, [normalized.id]: normalized };
+    set({ projects });
+    saveAll(projects);
+    return normalized;
+  },
 
   create: (input = {}) => {
     const id = input.id ?? nanoid();
@@ -206,9 +263,7 @@ export const useProjects = create<ProjectsState>((set, get) => ({
     if (!project) return;
     const updated: Project = {
       ...project,
-      pages: project.pages.map((p) =>
-        p.id === pageId ? { ...p, name } : p,
-      ),
+      pages: project.pages.map((p) => (p.id === pageId ? { ...p, name } : p)),
       updatedAt: Date.now(),
     };
     const projects = { ...get().projects, [projectId]: updated };
@@ -283,9 +338,7 @@ export const useProjects = create<ProjectsState>((set, get) => ({
     if (!target || target.design === design) return;
     const updated: Project = {
       ...project,
-      pages: project.pages.map((p) =>
-        p.id === pageId ? { ...p, design } : p,
-      ),
+      pages: project.pages.map((p) => (p.id === pageId ? { ...p, design } : p)),
       updatedAt: Date.now(),
     };
     const projects = { ...get().projects, [projectId]: updated };

@@ -19,16 +19,44 @@ export type Booking = {
 
 type BookingsMap = Record<string, Booking[]>;
 
+export const EMPTY_BOOKINGS: Booking[] = [];
+
+const STATUSES = new Set<Booking["status"]>(["pending", "done", "canceled"]);
+
+function isBooking(value: unknown): value is Booking {
+  if (!value || typeof value !== "object") return false;
+  const b = value as Booking;
+  return (
+    typeof b.id === "string" &&
+    typeof b.projectId === "string" &&
+    typeof b.name === "string" &&
+    typeof b.phone === "string" &&
+    typeof b.date === "string" &&
+    typeof b.time === "string" &&
+    typeof b.createdAt === "number" &&
+    Number.isFinite(b.createdAt) &&
+    STATUSES.has(b.status)
+  );
+}
+
+function normalizeBookingsMap(value: unknown): BookingsMap {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  const map: BookingsMap = {};
+  for (const [projectId, bookings] of Object.entries(value)) {
+    if (!Array.isArray(bookings)) continue;
+    const valid = bookings.filter(isBooking);
+    if (valid.length > 0) map[projectId] = valid;
+  }
+  return map;
+}
+
 function loadAll(): BookingsMap {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as BookingsMap;
-    }
-    return {};
+    return normalizeBookingsMap(JSON.parse(raw));
   } catch {
     return {};
   }
@@ -47,16 +75,24 @@ function saveAll(map: BookingsMap) {
 // notification bell can show an "unread bookings since X" badge.
 type SeenMap = Record<string, number>;
 
+function normalizeSeenMap(value: unknown): SeenMap {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  const seen: SeenMap = {};
+  for (const [projectId, timestamp] of Object.entries(value)) {
+    if (typeof timestamp === "number" && Number.isFinite(timestamp)) {
+      seen[projectId] = timestamp;
+    }
+  }
+  return seen;
+}
+
 function loadSeen(): SeenMap {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(SEEN_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as SeenMap;
-    }
-    return {};
+    return normalizeSeenMap(JSON.parse(raw));
   } catch {
     return {};
   }
@@ -79,14 +115,8 @@ export type BookingsState = {
   hydrated: boolean;
   hydrate: () => void;
   list: (projectId: string) => Booking[];
-  add: (
-    booking: Omit<Booking, "id" | "createdAt" | "status">,
-  ) => Booking;
-  setStatus: (
-    projectId: string,
-    id: string,
-    status: Booking["status"],
-  ) => void;
+  add: (booking: Omit<Booking, "id" | "createdAt" | "status">) => Booking;
+  setStatus: (projectId: string, id: string, status: Booking["status"]) => void;
   remove: (projectId: string, id: string) => void;
   /** Mark every booking up to "now" as read for this project. */
   markSeen: (projectId: string) => void;
@@ -106,7 +136,7 @@ export const useBookings = create<BookingsState>((set, get) => ({
     });
   },
 
-  list: (projectId) => get().byProject[projectId] ?? [],
+  list: (projectId) => get().byProject[projectId] ?? EMPTY_BOOKINGS,
 
   add: (input) => {
     const booking: Booking = {

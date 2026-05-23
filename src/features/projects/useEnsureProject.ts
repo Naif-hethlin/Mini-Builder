@@ -39,10 +39,7 @@ export function useEnsureProject(projectId: string): EnsureStatus {
             | { ok: true; project: Project }
             | { ok: false };
           if (data.ok) {
-            useProjects.setState((s) => ({
-              ...s,
-              projects: { ...s.projects, [data.project.id]: data.project },
-            }));
+            useProjects.getState().upsert(data.project);
             if (!cancelled) setStatus("ready");
             return;
           }

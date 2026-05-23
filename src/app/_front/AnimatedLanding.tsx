@@ -63,6 +63,11 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
     return () => window.removeEventListener("mousemove", handler);
   }, []);
 
+  // Ref callbacks — React invokes these post-commit, so writing to a ref
+  // inside is the documented pattern. The lint rule
+  // `react-hooks/refs` flags it anyway because the function is defined
+  // during render; the suppress is intentional and safe.
+  // eslint-disable-next-line react-hooks/refs
   const registerBlob = (i: number) => (el: HTMLDivElement | null) => {
     if (el) blobsRef.current[i] = el;
   };

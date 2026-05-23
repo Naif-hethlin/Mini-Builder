@@ -5,7 +5,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/shared/lib/cn";
 import { EmptyState } from "@/shared/ui/EmptyState";
-import { useBookings } from "@/features/workflows/booking/store";
+import {
+  EMPTY_BOOKINGS,
+  useBookings,
+} from "@/features/workflows/booking/store";
 import {
   customersFromBookings,
   customersToCsv,
@@ -24,11 +27,8 @@ export function Customers() {
     useBookings.getState().hydrate();
   }, []);
 
-  const bookings = useBookings((s) => s.byProject[id] ?? []);
-  const customers = useMemo(
-    () => customersFromBookings(bookings),
-    [bookings],
-  );
+  const bookings = useBookings((s) => s.byProject[id] ?? EMPTY_BOOKINGS);
+  const customers = useMemo(() => customersFromBookings(bookings), [bookings]);
 
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {

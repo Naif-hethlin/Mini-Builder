@@ -24,10 +24,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
-import {
-  useProjects,
-  type ProjectTemplateType,
-} from "@/features/projects";
+import { useProjects, type ProjectTemplateType } from "@/features/projects";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
 import { starterDesignFor } from "@/features/sections/starters";
 
@@ -56,14 +53,7 @@ const STEP_AFTER_CLICK = 400;
 const STEP_BEFORE_PUBLISH = 900;
 const STEP_AFTER_LOOP = 4000;
 
-export function BuilderShowcase({
-  suspended = false,
-}: {
-  /** True when the page is gated behind the auth overlay — we stop the
-   *  cursor demo, drop the canvas content, and render a calm placeholder
-   *  so the overlay covers nothing distracting. */
-  suspended?: boolean;
-} = {}) {
+export function BuilderShowcase(_props: { suspended?: boolean }) {
   const router = useRouter();
   const [previewing, setPreviewing] = useState<ProjectTemplateType | null>(
     null,
@@ -367,9 +357,7 @@ function ToolTile({
       >
         <Icon size={24} />
       </div>
-      <span
-        className={cn("text-sm font-bold text-stone-600", t.label)}
-      >
+      <span className={cn("text-sm font-bold text-stone-600", t.label)}>
         {label}
       </span>
     </div>
@@ -422,8 +410,7 @@ function Main({
       return;
     }
     let cancelled = false;
-    const sleep = (ms: number) =>
-      new Promise<void>((r) => setTimeout(r, ms));
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
     const centerOf = (el: Element) => {
       const rect = el.getBoundingClientRect();
@@ -449,9 +436,7 @@ function Main({
         let added = 0;
 
         for (const type of SEQUENCE) {
-          const tile = document.querySelector(
-            `[data-tool="tool-${type}"]`,
-          );
+          const tile = document.querySelector(`[data-tool="tool-${type}"]`);
           if (!tile) continue;
           const tilePos = centerOf(tile);
           setCursor({ x: tilePos.x - 14, y: tilePos.y - 14 });
@@ -525,7 +510,9 @@ function Main({
           {previewing ? (
             <span className="inline-flex min-w-0 items-center gap-2 truncate rounded-lg bg-brand-light px-2.5 py-1.5 text-xs text-brand sm:px-3 sm:text-sm">
               <Sparkles size={14} className="shrink-0" />
-              <span className="truncate">معاينة — {templateName(previewing)}</span>
+              <span className="truncate">
+                معاينة — {templateName(previewing)}
+              </span>
             </span>
           ) : (
             <span className="inline-flex items-center gap-2 rounded-lg bg-brand-light px-2.5 py-1.5 text-xs text-brand sm:px-3 sm:text-sm">
@@ -676,9 +663,7 @@ function Main({
           <div
             className={cn(
               "absolute inset-0 rounded-full border-2 border-brand bg-brand/20 transition-all duration-300",
-              ripple
-                ? "scale-[2.5] opacity-0"
-                : "scale-0 opacity-0",
+              ripple ? "scale-[2.5] opacity-0" : "scale-0 opacity-0",
             )}
           />
         </div>
@@ -696,9 +681,7 @@ function EmptyState() {
       <p className="text-lg font-bold text-stone-500">
         اسحب العناصر هنا لبدء البناء
       </p>
-      <p className="mt-2 text-sm text-stone-400">
-        سيتم إنشاء الهيكل تلقائياً
-      </p>
+      <p className="mt-2 text-sm text-stone-400">سيتم إنشاء الهيكل تلقائياً</p>
     </div>
   );
 }
@@ -717,15 +700,32 @@ function DroppedElement({ type }: { type: DroppedType }) {
           <nav className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z" /></svg>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                </svg>
               </div>
               <span className="text-xl font-bold text-stone-800">موقعي</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-stone-600">
-              <span className="transition-colors hover:text-brand">الرئيسية</span>
-              <span className="transition-colors hover:text-brand">خدماتنا</span>
-              <span className="transition-colors hover:text-brand">معرض الأعمال</span>
-              <span className="transition-colors hover:text-brand">تواصل معنا</span>
+              <span className="transition-colors hover:text-brand">
+                الرئيسية
+              </span>
+              <span className="transition-colors hover:text-brand">
+                خدماتنا
+              </span>
+              <span className="transition-colors hover:text-brand">
+                معرض الأعمال
+              </span>
+              <span className="transition-colors hover:text-brand">
+                تواصل معنا
+              </span>
             </div>
             <button
               type="button"
@@ -751,7 +751,8 @@ function DroppedElement({ type }: { type: DroppedType }) {
                 ابنِ موقعك الإلكتروني بدون برمجة
               </h1>
               <p className="max-w-md text-base leading-relaxed text-stone-400">
-                صمّم موقعًا احترافيًا بسهولة مع أدوات البناء الذكية والقوالب الجاهزة.
+                صمّم موقعًا احترافيًا بسهولة مع أدوات البناء الذكية والقوالب
+                الجاهزة.
               </p>
               <div className="mt-4 flex gap-4">
                 <button
@@ -773,7 +774,8 @@ function DroppedElement({ type }: { type: DroppedType }) {
                   <Check size={16} className="text-emerald-500" /> سهل الاستخدام
                 </span>
                 <span className="flex items-center gap-2">
-                  <Check size={16} className="text-emerald-500" /> قوالب احترافية
+                  <Check size={16} className="text-emerald-500" /> قوالب
+                  احترافية
                 </span>
                 <span className="flex items-center gap-2">
                   <Check size={16} className="text-emerald-500" /> دعم 24/7
@@ -798,7 +800,10 @@ function DroppedElement({ type }: { type: DroppedType }) {
           </div>
           <div className="grid grid-cols-3 gap-5">
             {[
-              { label: "موقع تجارة إلكترونية", bg: "from-brand-light to-white" },
+              {
+                label: "موقع تجارة إلكترونية",
+                bg: "from-brand-light to-white",
+              },
               { label: "منصة تعليمية", bg: "from-rose-50 to-white" },
               { label: "موقع شركات", bg: "from-emerald-50 to-white" },
             ].map((tile) => (

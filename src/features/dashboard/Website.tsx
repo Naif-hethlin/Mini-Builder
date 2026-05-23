@@ -1,19 +1,15 @@
 "use client";
 
-import {
-  Edit3,
-  Eye,
-  Rocket,
-  type LucideIcon,
-} from "lucide-react";
+import { Edit3, Eye, Rocket, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { PublishModal } from "@/features/builder/PublishModal";
 import { useProjects } from "@/features/projects";
 
 export function Website() {
   const { id } = useParams<{ id: string }>();
+  const [publishOpen, setPublishOpen] = useState(false);
 
   useEffect(() => {
     useProjects.getState().hydrate();
@@ -52,15 +48,21 @@ export function Website() {
         <ActionCard
           icon={Rocket}
           title="نشر الموقع"
-          description="ربط نطاق خاص ونشر الموقع للعالم."
-          onClick={() =>
-            toast.info(
-              "النشر التلقائي قريباً — استخدم تصدير JSON من المحرر حالياً.",
-            )
+          description={
+            project?.published
+              ? `منشور حالياً على /sites/${project.slug}.`
+              : "اختر رابطاً عاماً وانشر الموقع للعالم."
           }
+          onClick={() => setPublishOpen(true)}
           accent
         />
       </div>
+
+      <PublishModal
+        open={publishOpen}
+        projectId={id}
+        onClose={() => setPublishOpen(false)}
+      />
     </div>
   );
 }

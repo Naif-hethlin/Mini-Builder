@@ -47,9 +47,7 @@ describe("useProjects", () => {
     const project = useProjects.getState().create({ name: "x" });
     const page = project.pages[0];
     const before = useProjects.getState().get(project.id)!.updatedAt;
-    useProjects
-      .getState()
-      .updatePageDesign(project.id, page.id, page.design);
+    useProjects.getState().updatePageDesign(project.id, page.id, page.design);
     const after = useProjects.getState().get(project.id)!.updatedAt;
     expect(after).toBe(before);
   });
@@ -66,9 +64,7 @@ describe("useProjects", () => {
   it("removePage refuses to delete the only page", () => {
     const project = useProjects.getState().create({ name: "x" });
     useProjects.getState().removePage(project.id, project.pages[0].id);
-    expect(
-      useProjects.getState().get(project.id)?.pages,
-    ).toHaveLength(1);
+    expect(useProjects.getState().get(project.id)?.pages).toHaveLength(1);
   });
 
   it("removing the home page promotes the next one", () => {
@@ -112,6 +108,34 @@ describe("useProjects", () => {
     expect(project.pages[0].slug).toBe("home");
   });
 
+  it("upsert normalizes server projects missing pages", () => {
+    const project = useProjects.getState().upsert({
+      id: "server-legacy",
+      name: "server legacy",
+      design: { version: 1, sections: [] },
+      createdAt: 1,
+      updatedAt: 2,
+    });
+
+    expect(project.pages).toHaveLength(1);
+    expect(project.pages[0].slug).toBe("home");
+    expect(project.pages[0].isHome).toBe(true);
+    expect(useProjects.getState().get("server-legacy")?.pages).toHaveLength(1);
+  });
+
+  it("upsert repairs projects with an empty pages array", () => {
+    const project = useProjects.getState().upsert({
+      id: "empty-pages",
+      name: "empty pages",
+      pages: [],
+      createdAt: 1,
+      updatedAt: 2,
+    });
+
+    expect(project.pages).toHaveLength(1);
+    expect(project.pages[0].isHome).toBe(true);
+  });
+
   it("remove deletes the project", () => {
     const project = useProjects.getState().create({ name: "x" });
     useProjects.getState().remove(project.id);
@@ -146,10 +170,7 @@ describe("useProjects", () => {
   });
 
   it("survives a corrupt localStorage payload", () => {
-    window.localStorage.setItem(
-      "rekaz-builder/projects/v1",
-      "{not valid json",
-    );
+    window.localStorage.setItem("rekaz-builder/projects/v1", "{not valid json");
     expect(() => useProjects.getState().hydrate()).not.toThrow();
     expect(useProjects.getState().list()).toEqual([]);
   });
