@@ -20,6 +20,7 @@ import {
 } from "@/features/workflows/booking/store";
 import { useProjects } from "@/features/projects";
 import { metricsFromBookings, recentBookings } from "./derive";
+import { TrafficPanel } from "./TrafficPanel";
 
 const STATUS_LABEL: Record<"pending" | "done" | "canceled", string> = {
   pending: "قيد الانتظار",
@@ -127,6 +128,8 @@ export function Overview() {
           accent={liveStatus === "نشط" ? "green" : "stone"}
         />
       </div>
+
+      <TrafficPanel projectId={id} />
 
       <div className="rounded-2xl border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4">
