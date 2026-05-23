@@ -117,7 +117,7 @@ export function BuilderShowcase(_props: { suspended?: boolean }) {
   );
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-stone-50 text-stone-800 md:flex-row">
+    <div className="flex h-dvh w-screen flex-col overflow-hidden bg-stone-50 text-stone-800 md:flex-row">
       <Sidebar
         onScratch={startScratch}
         onTemplates={() => setChooserOpen(true)}
@@ -164,12 +164,12 @@ function Sidebar({
   onTemplates: () => void;
 }) {
   return (
-    <aside className="relative z-20 flex max-h-[60vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
-      <div className="relative z-10 flex items-center gap-3 border-b border-stone-100 bg-white px-8 py-6">
+    <aside className="relative z-20 flex max-h-[52vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-100 bg-white/95 px-5 py-4 backdrop-blur md:px-8 md:py-6">
         <Logo variant="wordmark" height={28} />
       </div>
 
-      <div className="flex flex-1 flex-col gap-10 overflow-y-auto px-8 py-8">
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5 md:gap-10 md:px-8 md:py-8">
         <section className="flex flex-col gap-4">
           <h2 className="mb-1 text-xl font-bold text-stone-900">
             اختر بداية مشروعك
@@ -344,20 +344,21 @@ function ToolTile({
       id={id}
       data-tool={id}
       className={cn(
-        "group relative flex cursor-grab flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 transition-all hover:shadow-md",
+        "group relative flex cursor-grab flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-stone-200 bg-white p-3.5 transition-all hover:shadow-md md:gap-3 md:p-5",
         t.border,
       )}
     >
       <div
         className={cn(
-          "flex h-12 w-12 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors",
+          "flex h-10 w-10 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors md:h-12 md:w-12",
           t.text,
           t.bg,
         )}
       >
-        <Icon size={24} />
+        <Icon size={20} className="md:hidden" />
+        <Icon size={24} className="hidden md:block" />
       </div>
-      <span className={cn("text-sm font-bold text-stone-600", t.label)}>
+      <span className={cn("text-xs font-bold text-stone-600 md:text-sm", t.label)}>
         {label}
       </span>
     </div>
@@ -393,24 +394,43 @@ function Main({
     [previewing],
   );
 
-  // Demo orchestrator — cycles forever on desktop whenever no template
-  // is being previewed. The auth overlay (z-200) covers the cursor
-  // (z-100) visually, so the loop is safe to leave running even while
-  // the login form is up; that way the moment a user dismisses the
+  // Demo orchestrator — cycles forever whenever no template is being
+  // previewed. The auth overlay (z-200) covers the cursor (z-100)
+  // visually, so the loop is safe to leave running even while the
+  // login form is up; that way the moment a user dismisses the
   // overlay they see the animation already in motion.
   //
-  // The only hard skips are: preview mode (different content) and
-  // phone-sized viewports (cursor + dropped cards look broken there).
+  // The only hard skip is preview mode (different content). On phones
+  // we keep the animation but scroll each tile into view first so the
+  // cursor tracks the (internally-scrollable) sidebar correctly. The
+  // loop also parks while the tab is hidden so we don't burn battery
+  // or skip frames in a background tab.
   useEffect(() => {
     if (previewing) return;
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 640px)").matches
-    ) {
-      return;
-    }
     let cancelled = false;
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+    const waitIfHidden = async () => {
+      while (
+        !cancelled &&
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      ) {
+        await new Promise<void>((resolve) => {
+          const onChange = () => {
+            if (document.visibilityState !== "hidden") {
+              document.removeEventListener("visibilitychange", onChange);
+              resolve();
+            }
+          };
+          document.addEventListener("visibilitychange", onChange);
+        });
+      }
+    };
+    const gatedSleep = async (ms: number) => {
+      await waitIfHidden();
+      await sleep(ms);
+    };
 
     const centerOf = (el: Element) => {
       const rect = el.getBoundingClientRect();
@@ -420,14 +440,14 @@ function Main({
     const loop = async () => {
       // Initial off-screen wait so the page settles + auth overlay can
       // dismiss before we start.
-      await sleep(1500);
+      await gatedSleep(1500);
 
       while (!cancelled) {
         // Reset (clear any previously-dropped elements + sit cursor off-screen).
         setDropped([]);
         setPublishActive(false);
         setCursor({ x: window.innerWidth + 100, y: window.innerHeight + 100 });
-        await sleep(500);
+        await gatedSleep(500);
         if (cancelled) return;
 
         // Local counter — using state would trigger a re-render that
@@ -438,16 +458,23 @@ function Main({
         for (const type of SEQUENCE) {
           const tile = document.querySelector(`[data-tool="tool-${type}"]`);
           if (!tile) continue;
+          // The sidebar has internal overflow-y-auto; on phones the
+          // tile is often below the fold. Scroll the nearest scrollable
+          // ancestor so getBoundingClientRect gives us live viewport
+          // coords before we move the cursor.
+          tile.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          await gatedSleep(350);
+          if (cancelled) return;
           const tilePos = centerOf(tile);
           setCursor({ x: tilePos.x - 14, y: tilePos.y - 14 });
-          await sleep(STEP_BEFORE_CLICK);
+          await gatedSleep(STEP_BEFORE_CLICK);
           if (cancelled) return;
 
           // Click effect
           setRipple(true);
-          await sleep(180);
+          await gatedSleep(180);
           setRipple(false);
-          await sleep(STEP_AFTER_CLICK);
+          await gatedSleep(STEP_AFTER_CLICK);
           if (cancelled) return;
 
           // Move cursor to canvas drop area
@@ -457,7 +484,7 @@ function Main({
               rect.top + Math.min(rect.height - 80, 120 + added * 40);
             const dropX = rect.left + rect.width / 2;
             setCursor({ x: dropX, y: dropY });
-            await sleep(450);
+            await gatedSleep(450);
             if (cancelled) return;
           }
 
@@ -469,28 +496,28 @@ function Main({
           added += 1;
 
           // Scroll canvas to bottom so the new element is visible
-          await sleep(50);
+          await gatedSleep(50);
           if (canvasRef.current) {
             canvasRef.current.scrollTo({
               top: canvasRef.current.scrollHeight,
               behavior: "smooth",
             });
           }
-          await sleep(700);
+          await gatedSleep(700);
         }
 
         // Publish click
         if (publishRef.current) {
           const p = centerOf(publishRef.current);
           setCursor({ x: p.x - 14, y: p.y - 14 });
-          await sleep(STEP_BEFORE_PUBLISH);
+          await gatedSleep(STEP_BEFORE_PUBLISH);
           setRipple(true);
-          await sleep(200);
+          await gatedSleep(200);
           setRipple(false);
           setPublishActive(true);
         }
 
-        await sleep(STEP_AFTER_LOOP);
+        await gatedSleep(STEP_AFTER_LOOP);
       }
     };
 
@@ -581,19 +608,20 @@ function Main({
 
       {/* Blueprint area — tighter padding on mobile so the browser-frame
           canvas can actually be seen. */}
-      <div className="blueprint-grid relative flex flex-1 justify-center overflow-hidden px-3 py-4 sm:px-8 sm:py-10">
-        <div className="relative z-10 flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] ring-8 ring-white/50">
+      <div className="blueprint-grid relative flex flex-1 justify-center overflow-hidden px-2 py-3 sm:px-8 sm:py-10">
+        <div className="relative z-10 flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] ring-2 ring-white/60 sm:rounded-3xl sm:ring-8 sm:ring-white/50">
           {/* Browser chrome */}
-          <div className="flex h-14 shrink-0 items-center gap-2 border-b border-stone-200 bg-stone-50/80 px-5 backdrop-blur-md">
-            <div className="flex gap-2.5">
-              <span className="h-3.5 w-3.5 rounded-full border border-rose-500/20 bg-rose-400" />
-              <span className="h-3.5 w-3.5 rounded-full border border-amber-500/20 bg-amber-400" />
-              <span className="h-3.5 w-3.5 rounded-full border border-emerald-500/20 bg-emerald-400" />
+          <div className="flex h-9 shrink-0 items-center gap-2 border-b border-stone-200 bg-stone-50/80 px-3 backdrop-blur-md sm:h-14 sm:px-5">
+            <div className="flex gap-1.5 sm:gap-2.5">
+              <span className="h-2.5 w-2.5 rounded-full border border-rose-500/20 bg-rose-400 sm:h-3.5 sm:w-3.5" />
+              <span className="h-2.5 w-2.5 rounded-full border border-amber-500/20 bg-amber-400 sm:h-3.5 sm:w-3.5" />
+              <span className="h-2.5 w-2.5 rounded-full border border-emerald-500/20 bg-emerald-400 sm:h-3.5 sm:w-3.5" />
             </div>
-            <div className="me-12 flex flex-1 justify-center">
-              <div className="flex h-7 w-64 items-center justify-center gap-2 rounded-lg border border-stone-200 bg-white px-3 shadow-sm text-stone-300">
-                <Lock size={12} />
-                <div className="h-1.5 w-32 rounded-full bg-stone-200" />
+            <div className="flex flex-1 justify-center sm:me-12">
+              <div className="flex h-5 w-32 items-center justify-center gap-1.5 rounded-md border border-stone-200 bg-white px-2 text-stone-300 shadow-sm sm:h-7 sm:w-64 sm:gap-2 sm:rounded-lg sm:px-3">
+                <Lock size={10} className="sm:hidden" />
+                <Lock size={12} className="hidden sm:inline" />
+                <div className="h-1 w-16 rounded-full bg-stone-200 sm:h-1.5 sm:w-32" />
               </div>
             </div>
           </div>
@@ -612,7 +640,7 @@ function Main({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
+              <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6 md:p-10">
                 {dropped.length === 0 ? <EmptyState /> : null}
                 {dropped.map((d) => (
                   <DroppedElement key={d.id} type={d.type} />
@@ -639,10 +667,8 @@ function Main({
           // it to the right edge in RTL and park it off-screen.
           //
           // z-[100] sits BELOW the auth overlay (z-[200]) so a stray
-          // cursor frame can never appear over the login form, and
-          // `hidden sm:flex` keeps it off phones where the showcase
-          // layout stacks and the cursor coords don't make sense.
-          className="pointer-events-none fixed top-0 left-0 z-[100] hidden h-8 w-8 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:flex"
+          // cursor frame can never appear over the login form.
+          className="pointer-events-none fixed top-0 left-0 z-[100] flex h-8 w-8 origin-top-left scale-75 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:scale-100"
         >
           <svg
             width="28"
@@ -674,14 +700,17 @@ function Main({
 
 function EmptyState() {
   return (
-    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-stone-400 transition-opacity duration-300">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-dashed border-stone-200 bg-stone-50 text-stone-300">
-        <Upload size={32} />
+    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-stone-400 transition-opacity duration-300">
+      <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50 text-stone-300 sm:mb-5 sm:h-20 sm:w-20 sm:rounded-3xl">
+        <Upload size={24} className="sm:hidden" />
+        <Upload size={32} className="hidden sm:block" />
       </div>
-      <p className="text-lg font-bold text-stone-500">
+      <p className="text-base font-bold text-stone-500 sm:text-lg">
         اسحب العناصر هنا لبدء البناء
       </p>
-      <p className="mt-2 text-sm text-stone-400">سيتم إنشاء الهيكل تلقائياً</p>
+      <p className="mt-1 text-xs text-stone-400 sm:mt-2 sm:text-sm">
+        سيتم إنشاء الهيكل تلقائياً
+      </p>
     </div>
   );
 }
@@ -694,12 +723,23 @@ function DroppedElement({ type }: { type: DroppedType }) {
   switch (type) {
     case "header":
       return (
-        <div className="animate-pop-in group relative shrink-0 rounded-2xl border border-stone-200 bg-white p-5 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+        <div className="animate-pop-in group relative shrink-0 rounded-2xl border border-stone-200 bg-white p-3 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] sm:p-5">
           <ElementChip color="brand" label="ترويسة (Header)" />
           <ElementHighlightBorder color="brand" />
-          <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
+          <nav className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-white sm:h-10 sm:w-10">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="sm:hidden"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                </svg>
                 <svg
                   width="20"
                   height="20"
@@ -707,13 +747,17 @@ function DroppedElement({ type }: { type: DroppedType }) {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  className="hidden sm:block"
                 >
                   <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-stone-800">موقعي</span>
+              <span className="truncate text-base font-bold text-stone-800 sm:text-xl">
+                موقعي
+              </span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-stone-600">
+            {/* Nav links — hidden on small screens; hamburger mock takes their place. */}
+            <div className="hidden items-center gap-6 text-sm text-stone-600 md:flex">
               <span className="transition-colors hover:text-brand">
                 الرئيسية
               </span>
@@ -727,12 +771,23 @@ function DroppedElement({ type }: { type: DroppedType }) {
                 تواصل معنا
               </span>
             </div>
-            <button
-              type="button"
-              className="rounded-lg bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-800"
-            >
-              ابدأ الآن
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Hamburger placeholder — only on small. */}
+              <div
+                aria-hidden
+                className="flex h-8 w-8 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-stone-200 bg-stone-50 md:hidden"
+              >
+                <span className="h-0.5 w-3.5 rounded bg-stone-500" />
+                <span className="h-0.5 w-3.5 rounded bg-stone-500" />
+                <span className="h-0.5 w-3.5 rounded bg-stone-500" />
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-stone-800 sm:px-5 sm:py-2.5 sm:text-sm"
+              >
+                ابدأ
+              </button>
+            </div>
           </nav>
         </div>
       );
@@ -741,35 +796,37 @@ function DroppedElement({ type }: { type: DroppedType }) {
         <div className="animate-pop-in group relative shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
           <ElementChip color="rose" label="قسم رئيسي (Hero)" />
           <ElementHighlightBorder color="rose" />
-          <div className="relative bg-stone-900 p-10 text-white">
-            <div className="flex flex-col items-center gap-6 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-stone-700 bg-stone-800 px-4 py-2 text-sm">
+          <div className="relative bg-stone-900 p-5 text-white sm:p-10">
+            <div className="flex flex-col items-center gap-3 text-center sm:gap-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-stone-700 bg-stone-800 px-3 py-1 text-[11px] sm:px-4 sm:py-2 sm:text-sm">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 منصة ركاز متوفرة الآن
               </div>
-              <h1 className="max-w-lg text-3xl font-bold leading-tight">
+              <h1 className="max-w-lg text-lg font-bold leading-tight sm:text-3xl">
                 ابنِ موقعك الإلكتروني بدون برمجة
               </h1>
-              <p className="max-w-md text-base leading-relaxed text-stone-400">
+              <p className="max-w-md text-xs leading-relaxed text-stone-400 sm:text-base">
                 صمّم موقعًا احترافيًا بسهولة مع أدوات البناء الذكية والقوالب
                 الجاهزة.
               </p>
-              <div className="mt-4 flex gap-4">
+              <div className="mt-1 flex w-full flex-col gap-2 sm:mt-4 sm:w-auto sm:flex-row sm:gap-4">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-dark"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark sm:px-6 sm:py-3 sm:text-base"
                 >
                   ابدأ مجاناً
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} className="sm:hidden" />
+                  <ArrowLeft size={18} className="hidden sm:inline" />
                 </button>
                 <button
                   type="button"
-                  className="rounded-xl border border-stone-700 bg-stone-800 px-6 py-3 font-semibold text-white transition-colors hover:bg-stone-700"
+                  className="rounded-xl border border-stone-700 bg-stone-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-stone-700 sm:px-6 sm:py-3 sm:text-base"
                 >
                   شاهد العرض التوضيحي
                 </button>
               </div>
-              <div className="mt-8 flex items-center gap-6 text-sm text-stone-500">
+              {/* Trust badges — hidden on phones where they wrap awkwardly. */}
+              <div className="mt-2 hidden items-center gap-6 text-sm text-stone-500 sm:mt-8 sm:flex">
                 <span className="flex items-center gap-2">
                   <Check size={16} className="text-emerald-500" /> سهل الاستخدام
                 </span>
@@ -787,21 +844,21 @@ function DroppedElement({ type }: { type: DroppedType }) {
       );
     case "gallery":
       return (
-        <div className="animate-pop-in group relative shrink-0 rounded-2xl border border-stone-200 bg-white p-8 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)]">
+        <div className="animate-pop-in group relative shrink-0 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] sm:p-8">
           <ElementChip color="emerald" label="معرض صور (Gallery)" />
           <ElementHighlightBorder color="emerald" />
-          <div className="mb-8 text-center">
-            <h3 className="mb-2 text-xl font-bold text-stone-800">
+          <div className="mb-4 text-center sm:mb-8">
+            <h3 className="mb-1 text-base font-bold text-stone-800 sm:mb-2 sm:text-xl">
               أعمالنا المميزة
             </h3>
-            <p className="text-sm text-stone-500">
+            <p className="text-xs text-stone-500 sm:text-sm">
               استكشف مجموعة من أفضل المواقع التي صممناها
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-3 gap-2 sm:gap-5">
             {[
               {
-                label: "موقع تجارة إلكترونية",
+                label: "تجارة إلكترونية",
                 bg: "from-brand-light to-white",
               },
               { label: "منصة تعليمية", bg: "from-rose-50 to-white" },
@@ -810,15 +867,20 @@ function DroppedElement({ type }: { type: DroppedType }) {
               <div
                 key={tile.label}
                 className={cn(
-                  "group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br",
+                  "group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-lg border border-stone-200 bg-gradient-to-br sm:rounded-2xl",
                   tile.bg,
                 )}
               >
                 <div className="flex h-full w-full items-center justify-center text-stone-400 opacity-60 transition-opacity group-hover:opacity-80">
-                  <ImageIcon size={40} strokeWidth={1.5} />
+                  <ImageIcon size={20} strokeWidth={1.5} className="sm:hidden" />
+                  <ImageIcon
+                    size={40}
+                    strokeWidth={1.5}
+                    className="hidden sm:inline"
+                  />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 border-t border-stone-200 bg-white p-3">
-                  <span className="text-xs font-medium text-stone-600">
+                <div className="absolute inset-x-0 bottom-0 border-t border-stone-200 bg-white p-1.5 sm:p-3">
+                  <span className="block truncate text-[10px] font-medium text-stone-600 sm:text-xs">
                     {tile.label}
                   </span>
                 </div>
