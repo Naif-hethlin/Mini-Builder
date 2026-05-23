@@ -676,6 +676,21 @@ function explodeGallery(p: GalleryProps): {
 // Testimonials — quote cards in a row.
 // -----------------------------------------------------------------------------
 
+// Cycled pastel pairs used for avatar circles (matches the preset Render).
+const TESTIMONIAL_AVATAR_TONES = [
+  "#fef3c7", // amber-100
+  "#d1fae5", // emerald-100
+  "#e0f2fe", // sky-100
+  "#ffe4e6", // rose-100
+  "#ede9fe", // violet-100
+  "#ffedd5", // orange-100
+];
+
+function avatarInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]).join("").toUpperCase() || "?";
+}
+
 function explodeTestimonials(p: TestimonialsProps): {
   primitives: Primitive[];
   height: number;
@@ -690,26 +705,119 @@ function explodeTestimonials(p: TestimonialsProps): {
   const cols = p.columns;
   const gap = 24;
   const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
-  const cardH = 240;
+  const cardH = 280;
+  const innerPad = 28;
 
   p.items.forEach((item, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const cx = padX + col * (cardW + gap);
     const cy = y + row * (cardH + gap);
-    primitives.push(shape(cx, cy, cardW, cardH, "rounded-rect", "#f8fafc"));
+
+    // White card with a soft border
+    primitives.push({
+      ...shape(cx, cy, cardW, cardH, "rounded-rect", "#ffffff"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#ffffff",
+        borderColor: "#e7e5e4",
+        borderWidth: 1,
+      },
+    } as Primitive);
+
+    // Faint floating quote icon (top-right corner)
+    primitives.push({
+      id: newId(),
+      type: "icon",
+      x: cx + cardW - 60,
+      y: cy + innerPad,
+      w: 36,
+      h: 36,
+      props: {
+        name: "lucide:quote",
+        color: "#fdeeea", // brand-light
+        strokeWidth: 0,
+      },
+    } as Primitive);
+
+    // Star rating row
+    for (let s = 0; s < 5; s += 1) {
+      primitives.push({
+        id: newId(),
+        type: "icon",
+        x: cx + innerPad + s * 20,
+        y: cy + innerPad,
+        w: 16,
+        h: 16,
+        props: {
+          name: s < item.rating ? "mdi:star" : "mdi:star-outline",
+          color: "#fbbf24", // amber-400
+          strokeWidth: 0,
+        },
+      } as Primitive);
+    }
+
+    // Quote text
     primitives.push(
-      text(cx + 24, cy + 24, cardW - 48, `"${item.quote}"`, {
-        fontSize: 14,
-        weight: "medium",
-      }),
+      text(
+        cx + innerPad,
+        cy + innerPad + 32,
+        cardW - innerPad * 2,
+        `"${item.quote}"`,
+        {
+          fontSize: 15,
+          weight: "regular",
+          color: "#44403c", // stone-700
+        },
+      ),
     );
-    primitives.push(heading(cx + 24, cy + cardH - 80, cardW - 48, item.name, 4));
+
+    // Author footer — avatar circle + name + role
+    const tone = TESTIMONIAL_AVATAR_TONES[i % TESTIMONIAL_AVATAR_TONES.length];
+    const authorY = cy + cardH - 76;
+
+    // Avatar background
+    primitives.push({
+      ...shape(cx + innerPad, authorY, 44, 44, "circle", tone),
+      props: {
+        kind: "circle",
+        fillColor: tone,
+        borderColor: "#000",
+        borderWidth: 0,
+      },
+    } as Primitive);
+    // Avatar initials (use heading sized to fit)
     primitives.push(
-      text(cx + 24, cy + cardH - 48, cardW - 48, item.role, {
-        fontSize: 12,
-        color: "#64748b",
-      }),
+      heading(
+        cx + innerPad,
+        authorY + 10,
+        44,
+        avatarInitials(item.name),
+        4,
+        "center",
+        "#1c1917",
+      ),
+    );
+    // Name + role next to avatar
+    primitives.push(
+      heading(
+        cx + innerPad + 56,
+        authorY + 4,
+        cardW - innerPad * 2 - 56,
+        item.name,
+        4,
+        "start",
+        "#1c1917",
+      ),
+    );
+    primitives.push(
+      text(
+        cx + innerPad + 56,
+        authorY + 28,
+        cardW - innerPad * 2 - 56,
+        item.role,
+        { fontSize: 12, color: "#78716c" /* stone-500 */ },
+      ),
     );
   });
 
