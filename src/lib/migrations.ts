@@ -137,6 +137,15 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );`,
   `CREATE INDEX IF NOT EXISTS visits_project_day_idx ON visits(project_id, created_at);`,
+
+  // visitor_hash = SHA-256(ip + daily-rotated-salt). Stored opaquely so
+  // the raw IP never lands in the DB. Lets us:
+  //   - COUNT(DISTINCT visitor_hash) for the "unique visitors" stat
+  //   - skip inserting a duplicate row when the same hash visited the
+  //     same project within the last 30 minutes (refresh-spam guard)
+  `ALTER TABLE visits ADD COLUMN IF NOT EXISTS visitor_hash TEXT;`,
+  `CREATE INDEX IF NOT EXISTS visits_project_hash_idx
+     ON visits(project_id, visitor_hash, created_at);`,
 ];
 
 let migrationsRan = false;

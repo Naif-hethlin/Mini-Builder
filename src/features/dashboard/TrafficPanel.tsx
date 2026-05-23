@@ -14,6 +14,8 @@ type VisitMetrics = {
   totalVisits: number;
   visitsThisMonth: number;
   visitsLast24h: number;
+  uniqueVisitors: number;
+  uniqueVisitorsThisMonth: number;
   spark14: number[];
   topOs: Array<{ os: string; count: number }>;
   topDevice: Array<{ device: string; count: number }>;
@@ -91,8 +93,18 @@ export function TrafficPanel({ projectId }: { projectId: string }) {
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <MiniStat label="الكل" value={metrics.totalVisits} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MiniStat
+          label="زوّار فريدون"
+          value={metrics.uniqueVisitors}
+          hint="حسب IP — التحديث المتكرر لا يُحسب."
+          accent
+        />
+        <MiniStat
+          label="زيارات (الكل)"
+          value={metrics.totalVisits}
+          hint={`${metrics.uniqueVisitorsThisMonth.toLocaleString("ar")} زائر فريد هذا الشهر`}
+        />
         <MiniStat label="هذا الشهر" value={metrics.visitsThisMonth} />
         <MiniStat label="آخر 24 ساعة" value={metrics.visitsLast24h} />
       </div>
@@ -138,13 +150,40 @@ const DEVICE_ICON: Record<string, LucideIcon> = {
   desktop: Monitor,
 };
 
-function MiniStat({ label, value }: { label: string; value: number }) {
+function MiniStat({
+  label,
+  value,
+  hint,
+  accent = false,
+}: {
+  label: string;
+  value: number;
+  hint?: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-stone-100 bg-stone-50/50 p-4">
-      <p className="text-[11px] font-medium text-stone-500">{label}</p>
+    <div
+      className={
+        accent
+          ? "rounded-xl border border-brand/20 bg-brand-light/40 p-4"
+          : "rounded-xl border border-stone-100 bg-stone-50/50 p-4"
+      }
+    >
+      <p
+        className={
+          accent
+            ? "text-[11px] font-bold text-brand-dark"
+            : "text-[11px] font-medium text-stone-500"
+        }
+      >
+        {label}
+      </p>
       <p className="mt-1 text-xl font-bold text-stone-900">
         {value.toLocaleString("ar")}
       </p>
+      {hint && (
+        <p className="mt-1 line-clamp-1 text-[10px] text-stone-500">{hint}</p>
+      )}
     </div>
   );
 }

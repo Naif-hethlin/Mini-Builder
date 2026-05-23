@@ -28,9 +28,22 @@ export async function POST(req: Request) {
       path,
       userAgent: req.headers.get("user-agent"),
       referrer: req.headers.get("referer"),
+      ip: extractIp(req),
     });
   } catch {
     // analytics dropping is non-fatal
   }
   return new NextResponse(null, { status: 204 });
+}
+
+// Behind Caddy → app runs on 127.0.0.1; the real client IP arrives in
+// x-forwarded-for (Caddy populates it). Take the FIRST entry — that's
+// the original client; subsequent values are intermediate proxies.
+function extractIp(req: Request): string | null {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return req.headers.get("x-real-ip") ?? null;
 }
