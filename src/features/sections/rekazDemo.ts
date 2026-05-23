@@ -28,7 +28,7 @@ export function rekazDemoDesign(): PageDesign {
             { label: "عملاؤنا", href: "#testimonials" },
             { label: "اتصل بنا", href: "#contact" },
           ],
-          ctaButton: { label: "ابدأ مجاناً", href: "#cta", show: true },
+          ctaButton: { label: "ابدأ مجاناً", href: "/templates", show: true },
         },
       },
 
@@ -43,7 +43,7 @@ export function rekazDemoDesign(): PageDesign {
             "أتمت حجوزاتك، استقبل المدفوعات، وأرسل تذكيرات الواتساب — كل ذلك من لوحة واحدة سهلة الاستخدام. أكثر من 10,000 مشروع يثقون بنا.",
           imageUrl:
             "https://images.unsplash.com/photo-1551434678-e076c223a692?w=1400&q=80",
-          primaryButton: { label: "ابدأ تجربتك المجانية", href: "#cta", show: true },
+          primaryButton: { label: "ابدأ تجربتك المجانية", href: "/templates", show: true },
           secondaryButton: { label: "احجز عرضاً تفصيلياً", href: "#contact", show: true },
           layout: "image-right",
           alignment: "left",
@@ -280,7 +280,7 @@ export function rekazDemoDesign(): PageDesign {
           title: "جاهز تبدأ تستقبل حجوزاتك أونلاين؟",
           description:
             "ركّب موقع الحجز خلال 5 دقائق. بدون بطاقة ائتمان، بدون التزام، إلغاء في أي وقت.",
-          button: { label: "أنشئ حسابي الآن", href: "#" },
+          button: { label: "أنشئ حسابي الآن", href: "/templates" },
           style: "gradient",
         },
       },

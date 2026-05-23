@@ -26,11 +26,26 @@ export const metadata = {
 // force-dynamic, Next's prerender chokes on the client hook at build time.
 export const dynamic = "force-dynamic";
 
+// Maps section type → anchor id so the demo's header nav links
+// (#features, #industries, #pricing, etc.) actually scroll somewhere.
+// Built from section.type so a single section per category is enough —
+// the demo design has exactly one of each.
+const ANCHOR_FOR_TYPE: Partial<Record<string, string>> = {
+  features: "features",
+  portfolio: "industries",
+  pricing: "pricing",
+  testimonials: "testimonials",
+  cta: "cta",
+  contact: "contact",
+};
+
 export default function DemoPage() {
   const design = rekazDemoDesign();
 
   return (
-    <main className="min-h-screen bg-white">
+    // scroll-smooth so anchor jumps animate; scroll-mt-20 set per-section
+    // below so the sticky banner doesn't cover the heading on landing.
+    <main className="min-h-screen scroll-smooth bg-white">
       {/* Top banner — sticky so the "this is the builder talking" framing
           stays visible while the visitor scrolls through what looks like a
           real product site. */}
@@ -60,9 +75,18 @@ export default function DemoPage() {
       </div>
 
       <div className="divide-y divide-stone-100">
-        {design.sections.map((section) => (
-          <SectionRenderer key={section.id} section={section} />
-        ))}
+        {design.sections.map((section) => {
+          const anchorId = ANCHOR_FOR_TYPE[section.type];
+          return (
+            <div
+              key={section.id}
+              id={anchorId}
+              className={anchorId ? "scroll-mt-20" : undefined}
+            >
+              <SectionRenderer section={section} />
+            </div>
+          );
+        })}
       </div>
 
       {/* Bottom "ready to start" repeat CTA — by the time the visitor scrolls
