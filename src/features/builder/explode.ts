@@ -1199,10 +1199,19 @@ function explodeBooking(p: BookingProps): {
   const innerW = CANVAS_W - padX * 2;
   const cardH = 620;
   const y = 60;
+  const gap = 16;
 
-  // Container card
+  // Two stand-alone panels (no container behind) so the form panel
+  // doesn't blend into the page bg.
+  const leftW = Math.floor((innerW - gap) * 5 / 12);
+  const rightX = padX + leftW + gap;
+  const rightW = innerW - leftW - gap;
+  const leftPad = 36;
+
+  // Right panel — white form card (render first so the dark panel
+  // can't visually sit on top of it).
   primitives.push({
-    ...shape(padX, y, innerW, cardH, "rounded-rect", "#ffffff"),
+    ...shape(rightX, y, rightW, cardH, "rounded-rect", "#ffffff"),
     props: {
       kind: "rounded-rect",
       fillColor: "#ffffff",
@@ -1210,11 +1219,6 @@ function explodeBooking(p: BookingProps): {
       borderWidth: 1,
     },
   } as Primitive);
-
-  const leftW = Math.floor(innerW * 5 / 12);
-  const rightX = padX + leftW;
-  const rightW = innerW - leftW;
-  const leftPad = 36;
 
   // Dark stone-900 left panel
   primitives.push({
@@ -1227,31 +1231,12 @@ function explodeBooking(p: BookingProps): {
     },
   } as Primitive);
 
-  // Brand-coral eyebrow chip
-  primitives.push({
-    ...shape(padX + leftPad, y + leftPad, 130, 26, "rounded-rect", "#e85d5d"),
-    props: {
-      kind: "rounded-rect",
-      fillColor: "#e85d5d",
-      borderColor: "#000",
-      borderWidth: 0,
-    },
-  } as Primitive);
-  primitives.push(
-    text(padX + leftPad, y + leftPad + 6, 130, "احجز موعدك", {
-      fontSize: 11,
-      weight: "bold",
-      align: "center",
-      color: "#ffffff",
-    }),
-  );
-
-  // Title + subtitle
+  // Title + subtitle directly on the brand panel — no eyebrow chip
   if (p.title) {
     primitives.push(
       heading(
         padX + leftPad,
-        y + leftPad + 56,
+        y + leftPad,
         leftW - leftPad * 2,
         p.title,
         2,
@@ -1264,7 +1249,7 @@ function explodeBooking(p: BookingProps): {
     primitives.push(
       text(
         padX + leftPad,
-        y + leftPad + 130,
+        y + leftPad + 80,
         leftW - leftPad * 2,
         p.subtitle,
         { fontSize: 15, color: "#d6d3d1" },
@@ -1278,7 +1263,7 @@ function explodeBooking(p: BookingProps): {
     { icon: "lucide:x-circle", label: "إلغاء مجاني" },
     { icon: "lucide:star", label: "تقييم 4.9 من 5" },
   ];
-  let trustY = y + leftPad + 220;
+  let trustY = y + leftPad + 170;
   trustItems.forEach((t) => {
     primitives.push({
       ...shape(padX + leftPad, trustY, 28, 28, "circle", "#3f3a35"),
