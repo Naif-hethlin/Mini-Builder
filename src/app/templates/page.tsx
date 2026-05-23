@@ -1,13 +1,14 @@
 // Route: /templates
 //
-// Blueprint-style starter picker with an auth overlay stacked on top.
-// First-time visitors get the login/signup card; signed-in users (or
-// those who picked "browse without login") see the BlueprintBuilder
-// directly.
+// Starter picker with the auth overlay stacked on top. We read the session
+// cookie SERVER-SIDE so the overlay (or lack thereof) is part of the
+// initial HTML — no client-side fetch gap that lets BuilderShowcase flash
+// before the overlay covers it on first paint.
 
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { AuthOverlay } from "@/features/auth/AuthOverlay";
+import { readSession } from "@/lib/session";
 import { BuilderShowcase } from "./_front/BuilderShowcase";
 
 export const metadata = {
@@ -16,16 +17,18 @@ export const metadata = {
     "ابدأ من الصفر أو اختر قالبًا جاهزًا (حلاق، مقهى، مصور) لإطلاق موقعك.",
 };
 
-// AuthOverlay reads useSearchParams (for ?auth=open from the /login
-// redirect), which forces dynamic rendering. Skip the prerender entirely.
+// readSession + AuthOverlay's useSearchParams both force dynamic rendering;
+// keep the route off the prerender path.
 export const dynamic = "force-dynamic";
 
-export default function TemplatesPage() {
+export default async function TemplatesPage() {
+  const session = await readSession();
+  const isAuthed = session !== null;
   return (
     <>
-      <BuilderShowcase />
+      <BuilderShowcase suspended={!isAuthed} />
       <Suspense fallback={null}>
-        <AuthOverlay />
+        <AuthOverlay initialAuthed={isAuthed} />
       </Suspense>
       <Toaster
         position="bottom-right"

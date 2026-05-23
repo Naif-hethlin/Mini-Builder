@@ -21,7 +21,13 @@ type Mode = "login" | "signup";
  * "تصفح بدون تسجيل" persists a flag in sessionStorage so the overlay
  * stays dismissed for the rest of the tab session.
  */
-export function AuthOverlay() {
+export function AuthOverlay({
+  initialAuthed = false,
+}: {
+  /** Server-detected auth status — used for the first paint so we don't
+   *  flash the page underneath while useCurrentUser is still fetching. */
+  initialAuthed?: boolean;
+} = {}) {
   const { user, loading } = useCurrentUser();
   const searchParams = useSearchParams();
   const openAuth = useAuthOverlay((s) => s.open);
@@ -56,7 +62,14 @@ export function AuthOverlay() {
     if (forceOpen) setSkipped(false);
   }, [forceOpen]);
 
-  const show = hydrated && !loading && !user && (forceOpen || !skipped);
+  // Server-known authed visitors should NEVER see the overlay flash, even
+  // before useCurrentUser settles. Client-known auth still wins (e.g. the
+  // user just signed in this session). The `hydrated` gate is intentionally
+  // OFF here: when an anonymous user hits /templates we want the overlay
+  // in the very first paint to cover BuilderShowcase, not on the second
+  // tick after sessionStorage is read.
+  const isAuthed = user !== null || (initialAuthed && loading);
+  const show = !isAuthed && (forceOpen || !skipped);
 
   const handleSkip = () => {
     if (typeof window !== "undefined") {

@@ -152,16 +152,7 @@ const listSchema: FieldSchema[] = [
 ];
 
 const shapeSchema: FieldSchema[] = [
-  {
-    kind: "select",
-    key: "kind",
-    label: "نوع الشكل",
-    options: [
-      { value: "circle", label: "دائرة" },
-      { value: "square", label: "مربع" },
-      { value: "triangle", label: "مثلث" },
-    ],
-  },
+  { kind: "shape", key: "kind", label: "الشكل" },
   { kind: "color", key: "fillColor", label: "لون التعبئة" },
   {
     kind: "select",
@@ -176,6 +167,50 @@ const shapeSchema: FieldSchema[] = [
     ],
   },
   { kind: "color", key: "borderColor", label: "لون الحد" },
+];
+
+const inputSchema: FieldSchema[] = [
+  { kind: "text", key: "label", label: "النص العلوي (Label)" },
+  {
+    kind: "text",
+    key: "placeholder",
+    label: "النص التلميحي (Placeholder)",
+  },
+  {
+    kind: "select",
+    key: "fieldType",
+    label: "نوع الحقل",
+    options: [
+      { value: "text", label: "نص" },
+      { value: "email", label: "بريد إلكتروني" },
+      { value: "tel", label: "رقم جوال" },
+      { value: "number", label: "رقم" },
+      { value: "textarea", label: "نص طويل" },
+    ],
+  },
+  {
+    kind: "select",
+    key: "required",
+    label: "إلزامي",
+    options: [
+      { value: "false", label: "لا" },
+      { value: "true", label: "نعم" },
+    ],
+  },
+];
+
+const qaSchema: FieldSchema[] = [
+  { kind: "text", key: "question", label: "السؤال" },
+  { kind: "textarea", key: "answer", label: "الإجابة", rows: 4 },
+  {
+    kind: "select",
+    key: "defaultOpen",
+    label: "مفتوح افتراضياً",
+    options: [
+      { value: "false", label: "مغلق" },
+      { value: "true", label: "مفتوح" },
+    ],
+  },
 ];
 
 const iconSchema: FieldSchema[] = [
@@ -203,4 +238,6 @@ export const PRIMITIVE_SCHEMAS: Record<PrimitiveType, FieldSchema[]> = {
   list: listSchema,
   shape: shapeSchema,
   icon: iconSchema,
+  input: inputSchema,
+  qa: qaSchema,
 };

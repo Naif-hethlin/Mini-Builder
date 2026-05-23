@@ -19,6 +19,11 @@ import {
   normalizeIconName,
   searchIcons,
 } from "@/features/primitives/Icon/library";
+import {
+  SHAPE_LIBRARY,
+  SHAPE_KIND_KEYS,
+  getShape,
+} from "@/features/primitives/Shape/library";
 import { useEffect } from "react";
 import type { FieldSchema, FormValue } from "./types";
 
@@ -724,6 +729,108 @@ function IconGrid({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// =============================================================================
+// Shape picker — preview button + popover with the curated SVG library.
+// Stores the shape kind (string) in the form value.
+// =============================================================================
+
+export function ShapeField({
+  field,
+  value,
+  onChange,
+}: {
+  field: Extract<FieldSchema, { kind: "shape" }>;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const current = getShape(value || "square");
+
+  return (
+    <div className="relative space-y-1.5">
+      <label htmlFor={id} className={fieldLabel}>
+        {field.label}
+      </label>
+
+      <button
+        id={id}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex h-10 w-full items-center gap-3 rounded-xl border border-stone-200 bg-white px-3 text-start text-sm transition-colors hover:border-brand focus:outline focus:outline-2 focus:outline-brand/30",
+          open && "border-brand",
+        )}
+      >
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-stone-50 text-stone-700">
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="h-4 w-4"
+          >
+            <path d={current.path} fill="currentColor" />
+          </svg>
+        </span>
+        <span className="flex-1 truncate text-xs font-medium text-stone-700">
+          {current.label}
+        </span>
+        <ChevronDown
+          size={14}
+          className={cn(
+            "shrink-0 text-stone-400 transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="إغلاق"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-30 cursor-default bg-transparent"
+          />
+          <div className="absolute z-40 mt-1 w-full overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl">
+            <div className="max-h-[300px] overflow-y-auto p-2">
+              <div className="grid grid-cols-5 gap-1.5">
+                {SHAPE_KIND_KEYS.map((kind) => {
+                  const def = SHAPE_LIBRARY[kind];
+                  const active = kind === value;
+                  return (
+                    <button
+                      key={kind}
+                      type="button"
+                      onClick={() => {
+                        onChange(kind);
+                        setOpen(false);
+                      }}
+                      title={def.label}
+                      aria-label={def.label}
+                      className={cn(
+                        "flex aspect-square w-full items-center justify-center rounded-md border border-stone-100 bg-white p-2 text-stone-600 transition-colors hover:bg-brand-light hover:text-brand",
+                        active && "bg-brand-light text-brand ring-2 ring-brand",
+                      )}
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                        className="h-8 w-8"
+                      >
+                        <path d={def.path} fill="currentColor" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
