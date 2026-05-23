@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { PrimitiveRenderer } from "@/features/primitives/PrimitiveRenderer";
 import { PrimitiveActionWrapper } from "@/features/primitives/PrimitiveActionWrapper";
 import {
@@ -7,6 +8,7 @@ import {
   useFitScale,
 } from "@/features/builder/canvas/useFitScale";
 import type { CanvasProps } from "@/features/builder/state/types";
+import type { Primitive } from "@/features/primitives/types";
 
 const BG_CLASS: Record<CanvasProps["background"], string> = {
   transparent: "",
@@ -34,10 +36,12 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
   return (
     <section className={`relative ${BG_CLASS[props.background]}`}>
       {/* Mobile flow-fallback */}
-      <div className="flex flex-col gap-4 p-6 md:hidden">
+      <div className="flex flex-col items-center gap-4 p-6 md:hidden">
         {props.primitives.map((p) => (
           <PrimitiveActionWrapper key={p.id} action={p.action}>
-            <PrimitiveRenderer primitive={p} positioned={false} />
+            <div style={flowSlotStyle(p)}>
+              <PrimitiveRenderer primitive={p} positioned={false} />
+            </div>
           </PrimitiveActionWrapper>
         ))}
       </div>
@@ -54,6 +58,28 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
       </div>
     </section>
   );
+}
+
+/**
+ * When primitives reflow into a single column (mobile fallback), each
+ * one needs:
+ *   - its DESIGN width as the natural size, so a 100px icon stays a
+ *     100px icon and doesn't blow up to fill the column;
+ *   - a 100% max so it shrinks instead of overflowing on a 375px phone;
+ *   - aspect-ratio (when h is known) so width-clamped shapes/images/
+ *     icons keep their proportions.
+ *
+ * Text/heading primitives intentionally have no fixed h — leaving aspect
+ * ratio off lets them wrap to whatever height the content needs.
+ */
+function flowSlotStyle(p: Primitive): CSSProperties {
+  const noFixedHeight = p.type === "text" || p.type === "heading";
+  return {
+    width: `min(100%, ${p.w}px)`,
+    ...(p.h !== undefined && !noFixedHeight
+      ? { aspectRatio: `${p.w} / ${p.h}` }
+      : {}),
+  };
 }
 
 function ScaledCanvas({

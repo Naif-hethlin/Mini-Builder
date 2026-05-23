@@ -75,18 +75,34 @@ export function CanvasEditor({
 
   // Mobile mode: reflow to vertical stack (mirrors runtime fallback). No
   // drag handles — phones aren't where you edit absolute positions.
+  // Each primitive gets a slot styled to its design width so icons/
+  // shapes/images stay at natural size instead of stretching to fill
+  // the column.
   if (deviceMode === "mobile") {
     return (
       <div className={`relative ${BG_CLASS[props.background]}`}>
-        <div className="flex flex-col gap-4 p-6">
+        <div className="flex flex-col items-center gap-4 p-6">
           {props.primitives.length === 0 && (
             <p className="py-12 text-center text-sm text-stone-400">
               لوحة فارغة. ارجع إلى عرض الحاسوب لإضافة عناصر.
             </p>
           )}
-          {props.primitives.map((p) => (
-            <PrimitiveRenderer key={p.id} primitive={p} positioned={false} />
-          ))}
+          {props.primitives.map((p) => {
+            const noFixedHeight = p.type === "text" || p.type === "heading";
+            return (
+              <div
+                key={p.id}
+                style={{
+                  width: `min(100%, ${p.w}px)`,
+                  ...(p.h !== undefined && !noFixedHeight
+                    ? { aspectRatio: `${p.w} / ${p.h}` }
+                    : {}),
+                }}
+              >
+                <PrimitiveRenderer primitive={p} positioned={false} />
+              </div>
+            );
+          })}
         </div>
         <div className="pointer-events-none absolute top-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-stone-900/85 px-3 py-1 text-[10px] font-bold text-white">
           عرض جوّال — للتحرير ارجع للحاسوب
