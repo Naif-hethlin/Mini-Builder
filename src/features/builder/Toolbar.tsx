@@ -4,9 +4,9 @@ import {
   Download,
   Eye,
   FolderOpen,
+  Hammer,
   LayoutDashboard,
   MoreVertical,
-  PaintBucket,
   Redo2,
   Rocket,
   Settings,
@@ -99,8 +99,8 @@ export function Toolbar() {
           className="hidden items-center gap-1 rounded-xl border border-slate-100 bg-slate-50 p-1 sm:flex"
         >
           <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-white px-4 py-1.5 text-sm font-bold text-brand-dark shadow-sm">
-            <PaintBucket size={14} />
-            المنشئ
+            <Hammer size={14} />
+            البناء
           </span>
           {projectId && (
             <Link
