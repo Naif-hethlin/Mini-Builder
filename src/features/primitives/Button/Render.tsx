@@ -3,6 +3,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ButtonPrimitiveProps } from "../types";
 
+// Used only when no custom colors are provided. The brand-aware default
+// covers most "add a button" cases; explode mappings pass bgColor +
+// textColor to match preset section buttons (Hero primary = stone-900).
 const VARIANT_CLASS: Record<ButtonPrimitiveProps["variant"], string> = {
   solid: "bg-brand text-white hover:bg-brand-dark",
   outline:
@@ -15,6 +18,30 @@ const SIZE_CLASS: Record<ButtonPrimitiveProps["size"], string> = {
   md: "h-11 px-5 text-sm",
   lg: "h-12 px-7 text-base",
 };
+
+// Per-variant color overrides — picks up `bgColor` / `textColor` from
+// props so explode can recreate the preset Hero's black-button look.
+function colorStyle(props: ButtonPrimitiveProps): React.CSSProperties {
+  const { variant, bgColor, textColor } = props;
+  if (!bgColor && !textColor) return {};
+  if (variant === "solid") {
+    return {
+      ...(bgColor ? { backgroundColor: bgColor } : {}),
+      ...(textColor ? { color: textColor } : {}),
+    };
+  }
+  if (variant === "outline") {
+    return {
+      ...(bgColor ? { borderColor: bgColor, color: bgColor } : {}),
+      ...(textColor ? { color: textColor } : {}),
+    };
+  }
+  // ghost
+  return {
+    ...(bgColor ? { color: bgColor } : {}),
+    ...(textColor ? { color: textColor } : {}),
+  };
+}
 
 /**
  * Button primitive — supports E5 action linking (none / link / navigate /
@@ -65,11 +92,15 @@ export default function ButtonRender({
     }
   };
 
+  const hasCustomColors =
+    props.bgColor !== undefined || props.textColor !== undefined;
+
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`inline-flex w-full items-center justify-center gap-2 rounded-full font-medium shadow-sm transition-colors ${VARIANT_CLASS[props.variant]} ${SIZE_CLASS[props.size]}`}
+      className={`inline-flex w-full items-center justify-center gap-2 rounded-xl font-medium shadow-sm transition-colors ${hasCustomColors ? "" : VARIANT_CLASS[props.variant]} ${SIZE_CLASS[props.size]} ${props.variant === "outline" ? "border-2" : ""}`}
+      style={colorStyle(props)}
     >
       {props.label}
     </button>

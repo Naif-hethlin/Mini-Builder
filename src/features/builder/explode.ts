@@ -47,8 +47,20 @@ function heading(
   level: 1 | 2 | 3 | 4,
   align: "start" | "center" | "end" = "start",
   color = "#1c1917",
+  opts: Partial<
+    Pick<HeadingPrimitiveProps, "weight" | "tracking">
+  > = {},
 ): Primitive {
-  const props: HeadingPrimitiveProps = { content: text, level, color, align };
+  // Match the preset Hero look — `font-bold tracking-tight` instead of
+  // the heading primitive's default extrabold-without-tracking.
+  const props: HeadingPrimitiveProps = {
+    content: text,
+    level,
+    color,
+    align,
+    weight: opts.weight ?? "bold",
+    tracking: opts.tracking ?? "tight",
+  };
   return { id: newId(), type: "heading", x, y, w, props };
 }
 
@@ -75,12 +87,16 @@ function button(
   w: number,
   label: string,
   variant: ButtonPrimitiveProps["variant"] = "solid",
+  bgColor?: string,
+  textColor?: string,
 ): Primitive {
   const props: ButtonPrimitiveProps = {
     label,
     variant,
     size: "md",
     action: { kind: "none" },
+    ...(bgColor ? { bgColor } : {}),
+    ...(textColor ? { textColor } : {}),
   };
   return { id: newId(), type: "button", x, y, w, props };
 }
@@ -238,11 +254,12 @@ function explodeHero(p: HeroProps): {
     }
     let bx = textX + textW / 2 - 140;
     if (p.primaryButton.show) {
-      primitives.push(button(bx, y, 140, p.primaryButton.label, "solid"));
+      // Hero image-bg primary stays brand-coral against the dark overlay.
+      primitives.push(button(bx, y, 140, p.primaryButton.label, "solid", "#e85d5d", "#ffffff"));
       bx += 156;
     }
     if (p.secondaryButton.show) {
-      primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline"));
+      primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline", "#ffffff", "#ffffff"));
     }
     return { primitives, height: 600 };
   }
@@ -277,11 +294,12 @@ function explodeHero(p: HeroProps): {
     }
     let bx = textX + textW / 2 - 140;
     if (p.primaryButton.show) {
-      primitives.push(button(bx, y, 140, p.primaryButton.label, "solid"));
+      // Match preset Hero — primary is stone-900, not brand.
+      primitives.push(button(bx, y, 140, p.primaryButton.label, "solid", "#1c1917", "#ffffff"));
       bx += 156;
     }
     if (p.secondaryButton.show) {
-      primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline"));
+      primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline", "#1c1917", "#1c1917"));
     }
     return { primitives, height: y + 80 };
   }
@@ -312,11 +330,12 @@ function explodeHero(p: HeroProps): {
   }
   let bx = textX;
   if (p.primaryButton.show) {
-    primitives.push(button(bx, y, 140, p.primaryButton.label, "solid"));
+    // Side-by-side Hero — primary matches preset's stone-900 button.
+    primitives.push(button(bx, y, 140, p.primaryButton.label, "solid", "#1c1917", "#ffffff"));
     bx += 156;
   }
   if (p.secondaryButton.show) {
-    primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline"));
+    primitives.push(button(bx, y, 140, p.secondaryButton.label, "outline", "#1c1917", "#1c1917"));
   }
   return { primitives, height: 520 };
 }
@@ -333,9 +352,9 @@ function explodeFeatures(p: FeaturesProps): {
   if (p.eyebrow) {
     primitives.push(
       text(padX, y, innerW, p.eyebrow.toUpperCase(), {
-        weight: "semibold",
+        weight: "medium",
         align: "center",
-        color: "#64748b",
+        color: "#78716c", // stone-500
       }),
     );
     y += 32;
@@ -346,31 +365,69 @@ function explodeFeatures(p: FeaturesProps): {
     primitives.push(
       text(padX, y, innerW, p.subtitle, {
         align: "center",
-        color: "#64748b",
+        color: "#57534e", // stone-600
       }),
     );
-    y += 60;
+    y += 56;
   }
 
-  // Cards row
+  // Cards row — match preset look: white bg + stone-200 border, icon
+  // tile, title, description.
   const cols = Math.min(p.columns, p.items.length || 1);
   const gap = 24;
   const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
-  const cardH = 200;
+  const cardH = 220;
 
   p.items.forEach((item, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const cx = padX + col * (cardW + gap);
     const cy = y + row * (cardH + gap);
-    // Card background
-    primitives.push(shape(cx, cy, cardW, cardH, "square", "#f8fafc"));
+    // White card with subtle border (1px stone-200)
+    primitives.push({
+      ...shape(cx, cy, cardW, cardH, "rounded-rect", "#ffffff"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#ffffff",
+        borderColor: "#e7e5e4", // stone-200
+        borderWidth: 1,
+      },
+    } as Primitive);
+    // Icon tile — small shape with stone-100 bg
+    primitives.push({
+      ...shape(cx + 24, cy + 24, 40, 40, "rounded-rect", "#f5f5f4"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#f5f5f4", // stone-100
+        borderColor: "#000",
+        borderWidth: 0,
+      },
+    } as Primitive);
+    // Icon — map the lucide icon name from preset to iconify
+    primitives.push({
+      id: newId(),
+      type: "icon",
+      x: cx + 32,
+      y: cy + 32,
+      w: 24,
+      h: 24,
+      props: {
+        name: `lucide:${(item.icon || "Sparkles")
+          .replace(/([a-z\d])([A-Z])/g, "$1-$2")
+          .toLowerCase()}`,
+        color: "#44403c", // stone-700
+        strokeWidth: 2,
+      },
+    } as Primitive);
     // Title
-    primitives.push(heading(cx + 20, cy + 24, cardW - 40, item.title, 3));
+    primitives.push(
+      heading(cx + 24, cy + 88, cardW - 48, item.title, 4, "start", "#1c1917"),
+    );
     // Description
     primitives.push(
-      text(cx + 20, cy + 80, cardW - 40, item.description, {
-        color: "#475569",
+      text(cx + 24, cy + 130, cardW - 48, item.description, {
+        fontSize: 14,
+        color: "#57534e", // stone-600
       }),
     );
   });
@@ -386,20 +443,65 @@ function explodeCta(p: CTAProps): {
   const primitives: Primitive[] = [];
   const padX = 60;
   const innerW = CANVAS_W - padX * 2;
-  const bg = p.style === "gradient" ? "#e85d5d" : "#0f172a";
 
-  primitives.push(shape(padX, 40, innerW, 240, "square", bg));
+  // Match the 3 preset CTA styles — bg + text + button colors all swap.
+  const styled = {
+    solid: {
+      bg: "#1c1917", // stone-900
+      titleColor: "#ffffff",
+      descColor: "#d6d3d1", // stone-300
+      btnBg: "#ffffff",
+      btnText: "#1c1917",
+    },
+    gradient: {
+      bg: "#292524", // stone-800 — closest single-color match for the gradient
+      titleColor: "#ffffff",
+      descColor: "#d6d3d1",
+      btnBg: "#ffffff",
+      btnText: "#1c1917",
+    },
+    subtle: {
+      bg: "#fafaf9", // stone-50
+      titleColor: "#1c1917",
+      descColor: "#57534e", // stone-600
+      btnBg: "#1c1917",
+      btnText: "#ffffff",
+    },
+  }[p.style];
+
+  // Filled background as a shape (so user can change it).
+  primitives.push({
+    ...shape(padX, 40, innerW, 220, "rounded-rect", styled.bg),
+    props: {
+      kind: "rounded-rect",
+      fillColor: styled.bg,
+      borderColor: "#e7e5e4",
+      borderWidth: p.style === "subtle" ? 1 : 0,
+    },
+  } as Primitive);
   primitives.push(
-    heading(padX, 90, innerW, p.title, 2, "center", "#ffffff"),
+    heading(padX, 90, innerW, p.title, 2, "center", styled.titleColor),
   );
+  if (p.description) {
+    primitives.push(
+      text(padX, 160, innerW, p.description, {
+        align: "center",
+        color: styled.descColor,
+      }),
+    );
+  }
   primitives.push(
-    text(padX, 170, innerW, p.description, {
-      align: "center",
-      color: "#e2e8f0",
-    }),
+    button(
+      CANVAS_W / 2 - 80,
+      200,
+      160,
+      p.button.label,
+      "solid",
+      styled.btnBg,
+      styled.btnText,
+    ),
   );
-  primitives.push(button(CANVAS_W / 2 - 80, 220, 160, p.button.label, "solid"));
-  return { primitives, height: 320 };
+  return { primitives, height: 300 };
 }
 
 function explodeHeader2(p: HeaderProps): {
