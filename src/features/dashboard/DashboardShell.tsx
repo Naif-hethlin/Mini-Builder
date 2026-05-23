@@ -2,12 +2,11 @@
 
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { UserMenu } from "@/features/auth/UserMenu";
-import { useProjects } from "@/features/projects";
+import { useEnsureProject, useProjects } from "@/features/projects";
 import { DashboardMobileNav, DashboardSidebar } from "./DashboardSidebar";
 import { NotificationsBell } from "./NotificationsBell";
 
@@ -22,13 +21,13 @@ export function DashboardShell({
   projectId: string;
   children: React.ReactNode;
 }) {
-  // Hydrate once so the top bar can read the project name.
-  useEffect(() => {
-    useProjects.getState().hydrate();
-  }, []);
+  // Hydrate localStorage + fetch from /api/projects/[id] on a cache miss
+  // so the dashboard works the first time the user opens it on a new
+  // device, not only after they've visited the builder.
+  const status = useEnsureProject(projectId);
 
   const project = useProjects((s) => s.projects[projectId]);
-  const hydrated = useProjects((s) => s.hydrated);
+  const hydrated = status === "ready" || status === "missing";
 
   return (
     <ConfirmProvider>
