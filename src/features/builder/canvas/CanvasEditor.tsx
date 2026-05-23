@@ -12,6 +12,7 @@ import type { Primitive } from "@/features/primitives/types";
 import type { CanvasProps } from "@/features/builder/state/types";
 import { cn } from "@/shared/lib/cn";
 import {
+  selectDeviceMode,
   selectSelection,
   useBuilderStore,
 } from "@/features/builder/state/store";
@@ -34,8 +35,13 @@ const BG_CLASS: Record<CanvasProps["background"], string> = {
  * background + primitives, but each primitive is wrapped in a draggable,
  * clickable shell so the user can position and select it.
  *
- * Mobile flow-fallback is NOT applied here — the builder is desktop-first.
- * The runtime renderer (sections/Canvas/Render.tsx) handles mobile stacking.
+ * Device-toggle behaviour:
+ *   - desktop: native absolute canvas, full drag/edit
+ *   - tablet:  proportional fit-scale of the desktop design
+ *   - mobile:  REFLOW — primitives are stacked vertically in source
+ *              order (same as the runtime mobile fallback), read-only
+ *              preview. Forces the user back to desktop to edit, but
+ *              shows them honestly what mobile visitors will see.
  */
 export function CanvasEditor({
   sectionId,
@@ -47,6 +53,7 @@ export function CanvasEditor({
   const selection = useBuilderStore(selectSelection);
   const setSelection = useBuilderStore((s) => s.setSelection);
   const addPrimitive = useBuilderStore((s) => s.addPrimitive);
+  const deviceMode = useBuilderStore(selectDeviceMode);
 
   const isCanvasSelected =
     selection.kind === "section" && selection.sectionId === sectionId;
@@ -65,6 +72,28 @@ export function CanvasEditor({
   };
 
   const { containerRef, scale } = useFitScale(CANVAS_DESIGN_WIDTH);
+
+  // Mobile mode: reflow to vertical stack (mirrors runtime fallback). No
+  // drag handles — phones aren't where you edit absolute positions.
+  if (deviceMode === "mobile") {
+    return (
+      <div className={`relative ${BG_CLASS[props.background]}`}>
+        <div className="flex flex-col gap-4 p-6">
+          {props.primitives.length === 0 && (
+            <p className="py-12 text-center text-sm text-stone-400">
+              لوحة فارغة. ارجع إلى عرض الحاسوب لإضافة عناصر.
+            </p>
+          )}
+          {props.primitives.map((p) => (
+            <PrimitiveRenderer key={p.id} primitive={p} positioned={false} />
+          ))}
+        </div>
+        <div className="pointer-events-none absolute top-3 start-3 inline-flex items-center gap-1.5 rounded-full bg-stone-900/85 px-3 py-1 text-[10px] font-bold text-white">
+          عرض جوّال — للتحرير ارجع للحاسوب
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative ${BG_CLASS[props.background]}`}>
