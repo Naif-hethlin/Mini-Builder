@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { login } from "@/lib/auth";
+import { listForOwner } from "@/lib/projects-repo";
 import { setSession } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -19,5 +20,12 @@ export async function POST(req: Request) {
     return NextResponse.json(result, { status: 401 });
   }
   await setSession(result.user.id);
-  return NextResponse.json({ ok: true, user: result.user });
+
+  // Returning the most-recent project's id lets the client route
+  // straight to /dashboard/<id> on login. listForOwner is already
+  // ordered by updated_at DESC.
+  const projects = await listForOwner(result.user.id);
+  const projectId = projects[0]?.id ?? null;
+
+  return NextResponse.json({ ok: true, user: result.user, projectId });
 }
