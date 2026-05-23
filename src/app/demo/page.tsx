@@ -21,6 +21,11 @@ export const metadata = {
     "موقع كامل مبني بمنصة ركاز. شاهد ما يمكن بناؤه من سحب وإفلات قبل أن تبدأ.",
 };
 
+// SectionRenderer pulls in primitives that ultimately call useSearchParams
+// (PrimitiveActionWrapper handles navigate actions via the router). Without
+// force-dynamic, Next's prerender chokes on the client hook at build time.
+export const dynamic = "force-dynamic";
+
 export default function DemoPage() {
   const design = rekazDemoDesign();
 
