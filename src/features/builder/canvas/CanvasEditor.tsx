@@ -19,6 +19,7 @@ import {
   InlinePrimitiveEditor,
   isInlineEditable,
 } from "./InlinePrimitiveEditor";
+import { CANVAS_DESIGN_WIDTH, useFitScale } from "./useFitScale";
 
 const BG_CLASS: Record<CanvasProps["background"], string> = {
   transparent: "",
@@ -63,37 +64,52 @@ export function CanvasEditor({
     });
   };
 
+  const { containerRef, scale } = useFitScale(CANVAS_DESIGN_WIDTH);
+
   return (
     <div className={`relative ${BG_CLASS[props.background]}`}>
       <div
-        // overflow-x-auto so primitives positioned past the visible
-        // canvas (e.g. when an exploded section sized for 1200px lands
-        // in a narrower viewport) stay reachable via horizontal scroll
-        // instead of being clipped off.
-        className="relative overflow-x-auto overflow-y-hidden"
-        style={{ minHeight: props.height }}
+        ref={containerRef}
+        // Outer height = SCALED design height. When the device toggle drops
+        // us into a 768px tablet frame we render the WHOLE 1280px design
+        // at 0.6x — same composition, no clipping, no left-drift.
+        className="relative w-full overflow-hidden"
+        style={{ height: props.height * scale }}
       >
-        {props.primitives.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-center">
-            <p className="max-w-sm text-sm text-stone-400">
-              لوحة فارغة. اضغط على القسم لإظهار شريط الإضافة، ثم أضف نصًا
-              أو زرًا أو صورة وحركها بحرية.
-            </p>
-          </div>
-        )}
+        {/* Fixed 1280px design surface, scaled to fit. transformOrigin
+            top-right is the RTL-correct anchor (start edge = right). */}
+        <div
+          className="absolute top-0 right-0"
+          style={{
+            width: CANVAS_DESIGN_WIDTH,
+            height: props.height,
+            transform: `scale(${scale})`,
+            transformOrigin: "top right",
+          }}
+        >
+          {props.primitives.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <p className="max-w-sm text-sm text-stone-400">
+                لوحة فارغة. اضغط على القسم لإظهار شريط الإضافة، ثم أضف نصًا
+                أو زرًا أو صورة وحركها بحرية.
+              </p>
+            </div>
+          )}
 
-        {props.primitives.map((p) => (
-          <DraggablePrimitive
-            key={p.id}
-            sectionId={sectionId}
-            primitive={p}
-            selected={
-              selection.kind === "primitive" &&
-              selection.sectionId === sectionId &&
-              selection.primitiveId === p.id
-            }
-          />
-        ))}
+          {props.primitives.map((p) => (
+            <DraggablePrimitive
+              key={p.id}
+              sectionId={sectionId}
+              primitive={p}
+              scale={scale}
+              selected={
+                selection.kind === "primitive" &&
+                selection.sectionId === sectionId &&
+                selection.primitiveId === p.id
+              }
+            />
+          ))}
+        </div>
       </div>
 
       {/* Floating "add primitive" toolbar — pinned bottom-center so it
@@ -137,10 +153,15 @@ function DraggablePrimitive({
   sectionId,
   primitive,
   selected,
+  scale,
 }: {
   sectionId: string;
   primitive: Primitive;
   selected: boolean;
+  // 1 at desktop width, smaller when the canvas is fit-scaled into a
+  // tablet/phone frame. Pointer events report in SCREEN pixels; design
+  // coordinates need (clientDelta / scale).
+  scale: number;
 }) {
   const movePrimitive = useBuilderStore((s) => s.movePrimitive);
   const removePrimitive = useBuilderStore((s) => s.removePrimitive);
@@ -253,7 +274,11 @@ function DraggablePrimitive({
     const onMove = (ev: PointerEvent) => {
       const r = resizeRef.current;
       if (!r) return;
-      last = applyResize(r, ev.clientX, ev.clientY);
+      // Convert screen pixels back to design pixels so a tablet-mode drag
+      // of the SE handle resizes by the visually-expected amount.
+      const dx = (ev.clientX - r.startX) / scale;
+      const dy = (ev.clientY - r.startY) / scale;
+      last = applyResize(r, r.startX + dx, r.startY + dy);
       setLiveResize(last);
     };
     const cleanup = () => {
@@ -312,8 +337,11 @@ function DraggablePrimitive({
     const onMove = (ev: PointerEvent) => {
       const drag = dragRef.current;
       if (!drag) return;
-      const dx = ev.clientX - drag.startX;
-      const dy = ev.clientY - drag.startY;
+      // Pointer deltas are in screen pixels; the canvas is rendered at
+      // `scale` of design pixels. Divide so a 50px tablet-mode drag moves
+      // the primitive by 50/scale design pixels.
+      const dx = (ev.clientX - drag.startX) / scale;
+      const dy = (ev.clientY - drag.startY) / scale;
       drag.dx = dx;
       drag.dy = dy;
       if (

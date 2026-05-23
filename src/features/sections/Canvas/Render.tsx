@@ -1,5 +1,11 @@
+"use client";
+
 import { PrimitiveRenderer } from "@/features/primitives/PrimitiveRenderer";
 import { PrimitiveActionWrapper } from "@/features/primitives/PrimitiveActionWrapper";
+import {
+  CANVAS_DESIGN_WIDTH,
+  useFitScale,
+} from "@/features/builder/canvas/useFitScale";
 import type { CanvasProps } from "@/features/builder/state/types";
 
 const BG_CLASS: Record<CanvasProps["background"], string> = {
@@ -11,26 +17,19 @@ const BG_CLASS: Record<CanvasProps["background"], string> = {
 };
 
 /**
- * Renders a Canvas section. Desktop: absolute-positioned primitives at the
- * height set on the section. Mobile: same primitives but flow-stacked
- * vertically (the canvas height is ignored — natural content height).
+ * Renders a Canvas section. The canvas is designed at 1280px; on every
+ * viewport narrower than that (tablet, in-browser preview windows, etc.)
+ * we proportionally scale the WHOLE composition down to fit instead of
+ * letting absolute-positioned primitives clip off the right edge.
+ *
+ * Mobile (`<md`) bypasses the absolute layer entirely and uses the
+ * flow-stack fallback — at phone widths the proportional shrink would
+ * make text unreadable, so we just stack the primitives vertically.
  *
  * Each primitive is wrapped in PrimitiveActionWrapper so its
  * `primitive.action` (navigate / scroll / link / payment / booking)
- * fires on click in the runtime (/preview, /sites). No-action primitives
- * pass through unchanged.
- *
- * IMPORTANT: the desktop frame is constrained to CANVAS_DESIGN_WIDTH
- * (1280px) and centered. The builder positions primitives inside a
- * 1280px-wide canvas, so their `left: 80px` etc. is measured from the
- * left edge of THAT box. If we let the runtime canvas stretch to full
- * viewport, the same coordinates land flush-left on a 1920px screen —
- * the form drifts off-center, the heading still looks centered (it's
- * positioned at x = (1280 - w)/2), and the whole composition reads
- * "broken." Same width here = same layout there.
+ * fires on click in the runtime.
  */
-const CANVAS_DESIGN_WIDTH = 1280;
-
 export default function CanvasRender({ props }: { props: CanvasProps }) {
   return (
     <section className={`relative ${BG_CLASS[props.background]}`}>
@@ -43,18 +42,49 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
         ))}
       </div>
 
-      {/* Desktop absolute — centered 1280px box matches the builder canvas
-          width so absolute coordinates land where the user placed them. */}
-      <div
-        className="relative mx-auto hidden overflow-hidden md:block"
-        style={{ height: props.height, maxWidth: CANVAS_DESIGN_WIDTH }}
-      >
-        {props.primitives.map((p) => (
-          <PrimitiveActionWrapper key={p.id} action={p.action}>
-            <PrimitiveRenderer primitive={p} positioned={true} />
-          </PrimitiveActionWrapper>
-        ))}
+      {/* Desktop absolute, scaled to fit container width */}
+      <div className="hidden md:block">
+        <ScaledCanvas height={props.height}>
+          {props.primitives.map((p) => (
+            <PrimitiveActionWrapper key={p.id} action={p.action}>
+              <PrimitiveRenderer primitive={p} positioned={true} />
+            </PrimitiveActionWrapper>
+          ))}
+        </ScaledCanvas>
       </div>
     </section>
+  );
+}
+
+function ScaledCanvas({
+  height,
+  children,
+}: {
+  height: number;
+  children: React.ReactNode;
+}) {
+  const { containerRef, scale } = useFitScale(CANVAS_DESIGN_WIDTH);
+  return (
+    <div
+      ref={containerRef}
+      className="relative mx-auto w-full overflow-hidden"
+      // Outer height = SCALED design height. If we left it at the design
+      // height, a shrunk canvas would leave a giant empty band below.
+      style={{ height: height * scale, maxWidth: CANVAS_DESIGN_WIDTH }}
+    >
+      <div
+        className="absolute top-0 right-0"
+        style={{
+          width: CANVAS_DESIGN_WIDTH,
+          height,
+          transform: `scale(${scale})`,
+          // RTL anchor: scale toward the start edge (right in RTL) so the
+          // composition's logical top-left stays at the visual corner.
+          transformOrigin: "top right",
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
