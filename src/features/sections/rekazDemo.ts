@@ -1,15 +1,17 @@
 // Rekaz-themed demo design.
 //
 // The demo page (`/demo`) renders a faithful sketch of rekaz.io — booking
-// platform for SMBs in KSA — built ENTIRELY from our own section primitives.
-// Every section gets auto-exploded into the free-canvas representation so
-// the user sees that this whole site is literally made of the same dragable
-// pieces they get when they sign up. No magic ingredients, no rendering
-// path the user can't replicate themselves.
+// platform for SMBs in KSA — using the SAME section presets the builder
+// publishes to /preview and /sites. The point is to show prospective users
+// the polished output: "this is what your published site can look like."
+//
+// We intentionally do NOT auto-explode here. Inside the builder, sections
+// get exploded so users can drag every piece around; on a published site
+// the polished preset rendering is what visitors actually see. The demo
+// mirrors the published path, not the builder path.
 
 import { newId } from "@/shared/lib/id";
 import type { PageDesign, Section } from "@/features/builder/state/types";
-import { explodeSection, isExplodable } from "@/features/builder/explode";
 
 export function rekazDemoDesign(): PageDesign {
   const sections: Section[] = [
@@ -89,7 +91,7 @@ export function rekazDemoDesign(): PageDesign {
             },
             {
               id: newId(),
-              icon: "BarChart3",
+              icon: "BarChart",
               title: "تقارير ذكية",
               description:
                 "تابع الإيرادات، عدد الحجوزات، وأداء كل موظف لحظياً — قرارات أسرع وأذكى.",
@@ -348,10 +350,5 @@ export function rekazDemoDesign(): PageDesign {
       },
   ];
 
-  return {
-    version: 1,
-    sections: sections.map((s) =>
-      isExplodable(s) ? (explodeSection(s) ?? s) : s,
-    ),
-  };
+  return { version: 1, sections };
 }
