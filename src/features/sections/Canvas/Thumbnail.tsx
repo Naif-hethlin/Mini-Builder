@@ -1,12 +1,79 @@
+import { newId } from "@/shared/lib/id";
+import type { Section } from "@/features/builder/state/types";
+import { SectionThumbnail } from "../SectionThumbnail";
+
+// Seed a sample canvas with a few primitives so the thumbnail conveys
+// "this is a free-form space with anything inside" — an empty canvas
+// would just render as a blank tile.
+const SAMPLE: Section = {
+  id: newId(),
+  type: "canvas",
+  props: {
+    height: 420,
+    background: "white",
+    primitives: [
+      {
+        id: newId(),
+        type: "heading",
+        x: 60,
+        y: 60,
+        w: 520,
+        props: {
+          content: "بناء حر",
+          level: 1,
+          color: "#1c1917",
+          align: "start",
+          weight: "bold",
+          tracking: "tight",
+        },
+      },
+      {
+        id: newId(),
+        type: "text",
+        x: 60,
+        y: 140,
+        w: 520,
+        props: {
+          content: "اسحب وأفلت أي عنصر بحرية كاملة.",
+          fontSize: 18,
+          weight: "regular",
+          color: "#57534e",
+          align: "start",
+        },
+      },
+      {
+        id: newId(),
+        type: "shape",
+        x: 700,
+        y: 60,
+        w: 280,
+        h: 280,
+        props: {
+          kind: "blob",
+          fillColor: "#e85d5d",
+          borderColor: "#000000",
+          borderWidth: 0,
+        },
+      },
+      {
+        id: newId(),
+        type: "button",
+        x: 60,
+        y: 240,
+        w: 200,
+        props: {
+          label: "ابدأ الآن",
+          variant: "solid",
+          size: "md",
+          action: { kind: "none" },
+          bgColor: "#1c1917",
+          textColor: "#ffffff",
+        },
+      },
+    ],
+  },
+};
+
 export default function CanvasThumbnail() {
-  return (
-    <div className="aspect-[4/2] rounded-md bg-stone-100 p-2">
-      <div className="relative h-full rounded bg-white shadow-sm">
-        <span className="absolute top-1 start-1 h-2 w-8 rounded bg-stone-300" />
-        <span className="absolute top-4 start-4 h-1.5 w-12 rounded bg-stone-200" />
-        <span className="absolute bottom-2 end-2 h-3 w-10 rounded-full bg-brand/70" />
-        <span className="absolute top-1 end-2 h-3 w-3 rounded-sm bg-brand-soft/60" />
-      </div>
-    </div>
-  );
+  return <SectionThumbnail section={SAMPLE} />;
 }
