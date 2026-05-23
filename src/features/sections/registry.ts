@@ -14,6 +14,10 @@ import FeaturesThumbnail from "./Features/Thumbnail";
 import { createFeatures } from "./Features/defaults";
 import { featuresSchema } from "./Features/schema";
 
+import PricingThumbnail from "./Pricing/Thumbnail";
+import { createPricing } from "./Pricing/defaults";
+import { pricingSchema } from "./Pricing/schema";
+
 import CTAThumbnail from "./CTA/Thumbnail";
 import { createCTA } from "./CTA/defaults";
 import { ctaSchema } from "./CTA/schema";
@@ -100,6 +104,14 @@ export const SECTION_PRESETS: SectionPresetMeta[] = [
     Thumbnail: FeaturesThumbnail,
     createDefault: createFeatures,
     schema: featuresSchema,
+  },
+  {
+    type: "pricing",
+    label: "خطط الأسعار",
+    description: "بطاقات أسعار (٣ خطط) مع ميزات وزر اشتراك لكل خطة.",
+    Thumbnail: PricingThumbnail,
+    createDefault: createPricing,
+    schema: pricingSchema,
   },
   {
     type: "cta",

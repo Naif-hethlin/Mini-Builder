@@ -56,6 +56,21 @@ export type FeaturesProps = {
   columns: 2 | 3 | 4;
 };
 
+export type PricingProps = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  plans: Array<{
+    id: string;
+    name: string;
+    price: string;
+    cadence: string;
+    features: string[];
+    cta: string;
+    highlighted: boolean;
+  }>;
+};
+
 export type CTAProps = {
   title: string;
   description: string;
@@ -168,6 +183,7 @@ export type Section =
   | { id: string; type: "header"; props: HeaderProps }
   | { id: string; type: "hero"; props: HeroProps }
   | { id: string; type: "features"; props: FeaturesProps }
+  | { id: string; type: "pricing"; props: PricingProps }
   | { id: string; type: "cta"; props: CTAProps }
   | { id: string; type: "footer"; props: FooterProps }
   | { id: string; type: "gallery"; props: GalleryProps }

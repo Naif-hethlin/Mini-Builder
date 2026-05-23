@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 
 const STORAGE_KEY = "rekaz-builder/bookings/v1";
+const SEEN_KEY = "rekaz-builder/bookings-seen/v1";
 
 export type Booking = {
   id: string;
@@ -42,8 +43,39 @@ function saveAll(map: BookingsMap) {
   }
 }
 
+// Track which timestamp each project's dashboard has acknowledged, so the
+// notification bell can show an "unread bookings since X" badge.
+type SeenMap = Record<string, number>;
+
+function loadSeen(): SeenMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as SeenMap;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSeen(seen: SeenMap) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+  } catch {
+    // ignore
+  }
+}
+
 export type BookingsState = {
   byProject: BookingsMap;
+  /** Per-project timestamp the dashboard has acknowledged. Bookings whose
+   *  `createdAt` is newer than this count as unread. */
+  lastSeenByProject: SeenMap;
   hydrated: boolean;
   hydrate: () => void;
   list: (projectId: string) => Booking[];
@@ -56,15 +88,22 @@ export type BookingsState = {
     status: Booking["status"],
   ) => void;
   remove: (projectId: string, id: string) => void;
+  /** Mark every booking up to "now" as read for this project. */
+  markSeen: (projectId: string) => void;
 };
 
 export const useBookings = create<BookingsState>((set, get) => ({
   byProject: {},
+  lastSeenByProject: {},
   hydrated: false,
 
   hydrate: () => {
     if (get().hydrated) return;
-    set({ byProject: loadAll(), hydrated: true });
+    set({
+      byProject: loadAll(),
+      lastSeenByProject: loadSeen(),
+      hydrated: true,
+    });
   },
 
   list: (projectId) => get().byProject[projectId] ?? [],
@@ -100,5 +139,14 @@ export const useBookings = create<BookingsState>((set, get) => ({
     const byProject = { ...get().byProject, [projectId]: next };
     set({ byProject });
     saveAll(byProject);
+  },
+
+  markSeen: (projectId) => {
+    const lastSeenByProject = {
+      ...get().lastSeenByProject,
+      [projectId]: Date.now(),
+    };
+    set({ lastSeenByProject });
+    saveSeen(lastSeenByProject);
   },
 }));

@@ -256,6 +256,8 @@ function labelOf(type: Section["type"]): string {
       return "البطل";
     case "features":
       return "المزايا";
+    case "pricing":
+      return "خطط الأسعار";
     case "cta":
       return "دعوة للإجراء";
     case "footer":

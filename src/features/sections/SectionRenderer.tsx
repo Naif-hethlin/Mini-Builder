@@ -3,6 +3,7 @@ import type { Section } from "@/features/builder/state/types";
 import HeaderRender from "./Header/Render";
 import HeroRender from "./Hero/Render";
 import FeaturesRender from "./Features/Render";
+import PricingRender from "./Pricing/Render";
 import CTARender from "./CTA/Render";
 import FooterRender from "./Footer/Render";
 import GalleryRender from "./Gallery/Render";
@@ -34,6 +35,8 @@ export function SectionRenderer({ section }: { section: Section }) {
       return <HeroRender props={section.props} />;
     case "features":
       return <FeaturesRender props={section.props} />;
+    case "pricing":
+      return <PricingRender props={section.props} />;
     case "cta":
       return <CTARender props={section.props} />;
     case "footer":

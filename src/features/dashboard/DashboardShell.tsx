@@ -9,6 +9,7 @@ import { Skeleton } from "@/shared/ui/Skeleton";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { useProjects } from "@/features/projects";
 import { DashboardMobileNav, DashboardSidebar } from "./DashboardSidebar";
+import { NotificationsBell } from "./NotificationsBell";
 
 /**
  * Layout wrapper for /dashboard/[id]/* — sidebar + top bar + content slot.
@@ -50,11 +51,12 @@ export function DashboardShell({
             <Link
               href={`/preview/${projectId}`}
               target="_blank"
-              className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand"
+              className="hidden items-center gap-2 rounded-full border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:border-brand hover:text-brand sm:inline-flex"
             >
               معاينة الموقع
               <ExternalLink size={12} />
             </Link>
+            <NotificationsBell projectId={projectId} />
             <UserMenu />
           </div>
         </header>
