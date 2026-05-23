@@ -3,18 +3,20 @@ import type { Section } from "@/features/builder/state/types";
 import { SectionRenderer } from "./SectionRenderer";
 
 /**
- * High-fidelity sidebar tile preview. Renders the actual SectionRenderer
- * at full width (1100px) inside an overflow-hidden 16:9 frame, then
- * scales it down via CSS transform so the user sees a real miniature of
- * what they'll get instead of a wireframe.
+ * High-fidelity sidebar tile preview. The trick: we render the actual
+ * SectionRenderer at a wide "design" width inside a fixed-aspect outer
+ * frame, then scale it down via CSS transform anchored top-left. We
+ * also size the inner to exactly the design aspect (16:9) so the
+ * scaled visual fills the tile without dead space.
  *
- * `pointer-events-none` on the inner scaled wrapper so any interactive
- * bits (FAQ accordions, Booking form, Contact submit) can't be clicked
- * from inside the sidebar tile.
+ * `pointer-events-none + select-none` so any interactive bits (FAQ
+ * accordion, Booking form, Contact submit) can't fire from inside the
+ * sidebar tile.
  */
-const RENDER_WIDTH = 1100;
-const TILE_WIDTH = 220; // matches the typical sidebar tile width
-const SCALE = TILE_WIDTH / RENDER_WIDTH; // ≈ 0.2
+const DESIGN_W = 1280;
+const DESIGN_H = 720; // 16:9 of DESIGN_W
+const PREVIEW_W = 256; // typical sidebar tile inner width
+const SCALE = PREVIEW_W / DESIGN_W; // ≈ 0.2
 
 export const SectionThumbnail = memo(function SectionThumbnail({
   section,
@@ -22,12 +24,13 @@ export const SectionThumbnail = memo(function SectionThumbnail({
   section: Section;
 }) {
   return (
-    <div className="aspect-[16/9] w-full overflow-hidden rounded border border-stone-200 bg-white">
+    <div className="relative aspect-[16/9] w-full overflow-hidden rounded border border-stone-200 bg-white">
       <div
         aria-hidden
-        className="pointer-events-none origin-top-left select-none"
+        className="pointer-events-none absolute left-0 top-0 origin-top-left select-none"
         style={{
-          width: `${RENDER_WIDTH}px`,
+          width: `${DESIGN_W}px`,
+          height: `${DESIGN_H}px`,
           transform: `scale(${SCALE})`,
         }}
       >
