@@ -18,7 +18,13 @@ export default function FooterRender({ props }: { props: FooterProps }) {
   return (
     <footer className="border-t border-stone-200 bg-stone-50 px-6 py-12 md:px-10">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-8 md:grid-cols-[2fr,1fr,1fr]">
+        {/* Brand gets ~40% of the width; the link columns share the rest
+            in a nested grid so any number of columns lays out cleanly.
+            Tailwind arbitrary values use UNDERSCORES, not commas — the
+            previous `md:grid-cols-[2fr,1fr,1fr]` was silently invalid
+            (commas aren't allowed) so the grid collapsed into one column
+            and the whole footer stacked vertically. */}
+        <div className="grid gap-8 md:grid-cols-[2fr_3fr]">
           {/* Brand */}
           <div>
             <p className="text-lg font-bold tracking-tight text-stone-900">
@@ -48,26 +54,33 @@ export default function FooterRender({ props }: { props: FooterProps }) {
             )}
           </div>
 
-          {/* Link columns */}
-          {props.columns.map((col) => (
-            <div key={col.id}>
-              <p className="mb-3 text-sm font-semibold text-stone-900">
-                {col.title}
-              </p>
-              <ul className="space-y-2">
-                {col.links.map((link, i) => (
-                  <li key={i}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-stone-600 transition-colors hover:text-stone-900"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Link columns — inline grid sized for the actual count. */}
+          <div
+            className="grid gap-8"
+            style={{
+              gridTemplateColumns: `repeat(${Math.max(1, props.columns.length)}, minmax(0, 1fr))`,
+            }}
+          >
+            {props.columns.map((col) => (
+              <div key={col.id}>
+                <p className="mb-3 text-sm font-semibold text-stone-900">
+                  {col.title}
+                </p>
+                <ul className="space-y-2">
+                  {col.links.map((link, i) => (
+                    <li key={i}>
+                      <a
+                        href={link.href}
+                        className="text-sm text-stone-600 transition-colors hover:text-stone-900"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Copyright bar */}
