@@ -34,7 +34,6 @@ export function AuthOverlay({
   const forceOpen = useAuthOverlay((s) => s.forceOpen);
   const closeForce = useAuthOverlay((s) => s.close);
   const [skipped, setSkipped] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
 
   // ?auth=open is set by the /login redirect and any "sign in" link from
   // outside the templates page. Treat it as an explicit re-open request.
@@ -50,24 +49,27 @@ export function AuthOverlay({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setSkipped(window.sessionStorage.getItem(SKIP_KEY) === "1");
-    }
-    setHydrated(true);
+    if (typeof window === "undefined") return;
+    // Standard mount-only read from browser storage — eslint's
+    // "no setState in effect" rule fires here, but there's no
+    // synchronous alternative for client-only APIs.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSkipped(window.sessionStorage.getItem(SKIP_KEY) === "1");
   }, []);
 
   // Re-read skipped flag when forceOpen flips on — that store call already
   // cleared sessionStorage but we also need local state in sync.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (forceOpen) setSkipped(false);
   }, [forceOpen]);
 
   // Server-known authed visitors should NEVER see the overlay flash, even
   // before useCurrentUser settles. Client-known auth still wins (e.g. the
-  // user just signed in this session). The `hydrated` gate is intentionally
-  // OFF here: when an anonymous user hits /templates we want the overlay
-  // in the very first paint to cover BuilderShowcase, not on the second
-  // tick after sessionStorage is read.
+  // user just signed in this session). No `hydrated` gate here — when an
+  // anonymous user hits /templates we want the overlay in the very first
+  // paint to cover BuilderShowcase, not on the second tick after
+  // sessionStorage is read.
   const isAuthed = user !== null || (initialAuthed && loading);
   const show = !isAuthed && (forceOpen || !skipped);
 

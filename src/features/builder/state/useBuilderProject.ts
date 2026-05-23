@@ -35,17 +35,14 @@ export function useBuilderProject(projectId: string) {
       if (cancelled) return;
 
       const projects = useProjects.getState();
-      const home =
-        projects.getHomePage(project.id) ?? project.pages[0];
+      const home = projects.getHomePage(project.id) ?? project.pages[0];
       const wanted =
         (wantedSlug
           ? project.pages.find((p) => p.slug === wantedSlug)
           : undefined) ?? home;
       if (!wanted) return;
 
-      useBuilderStore
-        .getState()
-        .loadPage(project.id, wanted.id, wanted.design);
+      useBuilderStore.getState().loadPage(project.id, wanted.id, wanted.design);
 
       unsubscribe = useBuilderStore.subscribe((state, prev) => {
         if (state.design === prev.design) return;
@@ -86,13 +83,8 @@ export function useBuilderProject(projectId: string) {
           const data = (await res.json()) as { ok: boolean; project: Project };
           if (data.ok) {
             // Merge into the local cache too, so picker + dashboard see it.
-            useProjects.setState({
-              projects: {
-                ...useProjects.getState().projects,
-                [data.project.id]: data.project,
-              },
-            });
-            finish(data.project);
+            const normalized = useProjects.getState().upsert(data.project);
+            finish(normalized);
             return;
           }
         }

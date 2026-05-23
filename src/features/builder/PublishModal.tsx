@@ -41,10 +41,7 @@ export function PublishModal({
   const patchProject = (patch: Partial<NonNullable<typeof project>>) => {
     const current = useProjects.getState().projects[projectId];
     if (!current) return;
-    useProjects.setState((s) => ({
-      ...s,
-      projects: { ...s.projects, [projectId]: { ...current, ...patch } },
-    }));
+    useProjects.getState().upsert({ ...current, ...patch });
   };
 
   const [slug, setSlug] = useState(project?.slug ?? "");
@@ -77,7 +74,10 @@ export function PublishModal({
         body: JSON.stringify({ slug }),
       });
       const data = (await res.json()) as
-        | { ok: true; project: { id: string; slug: string } }
+        | {
+            ok: true;
+            project: { id: string; slug: string; publishedAt?: number | null };
+          }
         | { ok: false; error: string };
       if (!res.ok || !data.ok) {
         toast.error(
@@ -89,7 +89,7 @@ export function PublishModal({
       patchProject({
         slug: data.project.slug,
         published: true,
-        publishedAt: Date.now(),
+        publishedAt: data.project.publishedAt ?? Date.now(),
       });
       toast.success("الموقع منشور");
     } catch {

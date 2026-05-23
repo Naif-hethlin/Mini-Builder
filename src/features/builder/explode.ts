@@ -13,18 +13,28 @@ import type {
   ButtonPrimitiveProps,
   HeadingPrimitiveProps,
   ImagePrimitiveProps,
+  InputPrimitiveProps,
   ListPrimitiveProps,
   Primitive,
+  QAPrimitiveProps,
   ShapePrimitiveProps,
   TextPrimitiveProps,
 } from "@/features/primitives/types";
 import type {
+  BookingProps,
   CTAProps,
+  ContactProps,
+  FAQProps,
   FeaturesProps,
   FooterProps,
+  GalleryProps,
   HeaderProps,
   HeroProps,
+  MenuProps,
+  PortfolioProps,
+  PricingProps,
   Section,
+  TestimonialsProps,
 } from "./state/types";
 
 const CANVAS_W = 1200;
@@ -123,6 +133,38 @@ function list(
     color: "#1c1917",
   };
   return { id: newId(), type: "list", x, y, w, props };
+}
+
+function input(
+  x: number,
+  y: number,
+  w: number,
+  label: string,
+  placeholder = "",
+  fieldType: InputPrimitiveProps["fieldType"] = "text",
+): Primitive {
+  const props: InputPrimitiveProps = {
+    label,
+    placeholder,
+    required: false,
+    fieldType,
+  };
+  return { id: newId(), type: "input", x, y, w, props };
+}
+
+function qa(
+  x: number,
+  y: number,
+  w: number,
+  question: string,
+  answer: string,
+): Primitive {
+  const props: QAPrimitiveProps = {
+    question,
+    answer,
+    defaultOpen: false,
+  };
+  return { id: newId(), type: "qa", x, y, w, props };
 }
 
 // -----------------------------------------------------------------------------
@@ -400,6 +442,405 @@ function explodeFooter(p: FooterProps): {
 }
 
 // -----------------------------------------------------------------------------
+// Section-header helper — every 'content' section starts with the same
+// title + subtitle stack at the top.
+// -----------------------------------------------------------------------------
+
+function sectionHeader(
+  startY: number,
+  innerX: number,
+  innerW: number,
+  primitives: Primitive[],
+  title: string,
+  subtitle?: string,
+): number {
+  let y = startY;
+  primitives.push(heading(innerX, y, innerW, title, 2, "center"));
+  y += 70;
+  if (subtitle) {
+    primitives.push(
+      text(innerX, y, innerW, subtitle, {
+        align: "center",
+        color: "#64748b",
+      }),
+    );
+    y += 50;
+  }
+  return y;
+}
+
+// -----------------------------------------------------------------------------
+// Pricing
+// -----------------------------------------------------------------------------
+
+function explodePricing(p: PricingProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 60;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  if (p.eyebrow) {
+    primitives.push(
+      text(padX, y, innerW, p.eyebrow.toUpperCase(), {
+        weight: "semibold",
+        align: "center",
+        color: "#e85d5d",
+      }),
+    );
+    y += 32;
+  }
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const cols = Math.min(p.plans.length || 1, 3);
+  const gap = 24;
+  const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
+  const cardH = 360;
+
+  p.plans.forEach((plan, i) => {
+    const cx = padX + i * (cardW + gap);
+    const cy = y;
+    const highlighted = plan.highlighted === true || (plan.highlighted as unknown) === "true";
+    // Card background
+    primitives.push(
+      shape(cx, cy, cardW, cardH, "rounded-rect", highlighted ? "#fdeeea" : "#f8fafc"),
+    );
+    // Plan name
+    primitives.push(heading(cx + 24, cy + 24, cardW - 48, plan.name, 3));
+    // Price
+    primitives.push(
+      heading(cx + 24, cy + 64, cardW - 48, `${plan.price}${plan.cadence ? " " + plan.cadence : ""}`, 2),
+    );
+    // Features as a list
+    if (plan.features.length > 0) {
+      primitives.push(
+        list(cx + 24, cy + 140, cardW - 48, plan.features, "check"),
+      );
+    }
+    // CTA button
+    primitives.push(
+      button(
+        cx + 24,
+        cy + cardH - 60,
+        cardW - 48,
+        plan.cta,
+        highlighted ? "solid" : "outline",
+      ),
+    );
+  });
+
+  return { primitives, height: y + cardH + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// Gallery — N images in a column grid.
+// -----------------------------------------------------------------------------
+
+function explodeGallery(p: GalleryProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 60;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const cols = p.columns;
+  const gap = 16;
+  const tileW = Math.floor((innerW - gap * (cols - 1)) / cols);
+  const tileH = Math.round(tileW * 0.75);
+
+  p.items.forEach((item, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = padX + col * (tileW + gap);
+    const cy = y + row * (tileH + gap);
+    if (item.url) {
+      primitives.push(image(cx, cy, tileW, tileH, item.url));
+    } else {
+      primitives.push(shape(cx, cy, tileW, tileH, "rounded-rect", "#f1f5f9"));
+    }
+  });
+
+  const rows = Math.ceil(p.items.length / cols);
+  return { primitives, height: y + rows * (tileH + gap) + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// Testimonials — quote cards in a row.
+// -----------------------------------------------------------------------------
+
+function explodeTestimonials(p: TestimonialsProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 60;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const cols = p.columns;
+  const gap = 24;
+  const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
+  const cardH = 240;
+
+  p.items.forEach((item, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = padX + col * (cardW + gap);
+    const cy = y + row * (cardH + gap);
+    primitives.push(shape(cx, cy, cardW, cardH, "rounded-rect", "#f8fafc"));
+    primitives.push(
+      text(cx + 24, cy + 24, cardW - 48, `"${item.quote}"`, {
+        fontSize: 14,
+        weight: "medium",
+      }),
+    );
+    primitives.push(heading(cx + 24, cy + cardH - 80, cardW - 48, item.name, 4));
+    primitives.push(
+      text(cx + 24, cy + cardH - 48, cardW - 48, item.role, {
+        fontSize: 12,
+        color: "#64748b",
+      }),
+    );
+  });
+
+  const rows = Math.ceil(p.items.length / cols);
+  return { primitives, height: y + rows * (cardH + gap) + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// FAQ — section header + Q&A primitives stacked vertically.
+// -----------------------------------------------------------------------------
+
+function explodeFaq(p: FAQProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 120;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const itemGap = 12;
+  const itemH = 60;
+  p.items.forEach((item, i) => {
+    primitives.push(
+      qa(padX, y + i * (itemH + itemGap), innerW, item.question, item.answer),
+    );
+  });
+
+  return {
+    primitives,
+    height: y + p.items.length * (itemH + itemGap) + 40,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Contact — text block + clickable contact lines.
+// -----------------------------------------------------------------------------
+
+function explodeContact(p: ContactProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 120;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  // Contact lines as headings (so they're prominent + editable)
+  if (p.email) {
+    primitives.push(text(padX, y, innerW, "البريد", { fontSize: 12, color: "#64748b", align: "center" }));
+    y += 22;
+    primitives.push(heading(padX, y, innerW, p.email, 3, "center"));
+    y += 56;
+  }
+  if (p.phone) {
+    primitives.push(text(padX, y, innerW, "الجوال", { fontSize: 12, color: "#64748b", align: "center" }));
+    y += 22;
+    primitives.push(heading(padX, y, innerW, p.phone, 3, "center"));
+    y += 56;
+  }
+  if (p.address) {
+    primitives.push(text(padX, y, innerW, "العنوان", { fontSize: 12, color: "#64748b", align: "center" }));
+    y += 22;
+    primitives.push(text(padX, y, innerW, p.address, { align: "center" }));
+    y += 40;
+  }
+
+  return { primitives, height: y + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// Booking — name + phone + date + time + (staff) + submit, as input
+// primitives the user can rearrange.
+// -----------------------------------------------------------------------------
+
+function explodeBooking(p: BookingProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 200;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const inputGap = 12;
+  const inputH = 70;
+
+  primitives.push(input(padX, y, innerW, "الاسم", "اسمك الكامل", "text"));
+  y += inputH + inputGap;
+
+  primitives.push(input(padX, y, innerW, "الجوال", "05xxxxxxxx", "tel"));
+  y += inputH + inputGap;
+
+  primitives.push(input(padX, y, innerW, "التاريخ", "YYYY-MM-DD", "text"));
+  y += inputH + inputGap;
+
+  primitives.push(
+    input(padX, y, innerW, "الوقت", p.slots[0] ?? "HH:MM", "text"),
+  );
+  y += inputH + inputGap;
+
+  if (p.staff.length > 0) {
+    primitives.push(
+      list(
+        padX,
+        y,
+        innerW,
+        ["اختر من فريق العمل:", ...p.staff.map((s) => s.name)],
+        "bullet",
+      ),
+    );
+    y += 24 + p.staff.length * 24 + 12;
+  }
+
+  primitives.push(button(padX, y, innerW, p.buttonLabel, "solid"));
+  y += 60;
+
+  return { primitives, height: y + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// Menu — image + name + price + description per item.
+// -----------------------------------------------------------------------------
+
+function explodeMenu(p: MenuProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 60;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const cols = p.columns;
+  const gap = 20;
+  const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
+  const imgH = 180;
+  const cardH = imgH + 130;
+
+  p.items.forEach((item, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = padX + col * (cardW + gap);
+    const cy = y + row * (cardH + gap);
+
+    // Card backdrop
+    primitives.push(shape(cx, cy, cardW, cardH, "rounded-rect", "#ffffff"));
+    // Image
+    if (item.imageUrl) {
+      primitives.push(image(cx, cy, cardW, imgH, item.imageUrl));
+    } else {
+      primitives.push(shape(cx, cy, cardW, imgH, "square", "#f1f5f9"));
+    }
+    // Title
+    primitives.push(heading(cx + 16, cy + imgH + 12, cardW - 32, item.name, 4));
+    // Price
+    primitives.push(
+      text(cx + 16, cy + imgH + 44, cardW - 32, `${item.price} ${p.currency}`, {
+        weight: "semibold",
+        color: "#e85d5d",
+      }),
+    );
+    // Description
+    if (item.description) {
+      primitives.push(
+        text(cx + 16, cy + imgH + 70, cardW - 32, item.description, {
+          fontSize: 13,
+          color: "#64748b",
+        }),
+      );
+    }
+  });
+
+  const rows = Math.ceil(p.items.length / cols);
+  return { primitives, height: y + rows * (cardH + gap) + 40 };
+}
+
+// -----------------------------------------------------------------------------
+// Portfolio — image + title + category overlay.
+// -----------------------------------------------------------------------------
+
+function explodePortfolio(p: PortfolioProps): {
+  primitives: Primitive[];
+  height: number;
+} {
+  const primitives: Primitive[] = [];
+  const padX = 60;
+  const innerW = CANVAS_W - padX * 2;
+
+  let y = 60;
+  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+
+  const cols = p.columns;
+  const gap = 16;
+  const tileW = Math.floor((innerW - gap * (cols - 1)) / cols);
+  const tileH = Math.round(tileW * 0.8);
+  const captionH = 60;
+
+  p.items.forEach((item, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = padX + col * (tileW + gap);
+    const cy = y + row * (tileH + captionH + gap);
+    if (item.imageUrl) {
+      primitives.push(image(cx, cy, tileW, tileH, item.imageUrl));
+    } else {
+      primitives.push(shape(cx, cy, tileW, tileH, "rounded-rect", "#f1f5f9"));
+    }
+    primitives.push(heading(cx + 8, cy + tileH + 8, tileW - 16, item.title, 4));
+    primitives.push(
+      text(cx + 8, cy + tileH + 36, tileW - 16, item.category, {
+        fontSize: 12,
+        color: "#64748b",
+      }),
+    );
+  });
+
+  const rows = Math.ceil(p.items.length / cols);
+  return {
+    primitives,
+    height: y + rows * (tileH + captionH + gap) + 40,
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Public entry point
 // -----------------------------------------------------------------------------
 
@@ -409,9 +850,19 @@ export function isExplodable(section: Section): boolean {
     case "header":
     case "hero":
     case "features":
+    case "pricing":
     case "cta":
     case "footer":
+    case "gallery":
+    case "testimonials":
+    case "faq":
+    case "contact":
+    case "booking":
+    case "menu":
+    case "portfolio":
       return true;
+    case "canvas":
+      return false; // already free
     default:
       return false;
   }
@@ -435,11 +886,35 @@ export function explodeSection(section: Section): Section | null {
     case "features":
       result = explodeFeatures(section.props);
       break;
+    case "pricing":
+      result = explodePricing(section.props);
+      break;
     case "cta":
       result = explodeCta(section.props);
       break;
     case "footer":
       result = explodeFooter(section.props);
+      break;
+    case "gallery":
+      result = explodeGallery(section.props);
+      break;
+    case "testimonials":
+      result = explodeTestimonials(section.props);
+      break;
+    case "faq":
+      result = explodeFaq(section.props);
+      break;
+    case "contact":
+      result = explodeContact(section.props);
+      break;
+    case "booking":
+      result = explodeBooking(section.props);
+      break;
+    case "menu":
+      result = explodeMenu(section.props);
+      break;
+    case "portfolio":
+      result = explodePortfolio(section.props);
       break;
     default:
       return null;

@@ -14,7 +14,10 @@ import { useEffect, useMemo } from "react";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/shared/lib/cn";
 import { EmptyState } from "@/shared/ui/EmptyState";
-import { useBookings } from "@/features/workflows/booking/store";
+import {
+  EMPTY_BOOKINGS,
+  useBookings,
+} from "@/features/workflows/booking/store";
 import { useProjects } from "@/features/projects";
 import { metricsFromBookings, recentBookings } from "./derive";
 
@@ -38,7 +41,7 @@ export function Overview() {
     useProjects.getState().hydrate();
   }, []);
 
-  const bookings = useBookings((s) => s.byProject[id] ?? []);
+  const bookings = useBookings((s) => s.byProject[id] ?? EMPTY_BOOKINGS);
   const project = useProjects((s) => s.projects[id]);
   const metrics = useMemo(() => metricsFromBookings(bookings), [bookings]);
   const activity = useMemo(() => recentBookings(bookings, 5), [bookings]);

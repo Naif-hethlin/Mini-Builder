@@ -4,7 +4,11 @@ import { Bell, CalendarCheck, Inbox } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/lib/cn";
-import { useBookings, type Booking } from "@/features/workflows/booking/store";
+import {
+  EMPTY_BOOKINGS,
+  useBookings,
+  type Booking,
+} from "@/features/workflows/booking/store";
 
 const STATUS_LABEL: Record<Booking["status"], string> = {
   pending: "قيد الانتظار",
@@ -31,10 +35,8 @@ export function NotificationsBell({ projectId }: { projectId: string }) {
     useBookings.getState().hydrate();
   }, []);
 
-  const bookings = useBookings((s) => s.byProject[projectId] ?? []);
-  const lastSeen = useBookings(
-    (s) => s.lastSeenByProject[projectId] ?? 0,
-  );
+  const bookings = useBookings((s) => s.byProject[projectId] ?? EMPTY_BOOKINGS);
+  const lastSeen = useBookings((s) => s.lastSeenByProject[projectId] ?? 0);
   const markSeen = useBookings((s) => s.markSeen);
 
   const unread = bookings.filter((b) => b.createdAt > lastSeen);
@@ -85,9 +87,7 @@ export function NotificationsBell({ projectId }: { projectId: string }) {
         <div className="absolute end-0 top-full z-40 mt-2 w-80 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
             <div>
-              <p className="text-sm font-bold text-stone-900">
-                آخر النشاطات
-              </p>
+              <p className="text-sm font-bold text-stone-900">آخر النشاطات</p>
               <p className="mt-0.5 text-xs text-stone-500">
                 {bookings.length === 0
                   ? "لا توجد حجوزات بعد"
