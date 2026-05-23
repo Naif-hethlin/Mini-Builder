@@ -1054,23 +1054,38 @@ function explodePortfolio(p: PortfolioProps): {
 // Public entry point
 // -----------------------------------------------------------------------------
 
-/** Returns true when explodeSection can handle this section's type. */
+/**
+ * Returns true when explodeSection can handle the section's type AND
+ * the resulting primitive layout is reasonable. Some sections are
+ * deliberately NOT exploded because their design (forms, accordion
+ * animation, split panels with focus states) is the value — turning
+ * them into absolutely-positioned primitives strips out hover, focus,
+ * mailto/tel links, smooth-open animations, etc. and looks much worse
+ * than the polished preset. Those types stay as preset sections; the
+ * user still edits their content via the right panel.
+ */
 export function isExplodable(section: Section): boolean {
   switch (section.type) {
+    // Simple layout sections — explode looks ~the same as the preset.
     case "header":
     case "hero":
     case "features":
-    case "pricing":
     case "cta":
     case "footer":
     case "gallery":
+    case "menu":
+    case "portfolio":
+      return true;
+
+    // Complex / interactive sections — design IS the experience, keep
+    // them as polished presets instead.
+    case "pricing":
     case "testimonials":
     case "faq":
     case "contact":
     case "booking":
-    case "menu":
-    case "portfolio":
-      return true;
+      return false;
+
     case "canvas":
       return false; // already free
     default:
