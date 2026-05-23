@@ -59,7 +59,9 @@ export function createPrimitive(type: PrimitiveType): Primitive {
         w: 320,
         h: 200,
         props: {
-          url: "",
+          // Neutral default photo so a newly-added image isn't a blank
+          // grey box. Users replace it via the EditPanel.
+          url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80",
           alt: "صورة",
           fit: "cover",
           rounded: true,
