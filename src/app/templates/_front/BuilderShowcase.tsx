@@ -134,7 +134,6 @@ export function BuilderShowcase({
       />
       <Main
         previewing={previewing}
-        suspended={suspended}
         onPublish={startScratch}
         onUseTemplate={startFromTemplate}
         onExitPreview={() => setPreviewing(null)}
@@ -383,13 +382,11 @@ function ToolTile({
 
 function Main({
   previewing,
-  suspended = false,
   onPublish,
   onUseTemplate,
   onExitPreview,
 }: {
   previewing: ProjectTemplateType | null;
-  suspended?: boolean;
   onPublish: () => void;
   onUseTemplate: (t: ProjectTemplateType) => void;
   onExitPreview: () => void;
@@ -408,17 +405,16 @@ function Main({
     [previewing],
   );
 
-  // Demo orchestrator — cycles forever, but only when no template is being
-  // previewed, the page isn't gated behind the auth overlay, and we're on
-  // a screen wide enough for the cursor + dropped cards to make sense.
-  // Re-keys on `previewing` + `suspended` so entering/leaving either state
-  // cleanly starts/stops the loop. The loop body resets `dropped`/`cursor`/
-  // `publishActive` on its first tick, so we don't need a separate reset
-  // when entering preview mode (preview-mode rendering ignores them anyway).
+  // Demo orchestrator — cycles forever on desktop whenever no template
+  // is being previewed. The auth overlay (z-200) covers the cursor
+  // (z-100) visually, so the loop is safe to leave running even while
+  // the login form is up; that way the moment a user dismisses the
+  // overlay they see the animation already in motion.
+  //
+  // The only hard skips are: preview mode (different content) and
+  // phone-sized viewports (cursor + dropped cards look broken there).
   useEffect(() => {
-    if (previewing || suspended) return;
-    // Skip the demo entirely on phone-sized screens — the layout stacks
-    // there and the dropped-card animations look broken.
+    if (previewing) return;
     if (
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 640px)").matches
@@ -517,7 +513,7 @@ function Main({
     return () => {
       cancelled = true;
     };
-  }, [previewing, suspended]);
+  }, [previewing]);
 
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col">
@@ -641,9 +637,10 @@ function Main({
       </div>
 
       {/* Demo cursor — desktop only. The auto-play looks awkward on phones
-          (the SVG appears huge over a stacked layout) and is hidden behind
-          the auth overlay via z-index when the page is suspended. */}
-      {cursor && !previewing && !suspended && (
+          (the SVG appears huge over a stacked layout); the cursor's
+          z-index sits below the auth overlay so it can't appear over
+          the login form on desktop either. */}
+      {cursor && !previewing && (
         <div
           aria-hidden
           style={{
