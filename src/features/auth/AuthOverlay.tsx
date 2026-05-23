@@ -2,12 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Phone, User } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
-import { SKIP_KEY, useAuthOverlay } from "./overlayState";
+import { SKIP_KEY } from "./overlayState";
 import { refreshCurrentUser, useCurrentUser } from "./useCurrentUser";
 
 type Mode = "login" | "signup";
@@ -29,18 +28,6 @@ export function AuthOverlay({
   initialAuthed?: boolean;
 } = {}) {
   const { user, loading } = useCurrentUser();
-  const searchParams = useSearchParams();
-  const openAuth = useAuthOverlay((s) => s.open);
-  const forceOpen = useAuthOverlay((s) => s.forceOpen);
-  const closeForce = useAuthOverlay((s) => s.close);
-  const [skipped, setSkipped] = useState(false);
-
-  // ?auth=open is set by the /login redirect and any "sign in" link from
-  // outside the templates page. Treat it as an explicit re-open request.
-  const wantsAuth = searchParams.get("auth") === "open";
-  useEffect(() => {
-    if (wantsAuth) openAuth();
-  }, [wantsAuth, openAuth]);
 
   const [mode, setMode] = useState<Mode>("login");
   const [phone, setPhone] = useState("");
@@ -48,38 +35,19 @@ export function AuthOverlay({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Old "تصفح بدون تسجيل" path was removed — anyone who has the legacy
+  // SKIP_KEY in sessionStorage from a previous session should also lose
+  // their bypass on the next visit, otherwise they'd still get into the
+  // builder without an account.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Standard mount-only read from browser storage — eslint's
-    // "no setState in effect" rule fires here, but there's no
-    // synchronous alternative for client-only APIs.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSkipped(window.sessionStorage.getItem(SKIP_KEY) === "1");
+    window.sessionStorage.removeItem(SKIP_KEY);
   }, []);
 
-  // Re-read skipped flag when forceOpen flips on — that store call already
-  // cleared sessionStorage but we also need local state in sync.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    if (forceOpen) setSkipped(false);
-  }, [forceOpen]);
-
   // Server-known authed visitors should NEVER see the overlay flash, even
-  // before useCurrentUser settles. Client-known auth still wins (e.g. the
-  // user just signed in this session). No `hydrated` gate here — when an
-  // anonymous user hits /templates we want the overlay in the very first
-  // paint to cover BuilderShowcase, not on the second tick after
-  // sessionStorage is read.
+  // before useCurrentUser settles. Client-known auth still wins.
   const isAuthed = user !== null || (initialAuthed && loading);
-  const show = !isAuthed && (forceOpen || !skipped);
-
-  const handleSkip = () => {
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(SKIP_KEY, "1");
-    }
-    setSkipped(true);
-    closeForce();
-  };
+  const show = !isAuthed;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,22 +205,22 @@ export function AuthOverlay({
               </p>
             </div>
 
-            {/* Divider */}
+            {/* Demo link — replaces the old "skip auth" path so anonymous
+                visitors can still see a real Rekaz-styled site (read-only)
+                without bypassing the auth gate around the actual builder. */}
             <div className="mt-8 flex items-center gap-4">
               <div className="h-px flex-1 bg-stone-200" />
               <span className="text-sm text-stone-400">أو</span>
               <div className="h-px flex-1 bg-stone-200" />
             </div>
 
-            {/* Skip */}
-            <button
-              type="button"
-              onClick={handleSkip}
+            <a
+              href="/demo"
               className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-stone-200 py-3 text-sm text-stone-600 transition-colors hover:bg-stone-50"
             >
-              تصفح بدون تسجيل
+              شاهد عرضاً تجريبياً
               <ArrowLeft size={14} className="text-stone-400" />
-            </button>
+            </a>
           </div>
         </motion.div>
       )}

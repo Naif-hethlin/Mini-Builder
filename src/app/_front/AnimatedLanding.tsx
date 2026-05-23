@@ -129,12 +129,22 @@ function HeroSection({ onScrollHint }: { onScrollHint: () => void }) {
           منصة واحدة.
         </p>
 
-        <div className="animate-fade-in-up fade-in-start [animation-delay:300ms]">
+        <div className="flex animate-fade-in-up flex-col items-center gap-3 fade-in-start [animation-delay:300ms] sm:flex-row sm:gap-4">
           <Link
             href="/templates"
             className="group inline-flex items-center gap-3 rounded-full bg-brand px-8 py-4 text-lg font-bold text-white shadow-[0_8px_20px_rgba(232,93,93,0.3)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(232,93,93,0.5)]"
           >
             <span>ابدأ الآن</span>
+            <ArrowLeft
+              size={16}
+              className="transition-transform duration-300 group-hover:-translate-x-1"
+            />
+          </Link>
+          <Link
+            href="/demo"
+            className="group inline-flex items-center gap-3 rounded-full border-2 border-stone-300 bg-white px-8 py-3.5 text-lg font-bold text-stone-700 transition-all duration-300 hover:-translate-y-1 hover:border-brand hover:text-brand hover:shadow-lg"
+          >
+            <span>شاهد عرضاً حياً</span>
             <ArrowLeft
               size={16}
               className="transition-transform duration-300 group-hover:-translate-x-1"
