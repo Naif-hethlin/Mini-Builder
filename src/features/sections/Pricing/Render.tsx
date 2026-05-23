@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import type { PricingProps } from "@/features/builder/state/types";
 
@@ -10,12 +10,13 @@ function isHighlighted(v: unknown): boolean {
 
 export default function PricingRender({ props }: { props: PricingProps }) {
   return (
-    <section className="bg-white px-6 py-16 md:px-10">
+    <section className="bg-gradient-to-b from-white via-stone-50 to-white px-6 py-20 md:px-10">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-12 text-center">
+        <div className="mb-14 text-center">
           {props.eyebrow && (
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-brand">
+            <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand">
+              <Sparkles size={12} />
               {props.eyebrow}
             </p>
           )}
@@ -30,63 +31,85 @@ export default function PricingRender({ props }: { props: PricingProps }) {
         </div>
 
         {/* Plans */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {props.plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={cn(
-                "flex flex-col overflow-hidden rounded-2xl border bg-white p-7 shadow-sm transition-shadow",
-                isHighlighted(plan.highlighted)
-                  ? "border-brand ring-2 ring-brand/30 shadow-[0_12px_40px_-8px_rgba(232,93,93,0.25)]"
-                  : "border-stone-200 hover:shadow-md",
-              )}
-            >
-              {isHighlighted(plan.highlighted) && (
-                <span className="mb-3 inline-flex w-fit items-center rounded-full bg-brand-light px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
-                  الأكثر شعبية
-                </span>
-              )}
-
-              <h3 className="text-lg font-bold text-stone-900">{plan.name}</h3>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-stone-900">
-                  {plan.price}
-                </span>
-                {plan.cadence && (
-                  <span className="text-sm text-stone-500">
-                    {plan.cadence}
-                  </span>
-                )}
-              </div>
-
-              <ul className="my-6 flex-1 space-y-2.5 text-sm">
-                {plan.features.map((f, i) => (
-                  <li key={`${plan.id}-f-${i}`} className="flex items-start gap-2">
-                    <Check
-                      size={15}
-                      className={cn(
-                        "mt-0.5 shrink-0",
-                        isHighlighted(plan.highlighted) ? "text-brand" : "text-emerald-500",
-                      )}
-                    />
-                    <span className="text-stone-600">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                type="button"
+        <div className="grid items-stretch gap-6 md:grid-cols-3">
+          {props.plans.map((plan) => {
+            const featured = isHighlighted(plan.highlighted);
+            return (
+              <div
+                key={plan.id}
                 className={cn(
-                  "inline-flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold transition-colors",
-                  isHighlighted(plan.highlighted)
-                    ? "bg-brand text-white shadow-sm hover:bg-brand-dark"
-                    : "border border-stone-200 bg-white text-stone-700 hover:border-brand hover:text-brand",
+                  "group relative flex flex-col overflow-hidden rounded-3xl border bg-white p-8 transition-all duration-300",
+                  featured
+                    ? "scale-100 border-brand shadow-[0_20px_60px_-15px_rgba(232,93,93,0.35)] md:-translate-y-2 md:scale-105"
+                    : "border-stone-200 shadow-sm hover:-translate-y-1 hover:shadow-lg",
                 )}
               >
-                {plan.cta}
-              </button>
-            </div>
-          ))}
+                {featured && (
+                  <>
+                    {/* Subtle brand glow at the top of the highlighted card */}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -top-24 start-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-brand/15 blur-3xl"
+                    />
+                    <span className="absolute end-4 top-4 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-brand/30">
+                      <Sparkles size={10} />
+                      الأكثر شعبية
+                    </span>
+                  </>
+                )}
+
+                <div className="relative">
+                  <h3 className="text-lg font-bold text-stone-900">
+                    {plan.name}
+                  </h3>
+
+                  <div className="mt-5 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold tracking-tight text-stone-900">
+                      {plan.price}
+                    </span>
+                    {plan.cadence && (
+                      <span className="text-sm text-stone-500">
+                        {plan.cadence}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <ul className="relative my-7 flex-1 space-y-3 text-sm">
+                  {plan.features.map((f, i) => (
+                    <li
+                      key={`${plan.id}-f-${i}`}
+                      className="flex items-start gap-3"
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                          featured
+                            ? "bg-brand-light text-brand"
+                            : "bg-emerald-50 text-emerald-600",
+                        )}
+                      >
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                      <span className="text-stone-600">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  className={cn(
+                    "relative inline-flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold transition-all",
+                    featured
+                      ? "bg-gradient-to-l from-brand-dark to-brand text-white shadow-lg shadow-brand/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand/40"
+                      : "border-2 border-stone-200 bg-white text-stone-700 hover:border-brand hover:text-brand",
+                  )}
+                >
+                  {plan.cta}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

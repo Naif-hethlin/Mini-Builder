@@ -1,4 +1,4 @@
-import { Coffee } from "lucide-react";
+import { Coffee, Utensils } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import type { MenuProps } from "@/features/builder/state/types";
 
@@ -9,50 +9,58 @@ const COLS: Record<MenuProps["columns"], string> = {
 
 export default function MenuRender({ props }: { props: MenuProps }) {
   return (
-    <section className="bg-white px-6 py-16 md:px-10">
+    <section className="bg-stone-50/60 px-6 py-20 md:px-10">
       <div className="mx-auto max-w-5xl">
         {(props.title || props.subtitle) && (
-          <div className="mb-10 text-center">
+          <div className="mb-12 text-center">
+            <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-light text-brand">
+              <Utensils size={22} />
+            </span>
             {props.title && (
-              <h2 className="text-3xl font-bold tracking-tight text-stone-900">
+              <h2 className="text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
                 {props.title}
               </h2>
             )}
             {props.subtitle && (
-              <p className="mt-2 text-sm text-stone-500">{props.subtitle}</p>
+              <p className="mx-auto mt-3 max-w-xl text-base text-stone-500">
+                {props.subtitle}
+              </p>
             )}
           </div>
         )}
 
-        <div className={cn("grid gap-4", COLS[props.columns])}>
+        <div className={cn("grid gap-5", COLS[props.columns])}>
           {props.items.map((item) => (
             <article
               key={item.id}
-              className="flex gap-4 rounded-2xl border border-stone-200 bg-white p-3 shadow-sm"
+              className="group flex gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_2px_20px_rgb(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_12px_30px_-10px_rgb(232,93,93,0.18)]"
             >
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-stone-100 text-stone-300">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-stone-100 text-stone-300">
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.imageUrl}
                     alt={item.name}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <Coffee size={24} />
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Coffee size={28} />
+                  </div>
                 )}
               </div>
               <div className="flex flex-1 flex-col">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-stone-900">
+                  <h3 className="text-base font-bold text-stone-900 transition-colors group-hover:text-brand-dark">
                     {item.name}
                   </h3>
-                  <span className="shrink-0 rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand">
-                    {item.price} {props.currency}
+                  <span className="shrink-0 rounded-full bg-brand-light px-3 py-1 text-xs font-bold text-brand">
+                    {item.price}{" "}
+                    <span className="opacity-70">{props.currency}</span>
                   </span>
                 </div>
                 {item.description && (
-                  <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                  <p className="mt-1.5 text-xs leading-relaxed text-stone-500">
                     {item.description}
                   </p>
                 )}
