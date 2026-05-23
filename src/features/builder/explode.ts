@@ -599,36 +599,114 @@ function explodePricing(p: PricingProps): {
   const cols = Math.min(p.plans.length || 1, 3);
   const gap = 24;
   const cardW = Math.floor((innerW - gap * (cols - 1)) / cols);
-  const cardH = 360;
+  const cardH = 460;
+  const pad = 28;
 
   p.plans.forEach((plan, i) => {
     const cx = padX + i * (cardW + gap);
     const cy = y;
-    const highlighted = plan.highlighted === true || (plan.highlighted as unknown) === "true";
-    // Card background
-    primitives.push(
-      shape(cx, cy, cardW, cardH, "rounded-rect", highlighted ? "#fdeeea" : "#f8fafc"),
-    );
-    // Plan name
-    primitives.push(heading(cx + 24, cy + 24, cardW - 48, plan.name, 3));
-    // Price
-    primitives.push(
-      heading(cx + 24, cy + 64, cardW - 48, `${plan.price}${plan.cadence ? " " + plan.cadence : ""}`, 2),
-    );
-    // Features as a list
-    if (plan.features.length > 0) {
+    const highlighted =
+      plan.highlighted === true || (plan.highlighted as unknown) === "true";
+
+    // Card backdrop — white with border, highlighted uses brand-tinted bg
+    primitives.push({
+      ...shape(cx, cy, cardW, cardH, "rounded-rect", "#ffffff"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: highlighted ? "#fffaf9" : "#ffffff",
+        borderColor: highlighted ? "#e85d5d" : "#e7e5e4",
+        borderWidth: highlighted ? 2 : 1,
+      },
+    } as Primitive);
+
+    // "الأكثر شعبية" badge for the highlighted card
+    if (highlighted) {
+      primitives.push({
+        ...shape(cx + cardW - 130, cy + 16, 110, 24, "rounded-rect", "#e85d5d"),
+        props: {
+          kind: "rounded-rect",
+          fillColor: "#e85d5d",
+          borderColor: "#000",
+          borderWidth: 0,
+        },
+      } as Primitive);
       primitives.push(
-        list(cx + 24, cy + 140, cardW - 48, plan.features, "check"),
+        text(cx + cardW - 130, cy + 21, 110, "الأكثر شعبية", {
+          fontSize: 11,
+          weight: "bold",
+          align: "center",
+          color: "#ffffff",
+        }),
       );
     }
-    // CTA button
+
+    // Plan name
+    primitives.push(
+      heading(cx + pad, cy + 36, cardW - pad * 2, plan.name, 3, "start", "#1c1917"),
+    );
+
+    // Price + cadence
+    primitives.push(
+      heading(
+        cx + pad,
+        cy + 88,
+        cardW - pad * 2,
+        `${plan.price}${plan.cadence ? " " + plan.cadence : ""}`,
+        2,
+        "start",
+        "#1c1917",
+        { weight: "extrabold" },
+      ),
+    );
+
+    // Features — render as individual rows so each line can be edited
+    const featuresY = cy + 170;
+    plan.features.forEach((f, fi) => {
+      const rowY = featuresY + fi * 30;
+      // colored circle behind the check
+      primitives.push({
+        ...shape(cx + pad, rowY, 20, 20, "circle", highlighted ? "#fdeeea" : "#d1fae5"),
+        props: {
+          kind: "circle",
+          fillColor: highlighted ? "#fdeeea" : "#d1fae5",
+          borderColor: "#000",
+          borderWidth: 0,
+        },
+      } as Primitive);
+      // check icon
+      primitives.push({
+        id: newId(),
+        type: "icon",
+        x: cx + pad + 4,
+        y: rowY + 4,
+        w: 12,
+        h: 12,
+        props: {
+          name: "lucide:check",
+          color: highlighted ? "#e85d5d" : "#059669",
+          strokeWidth: 3,
+        },
+      } as Primitive);
+      // feature text
+      primitives.push(
+        text(cx + pad + 30, rowY + 2, cardW - pad * 2 - 30, f, {
+          fontSize: 14,
+          color: "#57534e",
+        }),
+      );
+    });
+
+    // CTA button at the bottom — highlighted is brand-coral solid,
+    // others are outlined dark.
     primitives.push(
       button(
-        cx + 24,
+        cx + pad,
         cy + cardH - 60,
-        cardW - 48,
+        cardW - pad * 2,
         plan.cta,
         highlighted ? "solid" : "outline",
+        highlighted ? "#e85d5d" : "#1c1917",
+        highlighted ? "#ffffff" : "#1c1917",
       ),
     );
   });
@@ -834,18 +912,59 @@ function explodeFaq(p: FAQProps): {
   height: number;
 } {
   const primitives: Primitive[] = [];
-  const padX = 120;
+  const padX = 240;
   const innerW = CANVAS_W - padX * 2;
 
-  let y = 60;
+  let y = 80;
+
+  // Centered icon chip
+  primitives.push({
+    ...shape(
+      padX + innerW / 2 - 24,
+      y,
+      48,
+      48,
+      "rounded-rect",
+      "#fdeeea",
+    ),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#fdeeea",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
+  primitives.push({
+    id: newId(),
+    type: "icon",
+    x: padX + innerW / 2 - 12,
+    y: y + 12,
+    w: 24,
+    h: 24,
+    props: { name: "lucide:help-circle", color: "#e85d5d", strokeWidth: 2 },
+  } as Primitive);
+  y += 64;
+
   y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
 
+  // Q&A primitives — first item starts open
   const itemGap = 12;
-  const itemH = 60;
+  const itemH = 80;
   p.items.forEach((item, i) => {
-    primitives.push(
-      qa(padX, y + i * (itemH + itemGap), innerW, item.question, item.answer),
-    );
+    primitives.push({
+      ...qa(
+        padX,
+        y + i * (itemH + itemGap),
+        innerW,
+        item.question,
+        item.answer,
+      ),
+      props: {
+        question: item.question,
+        answer: item.answer,
+        defaultOpen: i === 0,
+      },
+    } as Primitive);
   });
 
   return {
@@ -863,33 +982,222 @@ function explodeContact(p: ContactProps): {
   height: number;
 } {
   const primitives: Primitive[] = [];
-  const padX = 120;
+  const padX = 60;
   const innerW = CANVAS_W - padX * 2;
+  const cardH = 540;
+  const y = 60;
 
-  let y = 60;
-  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+  // Container card backdrop (white, soft border)
+  primitives.push({
+    ...shape(padX, y, innerW, cardH, "rounded-rect", "#ffffff"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#ffffff",
+      borderColor: "#e7e5e4",
+      borderWidth: 1,
+    },
+  } as Primitive);
 
-  // Contact lines as headings (so they're prominent + editable)
-  if (p.email) {
-    primitives.push(text(padX, y, innerW, "البريد", { fontSize: 12, color: "#64748b", align: "center" }));
-    y += 22;
-    primitives.push(heading(padX, y, innerW, p.email, 3, "center"));
-    y += 56;
+  // ── Left brand panel (≈ 5/12 of inner width) ────────────────────────
+  const leftW = Math.floor(innerW * 5 / 12);
+  const rightX = padX + leftW;
+  const rightW = innerW - leftW;
+  const leftPad = 36;
+
+  // Brand-coral panel background (rounded only on the start side via
+  // a slightly inset rect — close enough for the explode preview)
+  primitives.push({
+    ...shape(padX, y, leftW, cardH, "rounded-rect", "#e85d5d"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#e85d5d",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
+
+  // Eyebrow chip
+  primitives.push({
+    ...shape(padX + leftPad, y + leftPad, 130, 26, "rounded-rect", "#ffffff"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#ffffff",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
+  primitives.push(
+    text(padX + leftPad, y + leftPad + 6, 130, "تواصل معنا", {
+      fontSize: 11,
+      weight: "bold",
+      align: "center",
+      color: "#e85d5d",
+    }),
+  );
+
+  // Title + subtitle on the brand panel
+  if (p.title) {
+    primitives.push(
+      heading(
+        padX + leftPad,
+        y + leftPad + 56,
+        leftW - leftPad * 2,
+        p.title,
+        2,
+        "start",
+        "#ffffff",
+      ),
+    );
   }
-  if (p.phone) {
-    primitives.push(text(padX, y, innerW, "الجوال", { fontSize: 12, color: "#64748b", align: "center" }));
-    y += 22;
-    primitives.push(heading(padX, y, innerW, p.phone, 3, "center"));
-    y += 56;
-  }
-  if (p.address) {
-    primitives.push(text(padX, y, innerW, "العنوان", { fontSize: 12, color: "#64748b", align: "center" }));
-    y += 22;
-    primitives.push(text(padX, y, innerW, p.address, { align: "center" }));
-    y += 40;
+  if (p.subtitle) {
+    primitives.push(
+      text(
+        padX + leftPad,
+        y + leftPad + 130,
+        leftW - leftPad * 2,
+        p.subtitle,
+        { fontSize: 15, color: "#fdeeea" },
+      ),
+    );
   }
 
-  return { primitives, height: y + 40 };
+  // Channel tiles (email / phone / address) — small glassy cards
+  const channels = [
+    p.email ? { icon: "lucide:mail", label: "البريد", value: p.email } : null,
+    p.phone ? { icon: "lucide:phone", label: "الهاتف", value: p.phone } : null,
+    p.address
+      ? { icon: "lucide:map-pin", label: "العنوان", value: p.address }
+      : null,
+  ].filter(Boolean) as Array<{ icon: string; label: string; value: string }>;
+
+  let chY = y + cardH - leftPad - channels.length * 64 + 8;
+  channels.forEach((ch) => {
+    // tile bg
+    primitives.push({
+      ...shape(
+        padX + leftPad,
+        chY,
+        leftW - leftPad * 2,
+        56,
+        "rounded-rect",
+        "#c44e4e",
+      ),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#c44e4e",
+        borderColor: "#000",
+        borderWidth: 0,
+      },
+    } as Primitive);
+    // icon box
+    primitives.push({
+      ...shape(padX + leftPad + 8, chY + 8, 40, 40, "rounded-rect", "#ffffff"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#ffffff",
+        borderColor: "#000",
+        borderWidth: 0,
+      },
+    } as Primitive);
+    primitives.push({
+      id: newId(),
+      type: "icon",
+      x: padX + leftPad + 18,
+      y: chY + 18,
+      w: 20,
+      h: 20,
+      props: { name: ch.icon, color: "#e85d5d", strokeWidth: 2 },
+    } as Primitive);
+    // label + value
+    primitives.push(
+      text(padX + leftPad + 60, chY + 10, leftW - leftPad * 2 - 70, ch.label, {
+        fontSize: 11,
+        weight: "bold",
+        color: "#fdeeea",
+      }),
+    );
+    primitives.push(
+      text(padX + leftPad + 60, chY + 28, leftW - leftPad * 2 - 70, ch.value, {
+        fontSize: 14,
+        weight: "bold",
+        color: "#ffffff",
+      }),
+    );
+    chY += 64;
+  });
+
+  // ── Right form panel ────────────────────────────────────────────────
+  const rightPad = 36;
+  let ry = y + rightPad;
+
+  // Header chip + title
+  primitives.push({
+    ...shape(rightX + rightPad, ry, 44, 44, "rounded-rect", "#fdeeea"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#fdeeea",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
+  primitives.push({
+    id: newId(),
+    type: "icon",
+    x: rightX + rightPad + 12,
+    y: ry + 12,
+    w: 20,
+    h: 20,
+    props: { name: "lucide:message-circle", color: "#e85d5d", strokeWidth: 2 },
+  } as Primitive);
+  primitives.push(
+    heading(
+      rightX + rightPad + 56,
+      ry + 4,
+      rightW - rightPad * 2 - 56,
+      "أرسل لنا رسالة",
+      4,
+      "start",
+      "#1c1917",
+    ),
+  );
+  primitives.push(
+    text(
+      rightX + rightPad + 56,
+      ry + 26,
+      rightW - rightPad * 2 - 56,
+      "سنرد عليك في أقرب وقت ممكن",
+      { fontSize: 12, color: "#78716c" },
+    ),
+  );
+  ry += 70;
+
+  // Form inputs
+  const inputW = rightW - rightPad * 2;
+  primitives.push(input(rightX + rightPad, ry, inputW, "الاسم الكامل", "اسمك", "text"));
+  ry += 70;
+  primitives.push(
+    input(rightX + rightPad, ry, inputW, "البريد الإلكتروني", "you@example.com", "email"),
+  );
+  ry += 70;
+  primitives.push(
+    input(rightX + rightPad, ry, inputW, "رسالتك", "كيف يمكننا مساعدتك؟", "textarea"),
+  );
+  ry += 110;
+
+  // Submit button
+  primitives.push(
+    button(
+      rightX + rightPad,
+      ry,
+      inputW,
+      "إرسال الرسالة",
+      "solid",
+      "#e85d5d",
+      "#ffffff",
+    ),
+  );
+
+  return { primitives, height: y + cardH + 40 };
 }
 
 // -----------------------------------------------------------------------------
@@ -902,46 +1210,216 @@ function explodeBooking(p: BookingProps): {
   height: number;
 } {
   const primitives: Primitive[] = [];
-  const padX = 200;
+  const padX = 60;
   const innerW = CANVAS_W - padX * 2;
+  const cardH = 620;
+  const y = 60;
 
-  let y = 60;
-  y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
+  // Container card
+  primitives.push({
+    ...shape(padX, y, innerW, cardH, "rounded-rect", "#ffffff"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#ffffff",
+      borderColor: "#e7e5e4",
+      borderWidth: 1,
+    },
+  } as Primitive);
 
-  const inputGap = 12;
-  const inputH = 70;
+  const leftW = Math.floor(innerW * 5 / 12);
+  const rightX = padX + leftW;
+  const rightW = innerW - leftW;
+  const leftPad = 36;
 
-  primitives.push(input(padX, y, innerW, "الاسم", "اسمك الكامل", "text"));
-  y += inputH + inputGap;
+  // Dark stone-900 left panel
+  primitives.push({
+    ...shape(padX, y, leftW, cardH, "rounded-rect", "#1c1917"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#1c1917",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
 
-  primitives.push(input(padX, y, innerW, "الجوال", "05xxxxxxxx", "tel"));
-  y += inputH + inputGap;
-
-  primitives.push(input(padX, y, innerW, "التاريخ", "YYYY-MM-DD", "text"));
-  y += inputH + inputGap;
-
+  // Brand-coral eyebrow chip
+  primitives.push({
+    ...shape(padX + leftPad, y + leftPad, 130, 26, "rounded-rect", "#e85d5d"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#e85d5d",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
   primitives.push(
-    input(padX, y, innerW, "الوقت", p.slots[0] ?? "HH:MM", "text"),
+    text(padX + leftPad, y + leftPad + 6, 130, "احجز موعدك", {
+      fontSize: 11,
+      weight: "bold",
+      align: "center",
+      color: "#ffffff",
+    }),
   );
-  y += inputH + inputGap;
+
+  // Title + subtitle
+  if (p.title) {
+    primitives.push(
+      heading(
+        padX + leftPad,
+        y + leftPad + 56,
+        leftW - leftPad * 2,
+        p.title,
+        2,
+        "start",
+        "#ffffff",
+      ),
+    );
+  }
+  if (p.subtitle) {
+    primitives.push(
+      text(
+        padX + leftPad,
+        y + leftPad + 130,
+        leftW - leftPad * 2,
+        p.subtitle,
+        { fontSize: 15, color: "#d6d3d1" },
+      ),
+    );
+  }
+
+  // Trust items
+  const trustItems = [
+    { icon: "lucide:check-circle-2", label: "تأكيد فوري" },
+    { icon: "lucide:x-circle", label: "إلغاء مجاني" },
+    { icon: "lucide:star", label: "تقييم 4.9 من 5" },
+  ];
+  let trustY = y + leftPad + 220;
+  trustItems.forEach((t) => {
+    primitives.push({
+      ...shape(padX + leftPad, trustY, 28, 28, "circle", "#3f3a35"),
+      props: {
+        kind: "circle",
+        fillColor: "#3f3a35",
+        borderColor: "#000",
+        borderWidth: 0,
+      },
+    } as Primitive);
+    primitives.push({
+      id: newId(),
+      type: "icon",
+      x: padX + leftPad + 6,
+      y: trustY + 6,
+      w: 16,
+      h: 16,
+      props: { name: t.icon, color: "#f28b82", strokeWidth: 2 },
+    } as Primitive);
+    primitives.push(
+      text(padX + leftPad + 40, trustY + 7, leftW - leftPad * 2 - 40, t.label, {
+        fontSize: 14,
+        weight: "bold",
+        color: "#ffffff",
+      }),
+    );
+    trustY += 44;
+  });
+
+  // ── Right form panel ───────────────────────────────────────────────
+  const rightPad = 36;
+  let ry = y + rightPad;
+
+  // Header
+  primitives.push({
+    ...shape(rightX + rightPad, ry, 44, 44, "rounded-rect", "#fdeeea"),
+    props: {
+      kind: "rounded-rect",
+      fillColor: "#fdeeea",
+      borderColor: "#000",
+      borderWidth: 0,
+    },
+  } as Primitive);
+  primitives.push({
+    id: newId(),
+    type: "icon",
+    x: rightX + rightPad + 12,
+    y: ry + 12,
+    w: 20,
+    h: 20,
+    props: {
+      name: "lucide:calendar-check",
+      color: "#e85d5d",
+      strokeWidth: 2,
+    },
+  } as Primitive);
+  primitives.push(
+    heading(
+      rightX + rightPad + 56,
+      ry + 4,
+      rightW - rightPad * 2 - 56,
+      "تفاصيل الحجز",
+      4,
+      "start",
+      "#1c1917",
+    ),
+  );
+  primitives.push(
+    text(
+      rightX + rightPad + 56,
+      ry + 26,
+      rightW - rightPad * 2 - 56,
+      "اختر الوقت وادخل بياناتك",
+      { fontSize: 12, color: "#78716c" },
+    ),
+  );
+  ry += 70;
+
+  // Form fields — 2 column grid
+  const fieldGap = 12;
+  const fieldW = Math.floor((rightW - rightPad * 2 - fieldGap) / 2);
+  const fields = [
+    { label: "الاسم", placeholder: "اسمك الكامل", type: "text" as const },
+    { label: "الجوال", placeholder: "05xxxxxxxx", type: "tel" as const },
+    { label: "التاريخ", placeholder: "YYYY-MM-DD", type: "text" as const },
+    {
+      label: "الوقت",
+      placeholder: p.slots[0] ?? "HH:MM",
+      type: "text" as const,
+    },
+  ];
+  fields.forEach((f, i) => {
+    const fx = rightX + rightPad + (i % 2) * (fieldW + fieldGap);
+    const fy = ry + Math.floor(i / 2) * 80;
+    primitives.push(input(fx, fy, fieldW, f.label, f.placeholder, f.type));
+  });
+  ry += 170;
 
   if (p.staff.length > 0) {
     primitives.push(
-      list(
-        padX,
-        y,
-        innerW,
-        ["اختر من فريق العمل:", ...p.staff.map((s) => s.name)],
-        "bullet",
+      input(
+        rightX + rightPad,
+        ry,
+        rightW - rightPad * 2,
+        "مع",
+        p.staff[0].name,
+        "text",
       ),
     );
-    y += 24 + p.staff.length * 24 + 12;
+    ry += 80;
   }
 
-  primitives.push(button(padX, y, innerW, p.buttonLabel, "solid"));
-  y += 60;
+  // Submit button
+  primitives.push(
+    button(
+      rightX + rightPad,
+      ry,
+      rightW - rightPad * 2,
+      p.buttonLabel,
+      "solid",
+      "#e85d5d",
+      "#ffffff",
+    ),
+  );
 
-  return { primitives, height: y + 40 };
+  return { primitives, height: y + cardH + 40 };
 }
 
 // -----------------------------------------------------------------------------
@@ -1055,37 +1533,28 @@ function explodePortfolio(p: PortfolioProps): {
 // -----------------------------------------------------------------------------
 
 /**
- * Returns true when explodeSection can handle the section's type AND
- * the resulting primitive layout is reasonable. Some sections are
- * deliberately NOT exploded because their design (forms, accordion
- * animation, split panels with focus states) is the value — turning
- * them into absolutely-positioned primitives strips out hover, focus,
- * mailto/tel links, smooth-open animations, etc. and looks much worse
- * than the polished preset. Those types stay as preset sections; the
- * user still edits their content via the right panel.
+ * Returns true when explodeSection can handle the section's type. EVERY
+ * preset section explodes — the builder's core value is letting users
+ * customize each piece of every section freely, so we always break
+ * presets down into primitives even when the resulting layout sacrifices
+ * some hover/focus animations that primitives can't reproduce.
  */
 export function isExplodable(section: Section): boolean {
   switch (section.type) {
-    // Simple layout sections — explode looks ~the same as the preset.
     case "header":
     case "hero":
     case "features":
+    case "pricing":
     case "cta":
     case "footer":
     case "gallery":
-    case "menu":
-    case "portfolio":
-      return true;
-
-    // Complex / interactive sections — design IS the experience, keep
-    // them as polished presets instead.
-    case "pricing":
     case "testimonials":
     case "faq":
     case "contact":
     case "booking":
-      return false;
-
+    case "menu":
+    case "portfolio":
+      return true;
     case "canvas":
       return false; // already free
     default:
