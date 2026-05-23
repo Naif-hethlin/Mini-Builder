@@ -984,19 +984,27 @@ function explodeContact(p: ContactProps): {
   const primitives: Primitive[] = [];
   const padX = 60;
   const innerW = CANVAS_W - padX * 2;
-  const cardH = 540;
   const y = 60;
   const gap = 16;
+  const leftPad = 32;
 
-  // Two stand-alone panels (no container behind them) so the layout
-  // doesn't look lopsided when the page bg matches white.
+  // Compute the form panel content height first so the brand panel can
+  // match it — no more empty middle on either side.
+  const headerH = 70; // chip + heading + sub
+  const inputH = 70;
+  const textareaH = 110;
+  const buttonH = 50;
+  const formContentH = headerH + inputH + inputH + textareaH + buttonH;
+  const cardH = 32 + formContentH + 32; // top/bottom padding
+
+  // Two stand-alone panels (no container) so the form panel doesn't
+  // blend into the page bg.
   const leftW = Math.floor((innerW - gap) * 5 / 12);
   const rightX = padX + leftW + gap;
   const rightW = innerW - leftW - gap;
-  const leftPad = 36;
 
-  // Right panel — cream form card (rendered before so the brand panel
-  // doesn't sit on top of it visually; primitive z-order = render order).
+  // Right panel — white form card (render first so the brand panel
+  // can't visually sit on top of it).
   primitives.push({
     ...shape(rightX, y, rightW, cardH, "rounded-rect", "#ffffff"),
     props: {
@@ -1007,8 +1015,7 @@ function explodeContact(p: ContactProps): {
     },
   } as Primitive);
 
-  // Brand-coral panel background (rounded only on the start side via
-  // a slightly inset rect — close enough for the explode preview)
+  // Brand-coral panel
   primitives.push({
     ...shape(padX, y, leftW, cardH, "rounded-rect", "#e85d5d"),
     props: {
@@ -1019,13 +1026,14 @@ function explodeContact(p: ContactProps): {
     },
   } as Primitive);
 
-  // Title + subtitle directly on the brand panel — no eyebrow chip
-  // (the chip used to duplicate the title text and float oddly).
+  // ── Brand panel content — title, subtitle, then channel tiles
+  //    flow continuously (no bottom-glue, no dead middle).
+  let ly = y + leftPad;
   if (p.title) {
     primitives.push(
       heading(
         padX + leftPad,
-        y + leftPad,
+        ly,
         leftW - leftPad * 2,
         p.title,
         2,
@@ -1033,20 +1041,22 @@ function explodeContact(p: ContactProps): {
         "#ffffff",
       ),
     );
+    ly += 68;
   }
   if (p.subtitle) {
     primitives.push(
       text(
         padX + leftPad,
-        y + leftPad + 80,
+        ly,
         leftW - leftPad * 2,
         p.subtitle,
-        { fontSize: 15, color: "#fdeeea" },
+        { fontSize: 14, color: "#fdeeea" },
       ),
     );
+    ly += 56;
   }
 
-  // Channel tiles (email / phone / address) — small glassy cards
+  // Channel tiles — small horizontal rows directly under the subtitle.
   const channels = [
     p.email ? { icon: "lucide:mail", label: "البريد", value: p.email } : null,
     p.phone ? { icon: "lucide:phone", label: "الهاتف", value: p.phone } : null,
@@ -1055,28 +1065,11 @@ function explodeContact(p: ContactProps): {
       : null,
   ].filter(Boolean) as Array<{ icon: string; label: string; value: string }>;
 
-  let chY = y + cardH - leftPad - channels.length * 64 + 8;
   channels.forEach((ch) => {
-    // tile bg
+    // Translucent-looking row (no separate bg shape — just an icon box
+    // + text on the brand panel)
     primitives.push({
-      ...shape(
-        padX + leftPad,
-        chY,
-        leftW - leftPad * 2,
-        56,
-        "rounded-rect",
-        "#c44e4e",
-      ),
-      props: {
-        kind: "rounded-rect",
-        fillColor: "#c44e4e",
-        borderColor: "#000",
-        borderWidth: 0,
-      },
-    } as Primitive);
-    // icon box
-    primitives.push({
-      ...shape(padX + leftPad + 8, chY + 8, 40, 40, "rounded-rect", "#ffffff"),
+      ...shape(padX + leftPad, ly, 36, 36, "rounded-rect", "#ffffff"),
       props: {
         kind: "rounded-rect",
         fillColor: "#ffffff",
@@ -1087,32 +1080,31 @@ function explodeContact(p: ContactProps): {
     primitives.push({
       id: newId(),
       type: "icon",
-      x: padX + leftPad + 18,
-      y: chY + 18,
+      x: padX + leftPad + 8,
+      y: ly + 8,
       w: 20,
       h: 20,
       props: { name: ch.icon, color: "#e85d5d", strokeWidth: 2 },
     } as Primitive);
-    // label + value
     primitives.push(
-      text(padX + leftPad + 60, chY + 10, leftW - leftPad * 2 - 70, ch.label, {
+      text(padX + leftPad + 48, ly + 2, leftW - leftPad * 2 - 56, ch.label, {
         fontSize: 11,
         weight: "bold",
         color: "#fdeeea",
       }),
     );
     primitives.push(
-      text(padX + leftPad + 60, chY + 28, leftW - leftPad * 2 - 70, ch.value, {
-        fontSize: 14,
+      text(padX + leftPad + 48, ly + 18, leftW - leftPad * 2 - 56, ch.value, {
+        fontSize: 13,
         weight: "bold",
         color: "#ffffff",
       }),
     );
-    chY += 64;
+    ly += 48;
   });
 
   // ── Right form panel ────────────────────────────────────────────────
-  const rightPad = 36;
+  const rightPad = 32;
   let ry = y + rightPad;
 
   // Header chip + title
@@ -1182,7 +1174,7 @@ function explodeContact(p: ContactProps): {
     ),
   );
 
-  return { primitives, height: y + cardH + 40 };
+  return { primitives, height: y + cardH + 32 };
 }
 
 // -----------------------------------------------------------------------------
@@ -1197,16 +1189,22 @@ function explodeBooking(p: BookingProps): {
   const primitives: Primitive[] = [];
   const padX = 60;
   const innerW = CANVAS_W - padX * 2;
-  const cardH = 620;
   const y = 60;
   const gap = 16;
+  const leftPad = 32;
 
-  // Two stand-alone panels (no container behind) so the form panel
-  // doesn't blend into the page bg.
+  // Compute the form panel content height so both panels match it.
+  const headerH = 70;
+  const fieldsRowsH = 170; // 2 rows × 80px + gap
+  const staffH = p.staff.length > 0 ? 80 : 0;
+  const buttonH = 50;
+  const formContentH = headerH + fieldsRowsH + staffH + buttonH;
+  const cardH = 32 + formContentH + 32;
+
+  // Two stand-alone panels
   const leftW = Math.floor((innerW - gap) * 5 / 12);
   const rightX = padX + leftW + gap;
   const rightW = innerW - leftW - gap;
-  const leftPad = 36;
 
   // Right panel — white form card (render first so the dark panel
   // can't visually sit on top of it).
@@ -1231,12 +1229,14 @@ function explodeBooking(p: BookingProps): {
     },
   } as Primitive);
 
-  // Title + subtitle directly on the brand panel — no eyebrow chip
+  // ── Brand panel content — title, subtitle, trust list flow
+  //    continuously top-down (no dead middle).
+  let ly = y + leftPad;
   if (p.title) {
     primitives.push(
       heading(
         padX + leftPad,
-        y + leftPad,
+        ly,
         leftW - leftPad * 2,
         p.title,
         2,
@@ -1244,29 +1244,30 @@ function explodeBooking(p: BookingProps): {
         "#ffffff",
       ),
     );
+    ly += 68;
   }
   if (p.subtitle) {
     primitives.push(
       text(
         padX + leftPad,
-        y + leftPad + 80,
+        ly,
         leftW - leftPad * 2,
         p.subtitle,
-        { fontSize: 15, color: "#d6d3d1" },
+        { fontSize: 14, color: "#d6d3d1" },
       ),
     );
+    ly += 52;
   }
 
-  // Trust items
+  // Trust items right under the subtitle
   const trustItems = [
     { icon: "lucide:check-circle-2", label: "تأكيد فوري" },
     { icon: "lucide:x-circle", label: "إلغاء مجاني" },
     { icon: "lucide:star", label: "تقييم 4.9 من 5" },
   ];
-  let trustY = y + leftPad + 170;
   trustItems.forEach((t) => {
     primitives.push({
-      ...shape(padX + leftPad, trustY, 28, 28, "circle", "#3f3a35"),
+      ...shape(padX + leftPad, ly, 28, 28, "circle", "#3f3a35"),
       props: {
         kind: "circle",
         fillColor: "#3f3a35",
@@ -1278,23 +1279,23 @@ function explodeBooking(p: BookingProps): {
       id: newId(),
       type: "icon",
       x: padX + leftPad + 6,
-      y: trustY + 6,
+      y: ly + 6,
       w: 16,
       h: 16,
       props: { name: t.icon, color: "#f28b82", strokeWidth: 2 },
     } as Primitive);
     primitives.push(
-      text(padX + leftPad + 40, trustY + 7, leftW - leftPad * 2 - 40, t.label, {
+      text(padX + leftPad + 40, ly + 7, leftW - leftPad * 2 - 40, t.label, {
         fontSize: 14,
         weight: "bold",
         color: "#ffffff",
       }),
     );
-    trustY += 44;
+    ly += 40;
   });
 
   // ── Right form panel ───────────────────────────────────────────────
-  const rightPad = 36;
+  const rightPad = 32;
   let ry = y + rightPad;
 
   // Header
@@ -1389,7 +1390,7 @@ function explodeBooking(p: BookingProps): {
     ),
   );
 
-  return { primitives, height: y + cardH + 40 };
+  return { primitives, height: y + cardH + 32 };
 }
 
 // -----------------------------------------------------------------------------
@@ -1467,26 +1468,73 @@ function explodePortfolio(p: PortfolioProps): {
   y = sectionHeader(y, padX, innerW, primitives, p.title, p.subtitle);
 
   const cols = p.columns;
-  const gap = 16;
+  const gap = 20;
   const tileW = Math.floor((innerW - gap * (cols - 1)) / cols);
-  const tileH = Math.round(tileW * 0.8);
-  const captionH = 60;
+  const tileH = Math.round(tileW * 1.05); // taller 4:5-ish ratio matching preset
+  const captionH = 64;
 
   p.items.forEach((item, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const cx = padX + col * (tileW + gap);
     const cy = y + row * (tileH + captionH + gap);
+
+    // White card backdrop covers image + caption together
+    primitives.push({
+      ...shape(cx, cy, tileW, tileH + captionH, "rounded-rect", "#ffffff"),
+      props: {
+        kind: "rounded-rect",
+        fillColor: "#ffffff",
+        borderColor: "#e7e5e4",
+        borderWidth: 1,
+      },
+    } as Primitive);
+
+    // Image (or fallback shape) — only top portion
     if (item.imageUrl) {
       primitives.push(image(cx, cy, tileW, tileH, item.imageUrl));
     } else {
-      primitives.push(shape(cx, cy, tileW, tileH, "rounded-rect", "#f1f5f9"));
+      primitives.push(
+        shape(cx, cy, tileW, tileH, "rounded-rect", "#f5f5f4"),
+      );
     }
-    primitives.push(heading(cx + 8, cy + tileH + 8, tileW - 16, item.title, 4));
+
+    // Category chip top-end inside the image
+    if (item.category) {
+      primitives.push({
+        ...shape(
+          cx + tileW - 78,
+          cy + 12,
+          70,
+          22,
+          "rounded-rect",
+          "#ffffff",
+        ),
+        props: {
+          kind: "rounded-rect",
+          fillColor: "#ffffff",
+          borderColor: "#000",
+          borderWidth: 0,
+        },
+      } as Primitive);
+      primitives.push(
+        text(cx + tileW - 78, cy + 17, 70, item.category, {
+          fontSize: 10,
+          weight: "bold",
+          align: "center",
+          color: "#44403c",
+        }),
+      );
+    }
+
+    // Caption strip — title + category
     primitives.push(
-      text(cx + 8, cy + tileH + 36, tileW - 16, item.category, {
+      heading(cx + 16, cy + tileH + 12, tileW - 32, item.title, 4, "start", "#1c1917"),
+    );
+    primitives.push(
+      text(cx + 16, cy + tileH + 38, tileW - 32, item.category, {
         fontSize: 12,
-        color: "#64748b",
+        color: "#78716c",
       }),
     );
   });
