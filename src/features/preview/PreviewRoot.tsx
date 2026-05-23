@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useEnsureProject, useProjects } from "@/features/projects";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
+import { VisitBeacon } from "@/features/analytics/VisitBeacon";
 import type { Page, Project } from "@/features/projects";
 
 /**
@@ -79,6 +80,7 @@ export function PreviewRoot({
 
   return (
     <main className="min-h-screen bg-white">
+      <VisitBeacon projectId={projectId} path={`/preview/${page.slug}`} />
       <div className="divide-y divide-stone-100">
         {page.design.sections.length === 0 ? (
           <div className="flex min-h-screen items-center justify-center px-6 text-center text-stone-500">

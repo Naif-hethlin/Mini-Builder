@@ -122,6 +122,21 @@ const SCHEMA = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );`,
   `CREATE INDEX IF NOT EXISTS bookings_project_idx ON bookings(project_id);`,
+
+  // Lightweight visit log — one row per page view (preview + published).
+  // No PII: we keep only the project id, the path bucket, a coarse device
+  // tag derived from the UA, and the day. Enough for the dashboard
+  // "visits / OS / device" stats, nothing more.
+  `CREATE TABLE IF NOT EXISTS visits (
+    id BIGSERIAL PRIMARY KEY,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    path TEXT NOT NULL,
+    os TEXT,
+    device TEXT,
+    referrer TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );`,
+  `CREATE INDEX IF NOT EXISTS visits_project_day_idx ON visits(project_id, created_at);`,
 ];
 
 let migrationsRan = false;

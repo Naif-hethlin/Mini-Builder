@@ -7,6 +7,7 @@
 import { notFound } from "next/navigation";
 import { getPublishedBySlug } from "@/lib/projects-repo";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
+import { VisitBeacon } from "@/features/analytics/VisitBeacon";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -44,6 +45,7 @@ export default async function PublishedSite({
 
   return (
     <main className="min-h-screen bg-white">
+      <VisitBeacon projectId={project.id} path={`/sites/${slug}`} />
       <div className="divide-y divide-stone-100">
         {home.design.sections.map((section) => (
           <SectionRenderer key={section.id} section={section} />

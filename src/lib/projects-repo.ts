@@ -310,6 +310,25 @@ export async function publishForOwner(
     };
   }
 
+  // Slug lock — once a project has been published with a slug, that
+  // slug is permanent. Re-publishing just refreshes the content under
+  // the same URL; trying to change the slug rejects with a clear
+  // message instead of silently rotating the public URL.
+  const { rows: existing } = await query<{ slug: string | null; published: boolean }>(
+    `SELECT slug, published FROM projects WHERE id = $1 AND owner_id = $2 LIMIT 1`,
+    [projectId, ownerId],
+  );
+  if (existing.length === 0) {
+    return { ok: false, error: "المشروع غير موجود أو ليس ملكك" };
+  }
+  const prevSlug = existing[0].slug;
+  if (prevSlug && prevSlug !== slug) {
+    return {
+      ok: false,
+      error: `الرابط مقفل على /sites/${prevSlug} — لا يمكن تغييره بعد النشر الأول.`,
+    };
+  }
+
   // Reject collision with another project.
   const { rows: clash } = await query<{ id: string }>(
     `SELECT id FROM projects WHERE slug = $1 AND id <> $2 LIMIT 1`,

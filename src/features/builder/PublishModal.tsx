@@ -219,8 +219,20 @@ export function PublishModal({
               <div>
                 <label className="mb-1 block text-xs font-medium text-stone-700">
                   الرابط (slug)
+                  {project?.slug && (
+                    <span className="ms-1 text-[10px] font-normal text-stone-500">
+                      — مقفل بعد النشر الأول
+                    </span>
+                  )}
                 </label>
-                <div className="flex items-center overflow-hidden rounded-xl border border-stone-200 bg-white focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
+                <div
+                  className={cn(
+                    "flex items-center overflow-hidden rounded-xl border bg-white",
+                    project?.slug
+                      ? "border-stone-200"
+                      : "border-stone-200 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20",
+                  )}
+                >
                   <span className="select-none border-e border-stone-100 bg-stone-50 px-3 py-2.5 font-mono text-xs text-stone-500">
                     /sites/
                   </span>
@@ -236,18 +248,26 @@ export function PublishModal({
                       )
                     }
                     placeholder="my-cafe"
-                    className="flex-1 bg-transparent px-3 py-2.5 font-mono text-sm focus:outline-none"
+                    readOnly={Boolean(project?.slug)}
+                    disabled={Boolean(project?.slug)}
+                    className="flex-1 bg-transparent px-3 py-2.5 font-mono text-sm focus:outline-none disabled:cursor-not-allowed disabled:text-stone-500"
                   />
                 </div>
                 <p
                   className={cn(
                     "mt-1 text-[11px]",
-                    slugLooksValid ? "text-stone-500" : "text-rose-600",
+                    project?.slug
+                      ? "text-stone-500"
+                      : slugLooksValid
+                        ? "text-stone-500"
+                        : "text-rose-600",
                   )}
                 >
-                  {slugLooksValid
-                    ? "أحرف صغيرة، أرقام، أو شرطات. مثال: my-cafe."
-                    : "الـ slug لازم ≥ 3 حرف ولا يحتوي رموزاً."}
+                  {project?.slug
+                    ? "النطاق مخصص لك. كل تحديث للموقع يُنشر هنا تلقائياً."
+                    : slugLooksValid
+                      ? "أحرف صغيرة، أرقام، أو شرطات — اختر بعناية، لا يمكن تغييره."
+                      : "الـ slug لازم ≥ 3 حرف ولا يحتوي رموزاً."}
                 </p>
               </div>
 
@@ -274,7 +294,7 @@ export function PublishModal({
                   ) : (
                     <Sparkles size={14} />
                   )}
-                  {project?.published ? "تحديث الرابط" : "نشر الآن"}
+                  {project?.published ? "تحديث المحتوى" : "نشر الآن"}
                 </button>
               </div>
             </div>
