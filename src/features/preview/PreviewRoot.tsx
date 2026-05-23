@@ -3,7 +3,7 @@
 import { ArrowRight, Edit3 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useProjects } from "@/features/projects";
+import { useEnsureProject, useProjects } from "@/features/projects";
 import { SectionRenderer } from "@/features/sections/SectionRenderer";
 import type { Page, Project } from "@/features/projects";
 
@@ -19,21 +19,21 @@ export function PreviewRoot({
   projectId: string;
   slug?: string;
 }) {
+  // Hydrate localStorage + fall back to the server API on a cache miss
+  // so /preview works on devices the user hasn't opened the builder on.
+  const status = useEnsureProject(projectId);
   const [project, setProject] = useState<Project | null>(null);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const store = useProjects.getState();
-    store.hydrate();
-    setProject(store.get(projectId) ?? null);
-    setReady(true);
+    if (status === "loading") return;
+    setProject(useProjects.getState().get(projectId) ?? null);
     const unsubscribe = useProjects.subscribe((s) => {
       setProject(s.projects[projectId] ?? null);
     });
     return unsubscribe;
-  }, [projectId]);
+  }, [projectId, status]);
 
-  if (!ready) return <PreviewSkeleton />;
+  if (status === "loading") return <PreviewSkeleton />;
 
   if (!project) {
     return (

@@ -11,3 +11,5 @@ export {
 } from "./store";
 export { ProjectPicker } from "./ProjectPicker";
 export { exportProjectFile, importProjectFile } from "./io";
+export { useEnsureProject } from "./useEnsureProject";
+export type { EnsureStatus } from "./useEnsureProject";
