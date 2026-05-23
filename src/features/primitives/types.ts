@@ -8,13 +8,17 @@
  * CanvasSection/Render.tsx.
  */
 
-// ----- Action model (used by Button + clickable Image for E5 linking) ----
+// ----- Action model — every primitive can have a click action via the
+//       shared `action` field on Geometry. Button + Image still carry
+//       their own `action` in props for backward compat.
 
 export type PrimitiveAction =
   | { kind: "none" }
   | { kind: "link"; href: string }
   | { kind: "navigate"; pageSlug: string }
-  | { kind: "scroll"; sectionId: string };
+  | { kind: "scroll"; sectionId: string }
+  | { kind: "payment"; url: string }   // Stripe / Tap / Moyasar checkout
+  | { kind: "booking" };               // Scroll to the first booking section
 
 // ----- Per-primitive prop types ------------------------------------------
 
@@ -103,6 +107,11 @@ type Geometry = {
   /** Rotation in degrees, applied via CSS transform around the primitive's
    *  center. Optional — defaults to 0. Common to every primitive type. */
   rotation?: number;
+  /** Click action for the primitive — runs in /preview and /sites. Common
+   *  to every type so any element (text, image, shape, icon, …) can be
+   *  made interactive. Button + Image's own `props.action` still wins
+   *  when set, for backward compat with the older E5 design. */
+  action?: PrimitiveAction;
 };
 
 export type Primitive = Geometry &

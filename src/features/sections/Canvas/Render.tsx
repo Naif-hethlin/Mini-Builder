@@ -1,4 +1,5 @@
 import { PrimitiveRenderer } from "@/features/primitives/PrimitiveRenderer";
+import { PrimitiveActionWrapper } from "@/features/primitives/PrimitiveActionWrapper";
 import type { CanvasProps } from "@/features/builder/state/types";
 
 const BG_CLASS: Record<CanvasProps["background"], string> = {
@@ -13,6 +14,11 @@ const BG_CLASS: Record<CanvasProps["background"], string> = {
  * Renders a Canvas section. Desktop: absolute-positioned primitives at the
  * height set on the section. Mobile: same primitives but flow-stacked
  * vertically (the canvas height is ignored — natural content height).
+ *
+ * Each primitive is wrapped in PrimitiveActionWrapper so its
+ * `primitive.action` (navigate / scroll / link / payment / booking)
+ * fires on click in the runtime (/preview, /sites). No-action primitives
+ * pass through unchanged.
  */
 export default function CanvasRender({ props }: { props: CanvasProps }) {
   return (
@@ -20,7 +26,9 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
       {/* Mobile flow-fallback */}
       <div className="flex flex-col gap-4 p-6 md:hidden">
         {props.primitives.map((p) => (
-          <PrimitiveRenderer key={p.id} primitive={p} positioned={false} />
+          <PrimitiveActionWrapper key={p.id} action={p.action}>
+            <PrimitiveRenderer primitive={p} positioned={false} />
+          </PrimitiveActionWrapper>
         ))}
       </div>
 
@@ -30,7 +38,9 @@ export default function CanvasRender({ props }: { props: CanvasProps }) {
         style={{ height: props.height }}
       >
         {props.primitives.map((p) => (
-          <PrimitiveRenderer key={p.id} primitive={p} positioned={true} />
+          <PrimitiveActionWrapper key={p.id} action={p.action}>
+            <PrimitiveRenderer primitive={p} positioned={true} />
+          </PrimitiveActionWrapper>
         ))}
       </div>
     </section>
