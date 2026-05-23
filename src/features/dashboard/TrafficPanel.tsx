@@ -97,7 +97,6 @@ export function TrafficPanel({ projectId }: { projectId: string }) {
         <MiniStat
           label="زوّار فريدون"
           value={metrics.uniqueVisitors}
-          hint="حسب IP — التحديث المتكرر لا يُحسب."
           accent
         />
         <MiniStat
