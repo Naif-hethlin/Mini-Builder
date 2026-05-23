@@ -28,6 +28,15 @@ import CanvasRender from "./Canvas/Render";
  * any future variants.
  */
 export function SectionRenderer({ section }: { section: Section }) {
+  // data-section-type lets primitive actions of `kind: "booking"` (and
+  // future "scroll-to-section-type" actions) find the matching section
+  // via a single querySelector call.
+  return (
+    <div data-section-type={section.type}>{renderInner(section)}</div>
+  );
+}
+
+function renderInner(section: Section) {
   switch (section.type) {
     case "header":
       return <HeaderRender props={section.props} />;

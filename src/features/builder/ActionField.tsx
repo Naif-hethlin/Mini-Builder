@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronDown, ExternalLink, Link2, MoveDown } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronDown,
+  CreditCard,
+  ExternalLink,
+  Link2,
+  MoveDown,
+} from "lucide-react";
 import type { Page } from "@/features/projects";
 import type { PrimitiveAction } from "@/features/primitives/types";
 
@@ -12,6 +19,8 @@ const KIND_OPTIONS: Array<{
   { value: "navigate", label: "صفحة داخل المشروع" },
   { value: "link", label: "رابط خارجي" },
   { value: "scroll", label: "تمرير إلى قسم" },
+  { value: "booking", label: "نموذج الحجز" },
+  { value: "payment", label: "صفحة الدفع" },
 ];
 
 /**
@@ -53,6 +62,10 @@ export function ActionField({
                 });
               case "scroll":
                 return onChange({ kind: "scroll", sectionId: "" });
+              case "payment":
+                return onChange({ kind: "payment", url: "" });
+              case "booking":
+                return onChange({ kind: "booking" });
             }
           }}
           className="h-10 w-full appearance-none rounded-xl border border-stone-200 bg-white pe-9 ps-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
@@ -123,6 +136,31 @@ export function ActionField({
             className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
           />
         </div>
+      )}
+
+      {action.kind === "payment" && (
+        <div className="relative">
+          <CreditCard
+            size={14}
+            className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-stone-400"
+          />
+          <input
+            type="url"
+            value={action.url}
+            placeholder="رابط الدفع (Stripe / Tap / Moyasar)"
+            onChange={(e) =>
+              onChange({ kind: "payment", url: e.target.value })
+            }
+            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+          />
+        </div>
+      )}
+
+      {action.kind === "booking" && (
+        <p className="flex items-center gap-1.5 px-1 text-[11px] text-stone-500">
+          <CalendarCheck size={12} />
+          ينتقل العميل لأول قسم حجز في الصفحة.
+        </p>
       )}
     </div>
   );

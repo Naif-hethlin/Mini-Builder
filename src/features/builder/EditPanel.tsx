@@ -115,6 +115,16 @@ export function EditPanel() {
                 )
               }
             />
+            <ActionForm
+              primitive={primInfo.primitive}
+              onChange={(action) =>
+                updatePrimitive(
+                  primInfo.canvasSectionId,
+                  primInfo.primitive.id,
+                  (p) => ({ ...p, action }) as Primitive,
+                )
+              }
+            />
             <PrimitiveForm
               canvasSectionId={primInfo.canvasSectionId}
               primitive={primInfo.primitive}
@@ -379,6 +389,30 @@ function NumberField({
         className="h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs"
       />
     </label>
+  );
+}
+
+// =============================================================================
+// Action form — exposes the shared `action` field on every primitive so
+// any element (text / heading / image / shape / icon / list / qa /
+// button / input) can be made interactive in /preview and /sites.
+// =============================================================================
+
+function ActionForm({
+  primitive,
+  onChange,
+}: {
+  primitive: Primitive;
+  onChange: (next: import("@/features/primitives/types").PrimitiveAction) => void;
+}) {
+  const { id: projectId } = useParams<{ id: string }>();
+  const project = useProjects((s) => s.projects[projectId]);
+  return (
+    <ActionField
+      value={primitive.action ?? { kind: "none" }}
+      pages={project?.pages ?? []}
+      onChange={onChange}
+    />
   );
 }
 
