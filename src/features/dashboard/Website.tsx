@@ -28,6 +28,11 @@ export function Website() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Bumping this remounts the live-preview iframe, which is the only
+  // way to make the iframe re-fetch / re-render after an import. The
+  // iframe's React tree subscribes to its own Zustand store; updates
+  // to the parent's store don't cross the document boundary.
+  const [previewBust, setPreviewBust] = useState(0);
 
   useEffect(() => {
     useProjects.getState().hydrate();
@@ -101,6 +106,11 @@ export function Website() {
     });
     store.remove(result.project.id);
 
+    // Remount the live-preview iframe so the new content is visible
+    // immediately — without this the iframe is stale until the user
+    // hits refresh manually.
+    setPreviewBust((n) => n + 1);
+
     // Persist each updated page to the server. Done in parallel — the
     // PATCH endpoint is idempotent per page, and we already showed the
     // user the new content optimistically.
@@ -121,10 +131,15 @@ export function Website() {
     );
     const failed = persistResults.filter((r) => r.status === "rejected");
     if (failed.length > 0) {
-      // Local UI is correct but the server didn't ack one or more pages.
-      // Surface it so the user knows a refresh might revert the change.
-      toast.error(
-        `تم الاستيراد محلياً، لكن لم يُحفظ ${failed.length} صفحة على الخادم. حاول مجدداً.`,
+      // Server didn't accept the page updates. The most common reason
+      // is the project lives only in this browser (created via the
+      // local-fallback path because the user wasn't fully authed at
+      // creation time, so the server has no record of it). Local UI is
+      // already correct from the upsert above — be honest about the
+      // server status instead of treating local success as failure.
+      toast.warning(
+        "تم الاستيراد على هذا الجهاز. لم نتمكن من حفظه على حسابك — افتح المحرر لمزامنته.",
+        { duration: 5000 },
       );
       return;
     }
@@ -237,6 +252,13 @@ export function Website() {
             </Link>
           </div>
           <iframe
+            // key={previewBust} forces a full remount of the iframe
+            // each time we bump the counter — that's how the iframe
+            // picks up imported content without the user pressing
+            // refresh. The iframe lives in a separate document with
+            // its own Zustand store; subscribing across the boundary
+            // would be more complex than a remount.
+            key={previewBust}
             src={`/preview/${id}`}
             className="block h-[640px] w-full bg-white"
             title="معاينة الموقع"
