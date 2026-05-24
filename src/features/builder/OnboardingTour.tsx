@@ -193,6 +193,11 @@ export function OnboardingTour() {
     setOpen(false);
   };
 
+  const advance = () => {
+    if (step === STEPS.length - 1) close();
+    else setStep((s) => s + 1);
+  };
+
   if (!open) return null;
 
   const current = STEPS[step];
@@ -212,57 +217,69 @@ export function OnboardingTour() {
 
     // Rough vertical estimate so we can flip when it would overflow.
     const estH = 220;
-    if (
-      placement === "bottom" &&
-      targetRect.bottom + TOOLTIP_GAP + estH > viewportH - 12
-    ) {
-      placement = "top";
-    } else if (
-      placement === "top" &&
-      targetRect.top - TOOLTIP_GAP - estH < 12
-    ) {
-      placement = "bottom";
-    }
+    const fitsBelow =
+      targetRect.bottom + TOOLTIP_GAP + estH <= viewportH - 12;
+    const fitsAbove = targetRect.top - TOOLTIP_GAP - estH >= 12;
+    if (placement === "bottom" && !fitsBelow) placement = "top";
+    else if (placement === "top" && !fitsAbove) placement = "bottom";
 
-    let left = targetRect.left + targetRect.width / 2 - tooltipMaxW / 2;
-    left = Math.max(12, Math.min(left, viewportW - tooltipMaxW - 12));
-
-    if (placement === "bottom") {
+    // If the target is too big for either above OR below — common when
+    // the target is the whole canvas — overlay the tooltip in a fixed
+    // bottom-of-viewport position so it's always reachable. Without
+    // this, a flip-then-flip-back lands the tooltip off-screen and the
+    // user can't see the Next button to advance. The bottom offset
+    // clears the mobile-tabs strip + iPhone safe-area on phones.
+    if (!fitsBelow && !fitsAbove) {
       tooltipStyle = {
         position: "fixed",
-        top: targetRect.bottom + TOOLTIP_GAP + PAD,
-        left,
-        width: tooltipMaxW,
-      };
-    } else if (placement === "top") {
-      tooltipStyle = {
-        position: "fixed",
-        bottom: viewportH - targetRect.top + TOOLTIP_GAP + PAD,
-        left,
+        bottom: isMobile
+          ? "calc(80px + env(safe-area-inset-bottom))"
+          : 24,
+        left: "50%",
+        transform: "translateX(-50%)",
         width: tooltipMaxW,
       };
     } else {
-      const top = Math.max(
-        12,
-        Math.min(
-          targetRect.top + targetRect.height / 2 - estH / 2,
-          viewportH - estH - 12,
-        ),
-      );
-      if (placement === "right") {
+      let left = targetRect.left + targetRect.width / 2 - tooltipMaxW / 2;
+      left = Math.max(12, Math.min(left, viewportW - tooltipMaxW - 12));
+
+      if (placement === "bottom") {
         tooltipStyle = {
           position: "fixed",
-          top,
-          left: targetRect.right + TOOLTIP_GAP + PAD,
+          top: targetRect.bottom + TOOLTIP_GAP + PAD,
+          left,
+          width: tooltipMaxW,
+        };
+      } else if (placement === "top") {
+        tooltipStyle = {
+          position: "fixed",
+          bottom: viewportH - targetRect.top + TOOLTIP_GAP + PAD,
+          left,
           width: tooltipMaxW,
         };
       } else {
-        tooltipStyle = {
-          position: "fixed",
-          top,
-          right: viewportW - targetRect.left + TOOLTIP_GAP + PAD,
-          width: tooltipMaxW,
-        };
+        const top = Math.max(
+          12,
+          Math.min(
+            targetRect.top + targetRect.height / 2 - estH / 2,
+            viewportH - estH - 12,
+          ),
+        );
+        if (placement === "right") {
+          tooltipStyle = {
+            position: "fixed",
+            top,
+            left: targetRect.right + TOOLTIP_GAP + PAD,
+            width: tooltipMaxW,
+          };
+        } else {
+          tooltipStyle = {
+            position: "fixed",
+            top,
+            right: viewportW - targetRect.left + TOOLTIP_GAP + PAD,
+            width: tooltipMaxW,
+          };
+        }
       }
     }
   } else {
@@ -283,43 +300,73 @@ export function OnboardingTour() {
         aria-label="جولة تعريفية"
         className="fixed inset-0 z-[180]"
       >
-        {/* Backdrop dim — only when no spotlight is active (the spotlight's
-            own box-shadow paints the dim around the cut-out). Tapping
-            the backdrop closes the tour. */}
-        {!targetRect && (
-          <motion.button
-            type="button"
-            aria-label="إغلاق"
-            onClick={close}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 cursor-default bg-stone-900/45 backdrop-blur-[2px]"
-          />
-        )}
+        {/* Full-viewport click catcher — eats any tap outside the
+            tooltip and the spotlight target, advancing the tour. This
+            is what stops the canvas's own onClick from intercepting
+            taps during a canvas-target step (which made the tour feel
+            "stuck" — the click went to the canvas, did nothing
+            visible, and the user couldn't see how to progress).
+            For target-less steps it also doubles as the dim backdrop. */}
+        <motion.button
+          type="button"
+          aria-label={targetRect ? "متابعة" : "إغلاق"}
+          onClick={targetRect ? advance : close}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className={cn(
+            "absolute inset-0 cursor-default",
+            // Only dim when there's no spotlight — the spotlight's own
+            // box-shadow paints the dim around the cut-out.
+            !targetRect && "bg-stone-900/45 backdrop-blur-[2px]",
+          )}
+        />
 
-        {/* Spotlight cut-out */}
+        {/* Spotlight cut-out + a separate pulsing ring so the
+            highlighted area reads as "here, look at this" even when
+            the target fills most of the screen (the dim becomes
+            very subtle in that case). */}
         {targetRect && (
-          <motion.div
-            key={`spotlight-${step}`}
-            aria-hidden
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.25 }}
-            style={{
-              position: "fixed",
-              top: targetRect.top - PAD,
-              left: targetRect.left - PAD,
-              width: targetRect.width + PAD * 2,
-              height: targetRect.height + PAD * 2,
-              borderRadius: 16,
-              boxShadow:
-                "0 0 0 9999px rgba(15, 23, 42, 0.55), 0 0 0 2px rgba(255,255,255,0.6) inset, 0 0 0 4px rgba(232,93,93,0.55)",
-              pointerEvents: "none",
-              transition:
-                "top 250ms ease, left 250ms ease, width 250ms ease, height 250ms ease",
-            }}
-          />
+          <>
+            <motion.div
+              key={`spotlight-${step}`}
+              aria-hidden
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              style={{
+                position: "fixed",
+                top: targetRect.top - PAD,
+                left: targetRect.left - PAD,
+                width: targetRect.width + PAD * 2,
+                height: targetRect.height + PAD * 2,
+                borderRadius: 16,
+                boxShadow:
+                  "0 0 0 9999px rgba(15, 23, 42, 0.65), 0 0 0 2px rgba(255,255,255,0.85) inset, 0 0 0 4px rgb(232,93,93)",
+                pointerEvents: "none",
+                transition:
+                  "top 250ms ease, left 250ms ease, width 250ms ease, height 250ms ease",
+              }}
+            />
+            {/* Pulsing outer ring — animated to draw the eye. */}
+            <motion.div
+              key={`pulse-${step}`}
+              aria-hidden
+              initial={{ opacity: 0.8, scale: 1 }}
+              animate={{ opacity: [0.8, 0.1, 0.8], scale: [1, 1.04, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "fixed",
+                top: targetRect.top - PAD,
+                left: targetRect.left - PAD,
+                width: targetRect.width + PAD * 2,
+                height: targetRect.height + PAD * 2,
+                borderRadius: 16,
+                boxShadow: "0 0 0 6px rgba(232,93,93,0.45)",
+                pointerEvents: "none",
+              }}
+            />
+          </>
         )}
 
         {/* Tooltip card */}
@@ -384,10 +431,7 @@ export function OnboardingTour() {
               )}
               <button
                 type="button"
-                onClick={() => {
-                  if (isLast) close();
-                  else setStep((s) => s + 1);
-                }}
+                onClick={advance}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
               >
                 {isLast ? "ابدأ البناء" : "التالي"}
