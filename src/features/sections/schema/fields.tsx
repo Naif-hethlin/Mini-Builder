@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ReactElement } from "react";
 import { useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/cn";
 import { Icon as IconifyIcon } from "@iconify/react";
@@ -373,6 +374,10 @@ export function ColorField({
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
+  // Ref on the trigger button — ColorPopover uses its bounding rect to
+  // position itself via fixed coords (escapes the EditPanel's
+  // overflow-hidden clipping).
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   // The native <input type="color"> can't represent shorthand or transparency,
   // so we feed it a normalized 6-digit hex; if `value` is bad we fall back to
@@ -381,13 +386,14 @@ export function ColorField({
     value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000";
 
   return (
-    <div className="relative space-y-1.5">
+    <div className="space-y-1.5">
       <label htmlFor={id} className={fieldLabel}>
         {field.label}
       </label>
 
       <button
         id={id}
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
@@ -414,6 +420,7 @@ export function ColorField({
 
       {open && (
         <ColorPopover
+          triggerRef={triggerRef}
           value={value}
           nativeValue={nativeColorValue}
           onChange={onChange}
@@ -425,11 +432,13 @@ export function ColorField({
 }
 
 function ColorPopover({
+  triggerRef,
   value,
   nativeValue,
   onChange,
   onClose,
 }: {
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
   value: string;
   nativeValue: string;
   onChange: (color: string) => void;
@@ -444,16 +453,64 @@ function ColorPopover({
     if (next && next !== value) onChange(next);
   };
 
-  return (
+  // Position the popover relative to the trigger button's viewport
+  // rect. We portal to <body> so the EditPanel's `overflow-hidden` +
+  // its scrollable inner can't clip us — previously on mobile (where
+  // EditPanel fills the whole screen) the popover's swatches +
+  // hex input were getting clipped behind the panel bounds, making it
+  // look like the picker just didn't work.
+  const [pos, setPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const el = triggerRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const POPOVER_W = Math.max(260, Math.min(r.width, 360));
+      const viewportH =
+        typeof window !== "undefined" ? window.innerHeight : 800;
+      const viewportW =
+        typeof window !== "undefined" ? window.innerWidth : 600;
+      // Prefer below; flip above if there isn't room.
+      const estH = 320;
+      const fitsBelow = r.bottom + 8 + estH <= viewportH - 12;
+      const top = fitsBelow ? r.bottom + 6 : Math.max(12, r.top - 6 - estH);
+      // Centre on the trigger, then clamp inside the viewport.
+      let left = r.left + r.width / 2 - POPOVER_W / 2;
+      left = Math.max(12, Math.min(left, viewportW - POPOVER_W - 12));
+      setPos({ top, left, width: POPOVER_W });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [triggerRef]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <>
-      {/* Backdrop — click anywhere outside to close. */}
+      {/* Backdrop — click anywhere outside to close. Now portaled, so
+          it covers the actual viewport (was a sibling-of-EditPanel
+          before; on mobile fixed inset-0 still spans viewport but the
+          popover below it was clipped, which broke the whole picker). */}
       <button
         type="button"
         aria-label="إغلاق"
         onClick={onClose}
-        className="fixed inset-0 z-30 cursor-default bg-transparent"
+        className="fixed inset-0 z-[170] cursor-default bg-stone-900/15"
       />
-      <div className="absolute z-40 mt-1 w-full rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
+      <div
+        className="fixed z-[180] rounded-xl border border-stone-200 bg-white p-3 shadow-2xl"
+        style={pos ?? { top: -9999, left: -9999, width: 280 }}
+      >
         {/* Native color wheel — full-width swatch you can drag inside. */}
         <label className="mb-2 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 p-2">
           <input
@@ -467,12 +524,14 @@ function ColorPopover({
           </span>
         </label>
 
-        {/* Preset swatches */}
+        {/* Preset swatches — 8 columns on mobile so each swatch is at
+            least ~32px wide (was 10 cols × 24px which fell below the
+            iOS HIG ≥44px target and felt fiddly on touch). */}
         <div className="mb-3">
           <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-stone-500">
             ألوان جاهزة
           </p>
-          <div className="grid grid-cols-10 gap-1">
+          <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10 sm:gap-1">
             {COLOR_PRESETS.map((c) => {
               const active = c.toLowerCase() === value.toLowerCase();
               return (
@@ -483,7 +542,7 @@ function ColorPopover({
                   title={c}
                   onClick={() => onChange(c)}
                   className={cn(
-                    "h-6 w-6 rounded-md border transition-transform hover:scale-110",
+                    "h-8 w-8 rounded-md border transition-transform active:scale-90 sm:h-6 sm:w-6 sm:hover:scale-110",
                     active
                       ? "border-stone-900 ring-2 ring-brand"
                       : "border-stone-200",
@@ -521,7 +580,8 @@ function ColorPopover({
           />
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
