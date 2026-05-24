@@ -540,6 +540,26 @@ function Main({
       };
     };
 
+    // The cursor element is `translate(x, y)` from its top-left. The
+    // arrow TIP — what the user perceives as "the click point" — sits
+    // ~8px right and ~4px down from the SVG's top-left after the
+    // `-rotate-12 origin-top-left` transform. On phones the wrapper
+    // is `scale-75`, so multiply by 0.75. Without this correction the
+    // tip lands ~11px above the target (which on the tiny mini-tools
+    // tiles means it's hovering OUTSIDE the tile entirely).
+    const cursorOffsetForTip = () => {
+      const scale =
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 640px)").matches
+          ? 1
+          : 0.75;
+      return { dx: -8 * scale, dy: -4 * scale };
+    };
+    const aimAt = (pos: { x: number; y: number }) => {
+      const { dx, dy } = cursorOffsetForTip();
+      return { x: pos.x + dx, y: pos.y + dy };
+    };
+
     const loop = async () => {
       // Initial off-screen wait so the page settles + auth overlay can
       // dismiss before we start.
@@ -584,8 +604,7 @@ function Main({
           tile.scrollIntoView({ behavior: "smooth", block: "nearest" });
           await gatedSleep(350);
           if (cancelled) return;
-          const tilePos = centerOf(tile);
-          setCursor({ x: tilePos.x - 14, y: tilePos.y - 14 });
+          setCursor(aimAt(centerOf(tile)));
           await gatedSleep(STEP_BEFORE_CLICK);
           if (cancelled) return;
 
@@ -596,13 +615,16 @@ function Main({
           await gatedSleep(STEP_AFTER_CLICK);
           if (cancelled) return;
 
-          // Move cursor to canvas drop area
+          // Move cursor to canvas drop area. Add scroll offsets so the
+          // coords match the rest of the orchestrator (page-relative).
           if (canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
             const dropY =
-              rect.top + Math.min(rect.height - 80, 120 + added * 40);
-            const dropX = rect.left + rect.width / 2;
-            setCursor({ x: dropX, y: dropY });
+              rect.top +
+              Math.min(rect.height - 80, 120 + added * 40) +
+              window.scrollY;
+            const dropX = rect.left + rect.width / 2 + window.scrollX;
+            setCursor(aimAt({ x: dropX, y: dropY }));
             await gatedSleep(450);
             if (cancelled) return;
           }
@@ -625,15 +647,20 @@ function Main({
           await gatedSleep(700);
         }
 
-        // Publish click — cursor uses PAGE coords, so it stays glued
-        // to the publish button regardless of where the user has
-        // scrolled. No scrollIntoView: yanking the page back to bring
-        // publish into view fights the user; if they've scrolled away
-        // they're not watching anyway, and the next cycle will redraw
-        // wherever they look.
+        // Publish click — the climax beat of the demo. The publish
+        // button sits in Main's top bar, which on the mobile
+        // scrollable layout can be above the viewport if the user
+        // scrolled down to watch the canvas fill up. Bring it back
+        // into view so the cursor's final press is actually visible —
+        // that's the whole point of the cycle.
         if (publishRef.current) {
-          const p = centerOf(publishRef.current);
-          setCursor({ x: p.x - 14, y: p.y - 14 });
+          publishRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+          await gatedSleep(400);
+          if (cancelled) return;
+          setCursor(aimAt(centerOf(publishRef.current)));
           await gatedSleep(STEP_BEFORE_PUBLISH);
           setRipple(true);
           await gatedSleep(200);
