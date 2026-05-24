@@ -1,16 +1,17 @@
-# docker compose for the Mini Website Builder.
+# docker compose stack for the Mini Website Builder.
 #
-# Two services: a Postgres 16 container (named mini-website-builder-db) and
-# the Next.js app. The app talks to Postgres over the shared docker_default
-# network using the hostname `postgres`.
+# Brings up Postgres 16 + the Next.js app together so you can do
+#   docker compose up
+# and open http://localhost:3000.
 #
-# Credentials default to dev-only values; production deployments should
-# override POSTGRES_PASSWORD + SESSION_SECRET via .env in the same folder.
+# Override the dev-only credentials by creating a .env file next to
+# this docker-compose.yml. At minimum:
+#   POSTGRES_PASSWORD=<change-me>
+#   SESSION_SECRET=<32+ char random>
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: mini-website-builder-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-rekaz}
@@ -18,8 +19,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-rekaz_builder}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - caddy_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rekaz}"]
       interval: 5s
@@ -28,26 +27,18 @@ services:
 
   app:
     build: .
-    container_name: mini-website-builder
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    expose:
-      - "3000"
-    networks:
-      - caddy_net
+    ports:
+      - "${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
       - DATABASE_URL=postgres://${POSTGRES_USER:-rekaz}:${POSTGRES_PASSWORD:-rekaz-dev-only-replace-me}@postgres:5432/${POSTGRES_DB:-rekaz_builder}
       - SESSION_SECRET=${SESSION_SECRET:-rekaz-dev-only-32-byte-secret-replace}
-
-networks:
-  caddy_net:
-    name: docker_default
-    external: true
 
 volumes:
   postgres_data:
