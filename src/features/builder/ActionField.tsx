@@ -68,7 +68,7 @@ export function ActionField({
                 return onChange({ kind: "booking" });
             }
           }}
-          className="h-10 w-full appearance-none rounded-xl border border-stone-200 bg-white pe-9 ps-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+          className="h-10 w-full appearance-none rounded-xl border border-stone-200 bg-white pe-9 ps-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
         >
           {KIND_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -93,7 +93,7 @@ export function ActionField({
             value={action.href}
             placeholder="https://"
             onChange={(e) => onChange({ kind: "link", href: e.target.value })}
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
           />
         </div>
       )}
@@ -105,7 +105,7 @@ export function ActionField({
             onChange={(e) =>
               onChange({ kind: "navigate", pageSlug: e.target.value })
             }
-            className="h-10 w-full appearance-none rounded-xl border border-stone-200 bg-white pe-9 ps-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+            className="h-10 w-full appearance-none rounded-xl border border-stone-200 bg-white pe-9 ps-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
           >
             {pages.map((p) => (
               <option key={p.id} value={p.slug}>
@@ -133,7 +133,7 @@ export function ActionField({
             onChange={(e) =>
               onChange({ kind: "scroll", sectionId: e.target.value })
             }
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
           />
         </div>
       )}
@@ -151,7 +151,7 @@ export function ActionField({
             onChange={(e) =>
               onChange({ kind: "payment", url: e.target.value })
             }
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+            className="h-10 w-full rounded-xl border border-stone-200 bg-white ps-9 pe-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
           />
         </div>
       )}

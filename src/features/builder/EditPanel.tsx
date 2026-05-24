@@ -337,7 +337,7 @@ function GeometryForm({
             max={180}
             step={1}
             onChange={(e) => setNumber("rotation")(e.target.value)}
-            className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center text-xs"
+            className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center text-base sm:text-xs"
           />
         </div>
         <div className="mt-2 flex gap-1">
@@ -386,7 +386,7 @@ function NumberField({
         placeholder={placeholder}
         min={min}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs"
+        className="h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-base sm:text-xs"
       />
     </label>
   );

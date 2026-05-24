@@ -109,7 +109,7 @@ export function MenuPanel({ projectId }: { projectId: string }) {
               value={item.name}
               placeholder="اسم الصنف"
               onChange={(e) => updateItem(item.id, "name", e.target.value)}
-              className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+              className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
             />
             <input
               type="text"
@@ -118,7 +118,7 @@ export function MenuPanel({ projectId }: { projectId: string }) {
               onChange={(e) =>
                 updateItem(item.id, "description", e.target.value)
               }
-              className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+              className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
             />
             <div className="flex items-center gap-1.5">
               <input
@@ -128,7 +128,7 @@ export function MenuPanel({ projectId }: { projectId: string }) {
                 onChange={(e) =>
                   updateItem(item.id, "price", e.target.value)
                 }
-                className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+                className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
               />
               <span className="text-xs text-stone-400">
                 {menuSection.props.currency}

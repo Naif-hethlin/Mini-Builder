@@ -141,7 +141,7 @@ function Field({ label, defaultValue, dir }: { label: string; defaultValue: stri
         defaultValue={defaultValue}
         dir={dir}
         readOnly
-        className="w-full rounded-lg border border-stone-200 bg-stone-50/50 px-3 py-2 text-sm text-stone-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+        className="w-full rounded-lg border border-stone-200 bg-stone-50/50 px-3 py-2 text-base text-stone-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 sm:text-sm"
       />
     </label>
   );

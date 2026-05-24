@@ -11,11 +11,14 @@ import { selectMobileTab, useBuilderStore } from "./state/store";
  * On desktop the user sees all three panels (Sidebar | Canvas | EditPanel)
  * side by side. On mobile there isn't room for that, so we collapse to one
  * panel at a time and let the user switch via these three tabs.
+ *
+ * Labels are Arabic to match the rest of the app — "Library / Preview /
+ * Editor" was a leftover from the English prototype.
  */
 const TABS: Array<{ id: MobileTab; label: string; Icon: typeof Layers }> = [
-  { id: "library", label: "Library", Icon: Layers },
-  { id: "canvas", label: "Preview", Icon: Eye },
-  { id: "editor", label: "Editor", Icon: Settings2 },
+  { id: "library", label: "المكتبة", Icon: Layers },
+  { id: "canvas", label: "المعاينة", Icon: Eye },
+  { id: "editor", label: "الخصائص", Icon: Settings2 },
 ];
 
 export function MobileTabs() {
@@ -25,8 +28,12 @@ export function MobileTabs() {
   return (
     <nav
       role="tablist"
-      aria-label="Builder sections"
-      className="flex rounded-2xl border border-slate-100 bg-white shadow-[0_2px_20px_rgb(0,0,0,0.04)] md:hidden"
+      aria-label="أقسام البناء"
+      // min-h enforces a ~56px touch target per tab (Apple HIG: ≥44px).
+      // The pill backdrop on the active tab gives a clear "you are here"
+      // signal — purely-color states like the old version disappear under
+      // bright sunlight on a phone.
+      className="flex min-h-14 shrink-0 items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-[0_2px_20px_rgb(0,0,0,0.04)] md:hidden"
     >
       {TABS.map(({ id, label, Icon }) => {
         const isActive = mobileTab === id;
@@ -38,14 +45,32 @@ export function MobileTabs() {
             type="button"
             onClick={() => setMobileTab(id)}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors",
+              "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 transition-all",
               isActive
-                ? "text-brand"
-                : "text-slate-500 hover:text-slate-900",
+                ? "bg-brand-light text-brand shadow-sm"
+                : "text-slate-500 active:bg-slate-50",
             )}
           >
-            <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
-            <span className="text-xs font-medium">{label}</span>
+            {/* pointer-events-none on the icon + label so the button is
+                always the click target — otherwise a tap landing on the
+                SVG/span reports the inner node to assistive tech and any
+                "elementFromPoint" debugging shows the SVG, not the
+                tab. Click still bubbles to the parent <button>, so the
+                React handler fires either way; this just keeps the
+                target semantically clean. */}
+            <Icon
+              size={20}
+              strokeWidth={isActive ? 2.25 : 1.75}
+              className="pointer-events-none"
+            />
+            <span
+              className={cn(
+                "pointer-events-none text-[11px]",
+                isActive ? "font-bold" : "font-semibold",
+              )}
+            >
+              {label}
+            </span>
           </button>
         );
       })}

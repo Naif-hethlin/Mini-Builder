@@ -81,7 +81,7 @@ export function Settings() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="اسم المشروع"
-          className="mt-4 block h-11 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30"
+          className="mt-4 block h-11 w-full rounded-xl border border-stone-200 bg-white px-3 text-base focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 sm:text-sm"
         />
       </section>
 

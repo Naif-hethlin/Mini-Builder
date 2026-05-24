@@ -31,8 +31,11 @@ import type { FieldSchema, FormValue } from "./types";
 // Shared input styles
 // =============================================================================
 
+// iOS Safari zooms into any input <16px on focus. Mobile-first: 16px on
+// phones (text-base), 14px on tablet+ (sm:text-sm) where there's no zoom
+// penalty.
 const inputBase =
-  "block w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 focus:outline-offset-0";
+  "block w-full rounded-xl border border-stone-200 bg-white px-3 text-base text-stone-900 placeholder:text-stone-400 focus:border-brand focus:outline focus:outline-2 focus:outline-brand/30 focus:outline-offset-0 sm:text-sm";
 
 const fieldLabel = "block text-xs font-medium text-stone-700";
 
@@ -310,7 +313,7 @@ export function ImageUrlField({
           value={isDataUrl ? "" : value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder ?? "https://…"}
-          className={cn(inputBase, "mt-2 h-9 text-xs")}
+          className={cn(inputBase, "mt-2 h-9 text-base sm:text-xs")}
         />
       </details>
     </div>
@@ -514,7 +517,7 @@ function ColorPopover({
               }
             }}
             placeholder="#000000"
-            className={cn(inputBase, "h-9 font-mono text-xs")}
+            className={cn(inputBase, "h-9 font-mono text-base sm:text-xs")}
           />
         </div>
       </div>
@@ -640,7 +643,7 @@ export function IconField({
                 onChange={(e) => handleQueryChange(e.target.value)}
                 placeholder="ابحث في 200,000+ أيقونة…"
                 autoFocus
-                className={cn(inputBase, "h-9 text-xs")}
+                className={cn(inputBase, "h-9 text-base sm:text-xs")}
               />
             </div>
 

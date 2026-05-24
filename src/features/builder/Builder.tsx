@@ -1,9 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { cn } from "@/shared/lib/cn";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
-import { selectMobileTab, useBuilderStore } from "./state/store";
+import {
+  selectMobileTab,
+  selectSelection,
+  useBuilderStore,
+} from "./state/store";
 import { useBuilderProject } from "./state/useBuilderProject";
 import { useBuilderHotkeys } from "./useBuilderHotkeys";
 import { Canvas } from "./Canvas";
@@ -26,12 +31,27 @@ import { Toolbar } from "./Toolbar";
  */
 export function Builder({ projectId }: { projectId: string }) {
   const mobileTab = useBuilderStore(selectMobileTab);
+  const selection = useBuilderStore(selectSelection);
+  const setMobileTab = useBuilderStore((s) => s.setMobileTab);
   useBuilderProject(projectId);
   useBuilderHotkeys();
 
+  // On phones the three panels are mutually exclusive. When the user taps a
+  // section or primitive on the canvas, jump them to the Editor tab so the
+  // selection-driven form is in front of them — otherwise the tap appears to
+  // do nothing because the form is on a hidden tab. We don't auto-jump
+  // back on deselect; the user can hit the Canvas tab manually to verify
+  // their edit, which feels more deliberate than yanking them around.
+  useEffect(() => {
+    if (selection.kind === "none") return;
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 767.99px)").matches) return;
+    setMobileTab("editor");
+  }, [selection, setMobileTab]);
+
   return (
     <ConfirmProvider>
-      <div className="flex h-screen w-screen flex-col gap-2 overflow-hidden bg-slate-50 p-2 text-slate-800 antialiased selection:bg-brand-light selection:text-brand-dark sm:gap-3 sm:p-3">
+      <div className="flex h-dvh w-screen flex-col gap-2 overflow-hidden bg-slate-50 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-slate-800 antialiased selection:bg-brand-light selection:text-brand-dark sm:gap-3 sm:p-3">
         <Toolbar />
 
         <div className="flex flex-1 gap-2 overflow-hidden sm:gap-3">
@@ -75,6 +95,10 @@ export function Builder({ projectId }: { projectId: string }) {
           richColors
           closeButton
           duration={3000}
+          // On phones the default 16px bottom offset puts toasts under
+          // the MobileTabs strip (~56px tall) and under iPhone's home
+          // indicator (~34px safe-area). Push them above both.
+          mobileOffset={{ bottom: "calc(80px + env(safe-area-inset-bottom))" }}
         />
       </div>
     </ConfirmProvider>

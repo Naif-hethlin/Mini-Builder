@@ -149,7 +149,7 @@ export default function BookingRender({ props }: { props: BookingProps }) {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="اسمك الكامل"
                     required
-                    className="w-full bg-transparent text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                    className="w-full bg-transparent text-base text-stone-900 placeholder:text-stone-400 focus:outline-none sm:text-sm"
                   />
                 </Field>
                 <Field icon={<Phone size={14} />} label="الجوال">
@@ -159,7 +159,7 @@ export default function BookingRender({ props }: { props: BookingProps }) {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="05xxxxxxxx"
                     required
-                    className="w-full bg-transparent text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
+                    className="w-full bg-transparent text-base text-stone-900 placeholder:text-stone-400 focus:outline-none sm:text-sm"
                   />
                 </Field>
                 <Field icon={<Calendar size={14} />} label="التاريخ">
