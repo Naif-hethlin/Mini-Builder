@@ -1,38 +1,47 @@
 # Rekaz Builder — Master Plan
 
-> Source-of-truth document for the project. Combines product vision, design
-> system, and phased engineering plan. Update this file as decisions change.
+> Source-of-truth document for the project. Combines product vision,
+> design system, current status, and roadmap. Update this file as
+> decisions change. The engineering-level breakdown lives in
+> [IMPLEMENTATION.md](./IMPLEMENTATION.md).
 
 ---
 
 ## 0. Quick facts
 
-- **Project:** Naif's Rekaz frontend interview submission.
+- **Project:** Naif's Rekaz frontend interview submission, now extended.
 - **Repo:** `/home/ubuntu/mini-website-builder/` (standalone).
-- **Live URL target:** `https://builder.naifhub.com` (self-hosted VPS via Docker + Caddy).
+- **GitHub:** <https://github.com/Naif-hethlin/Mini-Builder>
+- **Live URL:** <https://builder.naifhub.com> (self-hosted VPS via
+  Docker + Caddy).
 - **Brand color:** `#E85D5D` (coral). Secondary `#F28B82`.
-- **Routing model:** multi-project with IDs (`/builder/[id]`, `/dashboard/[id]`, `/preview/[id]`).
-- **Persistence:** localStorage only. No backend, no auth, no real payments.
-- **Stack:** Next.js 16 + TS + Tailwind 4 + Zustand + dnd-kit + Framer Motion + Zod.
+- **Routing model:** multi-page projects with IDs
+  (`/builder/[id]`, `/dashboard/[id]`, `/preview/[id]/[slug?]`,
+  `/sites/[slug]/[pageSlug?]`).
+- **Persistence:** **PostgreSQL** (was localStorage in the original
+  interview submission — see Decisions log).
+- **Auth:** Saudi phone-only signup/login + HMAC-signed session cookie.
+- **Stack:** Next.js 16 + React 19 + TS + Tailwind 4 + Zustand + dnd-kit
+  + Framer Motion + Zod + Postgres.
 
 ---
 
-# Part 1 — Product Vision
+# Part 1 — Product vision
 
 ## Vision
 
 Rekaz Builder is a lightweight business website platform designed for
 non-technical business owners.
 
-The goal is **NOT** to create a complex website builder like Webflow.
+The goal is **NOT** to build a complex website builder like Webflow.
 
 The goal is to:
 
-- help users launch quickly
-- provide guided starter layouts
-- allow flexible customization
-- include lightweight business workflows
-- make the experience extremely easy and safe for non-technical users
+- help users launch quickly,
+- provide guided starter layouts,
+- allow flexible customisation when needed,
+- include lightweight business workflows (bookings / menu / portfolio),
+- make the experience extremely easy and safe for non-technical users.
 
 Core philosophy:
 
@@ -40,131 +49,101 @@ Core philosophy:
 
 ## Primary product goals
 
-- Simple onboarding experience
-- Non-technical friendly UX
-- Ready business starter layouts
-- Flexible editing
-- Lightweight management dashboard
-- Realistic business workflows
-- Responsive design
-- Smooth and polished UI
+- Simple onboarding (phone-only auth, no email/password).
+- Non-technical-friendly UX.
+- Ready business starter layouts.
+- Flexible editing — including a free-positioning canvas mode.
+- Lightweight management dashboard.
+- Realistic business workflows backed by a real DB.
+- Responsive design (desktop / tablet / mobile reflow).
+- Smooth, polished UI.
 
 ## Avoid
 
-- Complex design systems
-- Advanced freeform layout editing
-- Developer-heavy UX
-- Enterprise dashboards
-- Backend-heavy architecture
-- Real payment systems
-- Complex auth systems
+- Complex design systems.
+- Advanced freeform layout editing for everyday use (the free canvas is
+  an opt-in for the user who wants it, not the default).
+- Developer-heavy UX.
+- Enterprise dashboards.
+- Real payment systems.
+- Email / OTP / password recovery flows.
 
 ## Product flow
 
-### 1. Landing Page (`/`)
-
-- Hero, Features, Starter layouts showcase, Workflow examples, CTA.
-- Inspired by Rekaz.io — soft spacing, rounded cards, calm colors, Arabic-first.
-- CTAs: **Start Building** and **Explore Layouts**.
-
-### 2. Template Selection (`/templates`)
-
-- Option A — Start from scratch.
-- Option B — Use a starter layout.
-
-Starter layouts:
-
-- **Barber Shop** — Hero, Services, Team, Booking, Testimonials, Contact.
-- **Coffee Shop** — Hero, Featured drinks, Menu, Gallery, Location.
-- **Photography** — Hero, Portfolio, Packages, Testimonials, Contact.
-
-Each card shows preview image, included sections, included workflow.
-Starter layouts are **NOT** locked — users can fully customize them after.
-
-### 3. Builder (`/builder/[id]`)
-
-Feel: simple, guided, safe, flexible. **Not** technical, overwhelming, or
-infinitely customizable.
-
-- **Left sidebar:** starter layouts + section library (Hero, Features, Gallery,
-  Testimonials, FAQ, Contact, Footer, Booking, Menu, Portfolio). Click to add,
-  drag to reorder, delete, duplicate.
-- **Center canvas:** live preview, desktop/mobile toggle, smooth animations,
-  scrollable, selected section highlight.
-- **Right panel:** focused editing — titles, descriptions, images, colors,
-  buttons, services, menu items, gallery images. No advanced design controls.
-
-### 4. Dashboard (`/dashboard/[id]`)
-
-Inspired by Zid/Salla — smaller and simpler. Makes the product feel complete.
-
-Sidebar: Overview / Website / Workflow (Bookings / Menu / Portfolio) /
-Customers / Settings.
-
-Pages:
-
-- **Overview** — visits, recent activity, recent bookings, website status (mock).
-- **Website** — edit, preview, publish actions.
-- **Workflow page** — varies by business type (Bookings / Menu / Portfolio).
-
-### 5. Preview (`/preview/[id]`)
-
-Render the design without any builder UI. Public-feeling.
+1. **Landing** (`/`) — hero, features, starter showcase, CTAs.
+2. **Templates** (`/templates`) — auth gate; signed-in users see scratch
+   + the three starter cards.
+3. **Builder** (`/builder/[id]`) — sidebar library, canvas, schema-driven
+   edit panel, per-design undo/redo, free canvas mode.
+4. **Preview** (`/preview/[id]`) — owner-only preview, no builder chrome.
+5. **Sites** (`/sites/[slug]`) — public published site, no auth gate.
+6. **Dashboard** (`/dashboard/[id]`) — Overview / Website / Workflow /
+   Customers / Settings.
 
 ## Business templates
 
-### Barber Shop
+### Barber shop
+- Sections: Header, Hero, Services (Features), Testimonials, Booking, Contact, Footer.
+- **Real:** booking flow (select staff → date → time → submit, stored in `bookings` table).
+- **Mocked:** revenue analytics, customer insights.
 
-- Sections: Hero, Services, Team, Booking CTA, Testimonials, Contact.
-- **Real:** booking flow (select barber → date → time → submit, stored locally).
-- **Fake:** revenue analytics, customer insights, notifications.
+### Coffee shop
+- Sections: Header, Hero, Menu, Gallery, CTA, Contact, Footer.
+- **Real:** menu editor (CRUD against the active Menu section).
+- **Mocked:** orders analytics, delivery tracking.
 
-### Coffee Shop
-
-- Sections: Hero, Featured drinks, Menu, Gallery, Location.
-- **Real:** menu editor (add/remove/edit items, live preview).
-- **Fake:** orders analytics, delivery tracking, loyalty.
-
-### Photography
-
-- Sections: Hero, Portfolio, Packages, Testimonials, Contact.
-- **Real:** gallery manager (add/remove/reorder).
-- **Fake:** client analytics, session history, invoices.
+### Photography portfolio
+- Sections: Header, Hero, Portfolio, Features (packages), Testimonials, Contact, Footer.
+- **Real:** portfolio CRUD (add/remove/reorder images with categories).
+- **Mocked:** client analytics, session invoices.
 
 ## UX principles
 
-User is **non-technical**. Everything must feel obvious, guided, safe, clean.
+The user is **non-technical**. Everything must feel obvious, guided,
+safe, and clean.
 
-Avoid: blank confusion, too many controls, advanced design freedom,
-overwhelming interfaces.
+Avoid: blank confusion, too many controls, overwhelming interfaces. The
+system provides smart defaults for spacing, typography, colours, and
+section ordering. Users mainly edit content, images, ordering, and
+business data.
 
-The system provides smart defaults for spacing, typography, colors, and
-section ordering. Users mainly edit content, images, ordering, business data.
+## Engineering decisions
 
-## Important engineering decisions
+- Default builder is **not** fully freeform: add/remove sections, reorder,
+  and edit per-section content. Users who want free positioning opt into
+  the **Canvas** section.
+- Starter layouts are predefined section arrays produced by
+  `starterDesignFor(templateType)` in
+  [`src/features/sections/starters.ts`](../src/features/sections/starters.ts).
+- Auto-explode: each preset section in a starter is exploded into editable
+  primitives on creation so the user can edit any sub-element directly.
+- Client state is managed by Zustand with narrow selectors per feature.
+- Persistence is PostgreSQL only — JSONB for design payloads,
+  relational tables for users / projects / pages / bookings / visits.
+- Analytics are server-side: VisitBeacon fires a fire-and-forget POST
+  to `/api/visits` on mount, recordVisit derives OS/device from UA on
+  the server, no PII reaches the browser.
 
-- Builder is **NOT** fully freeform: no arbitrary drag positioning, no free
-  canvas movement, no complex resizing. Only reorder, add/remove, edit content.
-- Starter layouts are simply predefined section arrays.
-- State managed by Zustand with narrow selectors.
-- Persistence is localStorage only.
+## Real vs. mocked features
 
-## Real vs Fake feature breakdown
-
-- **Real:** drag/drop reorder, section editing, starter layouts, booking demo,
-  menu editing, gallery editing, local persistence, responsive preview.
-- **Semi-real:** dashboard, analytics, customer lists.
-- **Fake:** payments, real auth, notifications, publishing infrastructure,
-  databases.
+- **Real:** drag/reorder, all section editing, starter layouts, real auth
+  + sessions, multi-page projects, publishing to `/sites/<slug>`,
+  bookings, menu editing, portfolio CRUD, undo/redo, auto-save, JSON
+  export/import, AR/RTL layout, device-mode reflow, server-side visit
+  tracking.
+- **Semi-real:** dashboard overview (real bookings + visits counts,
+  shape of sparkline may fall back to a sample for brand-new projects).
+- **Mocked:** payments, customers table, email notifications, language
+  toggle.
 
 ---
 
-# Part 2 — Design System
+# Part 2 — Design system
 
 ## Feeling
 
 The product should feel **calm, modern, friendly, simple, trustworthy,
-Arabic-first, non-technical friendly**.
+Arabic-first, non-technical-friendly**.
 
 It should NEVER feel corporate-enterprise, developer-heavy, futuristic,
 crowded, or complicated.
@@ -173,9 +152,11 @@ crowded, or complicated.
 
 ## Colors
 
+Defined in [`src/app/globals.css`](../src/app/globals.css) under `@theme`.
+
 ```
-Primary brand:     #E85D5D   (buttons, active, highlights, CTA, big stats)
-Secondary accent:  #F28B82   (hover, soft backgrounds, badges)
+Primary brand:     #E85D5D   buttons, active, highlights, CTA, big stats
+Secondary accent:  #F28B82   hover, soft backgrounds, badges
 
 Main background:   #FAFAF9
 Surface:           #FFFFFF
@@ -192,27 +173,23 @@ Warning:           #F59E0B
 Error:             #EF4444
 ```
 
-### Tinted section backgrounds (from Rekaz.io homepage reference)
+### Tinted section backgrounds
 
-Rekaz alternates tinted section backgrounds with white to give the page
-rhythm. Use these for section blocks — pick by context, never random.
+Sections alternate tinted backgrounds with white to give the page
+rhythm. Pick by context, never random.
 
 ```
-Section tint — peach    #FDEEEA   (hero, primary tinted blocks)
-Section tint — mint     #E8F4EC   (positive / "what you get")
-Section tint — lavender #EFEDF7   (calm secondary blocks)
-Section tint — cream    #FBF6EE   (FAQ, soft trust blocks)
-Section dark            #0F0F10   (high-contrast CTAs near the bottom)
+peach    #FDEEEA   hero, primary tinted blocks
+mint     #E8F4EC   positive / "what you get"
+lavender #EFEDF7   calm secondary blocks
+cream    #FBF6EE   FAQ, soft trust blocks
+dark     #0F0F10   high-contrast CTAs near the bottom
 ```
-
-These are approximations from the screenshot — refine if exact values land later.
 
 ## Typography
 
 - **Primary font:** IBM Plex Sans Arabic. Fallback: Inter.
-- Avoid: too many weights, ultra-thin text, tiny text, condensed typography.
-
-Scale:
+- Avoid too many weights, ultra-thin text, tiny text.
 
 ```
 Hero title     — text-5xl  font-bold  tracking-tight
@@ -222,196 +199,172 @@ Body           — text-base leading-7
 Small label    — text-sm   font-medium
 ```
 
-## Spacing
-
-UI should breathe.
+## Spacing & radii
 
 ```
-Section padding   — py-24 (desktop) / py-16 (mobile)
-Card padding      — p-6 or p-8
-Gap system        — gap-4 / gap-6 / gap-8
+Section padding  py-24 (desktop) / py-16 (mobile)
+Card padding     p-6 or p-8
+Gap system       gap-4 / gap-6 / gap-8
+Main radius      rounded-2xl
+Small radius     rounded-xl
 ```
-
-## Radii
-
-```
-Main         — rounded-2xl
-Small        — rounded-xl
-```
-
-Avoid sharp edges.
 
 ## Shadows
 
-```
-Main card    — shadow-sm   (or custom: 0 1px 2px rgba(0,0,0,0.04))
-```
-
-Avoid giant shadows, neon, hard depth.
+Stick to `shadow-sm` (custom: `0 1px 2px rgba(0,0,0,0.04)`). No giant
+shadows, no neon, no hard depth.
 
 ## Layout sizes
 
 - Builder left sidebar: **320 px**.
-- Builder right panel: **380 px**.
-- Builder canvas: `max-w-5xl mx-auto`.
-
-## Buttons
-
-- **Primary:** coral bg, white text, `rounded-xl`, medium weight, darker on hover.
-- **Secondary:** white bg, soft border, muted text.
-
-## Inputs
-
-```
-h-12  rounded-xl  border-stone-200
-```
-
-Large, readable, approachable.
+- Builder right panel: **280 px**.
+- Builder canvas: fluid, fits available width with desktop/tablet/mobile
+  device-mode scaling.
 
 ## Animations (Framer Motion)
 
-- Subtle fade-in, slide-up, slight scale, smooth hover.
-- Avoid bouncing, spinning, excessive motion.
+Subtle fade-in, slide-up, slight scale, smooth hover. Avoid bouncing,
+spinning, excessive motion.
 
-## Dashboard cards
+## Mobile
 
-- `rounded-2xl`, white surface, soft border, minimal charts.
-- One metric, one action, one purpose per card.
-
-## Mobile design
-
-- Bottom tabs, one panel at a time, large touch targets, simplified
-  interactions.
-
-## Visual reference notes — Rekaz.io homepage
-
-Concrete patterns to mirror in our landing page + builder UI:
-
-- **Hero:** pale peach background, headline in coral (`#E85D5D`), muted-gray
-  subtitle, one coral CTA button, device mockup off-axis. Trustpilot-style
-  rating chip near the CTA.
-- **Section rhythm:** alternate tinted backgrounds (peach → mint → lavender →
-  cream → white). Never two tinted blocks of the same color in a row.
-- **Cards:** generous radius (`rounded-2xl` or `rounded-3xl`), `shadow-sm`,
-  soft `#E7E5E4` borders. Cards often have their own light tint.
-- **Feature grids:** 4×3 colorful icon tiles inside a white card. Icons are
-  filled-color (not outline), each in its own pastel circle.
-- **Stats row:** 3 huge coral numbers (e.g., `10K+`, `91%`, `800K+`) with
-  small muted descriptors below. Coral, not black.
-- **Testimonials (written):** white bordered cards, 5-star rating top, body,
-  author footer. Grid of 6 or 8.
-- **Testimonials (video):** story-style portrait cards in a horizontal row.
-- **Dark CTAs:** strategically placed near page bottom on `#0F0F10`
-  background, white text, coral button. Sharp contrast against the otherwise
-  light page.
-- **FAQ:** cream-tinted section, accordion of white rounded rows.
-- **Footer:** dark, multi-column links, social icons, sponsor/partner row above.
-
-## Final feel
-
-Calm, premium, beginner-friendly, guided, trustworthy, modern Arabic SaaS.
-
-**Not** a developer tool, design software, enterprise dashboard, or complex
-CMS.
+- Builder uses bottom tabs to switch between Library / Canvas / Edit.
+- Canvas device-mode "mobile" **reflows** into a vertical stack instead
+  of just shrinking — so users see what a real phone will render.
+- One panel visible at a time on small screens.
 
 ---
 
-# Part 3 — Engineering Phases
+# Part 3 — Status
 
-## Folder structure target
-
-```
-app/
-├── page.tsx                    landing
-├── templates/page.tsx          scratch + starter cards
-├── builder/[id]/page.tsx       canvas + sidebar + edit panel
-├── dashboard/[id]/page.tsx     overview/website/workflow/customers/settings
-├── preview/[id]/page.tsx       public-feeling render
-
-features/
-├── sections/                   one folder per section type
-├── projects/                   project model + localStorage I/O
-├── dashboard/
-├── workflows/                  booking / menu / portfolio business logic
-
-shared/
-├── ui/                         buttons, inputs, dialogs, primitives
-├── lib/                        cn, id, etc.
-```
-
-## Phase status legend
-
-- `[ ]` not started · `[~]` in progress · `[x]` done
+Phase status legend: `[ ]` not started · `[~]` in progress · `[x]` done.
+Phase numbers match [IMPLEMENTATION.md](./IMPLEMENTATION.md).
 
 ## M1. Foundation — design system + routing
 
-- [ ] **1. Design system tokens.** Tailwind theme: coral `#E85D5D` / `#F28B82`,
-  stone neutrals, IBM Plex Sans Arabic, `rounded-2xl`, `shadow-sm`. Repaint
-  existing builder using new tokens. Update `globals.css`.
-- [ ] **2. Project model + localStorage.** `Project = { id, name, design,
-  createdAt, updatedAt, templateType? }`. Single persistence module in
-  `features/projects/`. Auto-save on edit (debounced).
-- [ ] **3. Routing refactor.** Move `/web-builder` → `/builder/[id]`. Add
-  stub pages for `/`, `/templates`, `/dashboard/[id]`, `/preview/[id]`.
-  Project resolved by route param.
-- [ ] **4. Trim data model.** Remove Layout/Component variants from `types.ts`
-  and delete `features/layouts`, `features/components` stub folders. Update
-  `SectionRenderer` to remove the layout branch.
+- [x] **1.** Design system tokens (Tailwind `@theme`, IBM Plex Sans Arabic, coral).
+- [x] **2.** Project model + persistence (originally localStorage, now Postgres).
+- [x] **3.** Routing refactor → `/builder/[id]`, `/dashboard/[id]`, `/preview/[id]`.
+- [x] **4.** Trim data model (Section + free-canvas Primitive — no
+  Layout/Component variants).
 
 ## M2. Core builder — edit, reorder, more sections
 
-- [ ] **5. EditPanel schema-driven forms.** One `schema.ts` per section type.
-  Schema-driven renderer for text / textarea / image-url / select / list inputs.
-- [ ] **6. dnd-kit reorder.** Drag handle on each canvas section. Sortable
-  list with drop indicator. Update store via `reorderSections`.
-- [ ] **7. Selection + hover toolbar.** Click section to select; hover shows
-  delete / duplicate / move-up / move-down.
-- [ ] **8. Section library expansion.** Add Gallery, Testimonials, FAQ,
-  Contact (Render + Thumbnail + defaults + schema each).
-- [ ] **9. Confirm dialog + toast polish.** Replace `window.confirm` with
-  proper dialog component. Tighten toast copy.
-- [ ] **10. Save / Open / Export.** Toolbar Save persists; Open shows project
-  picker; JSON export + import.
+- [x] **5.** EditPanel schema-driven forms (one `schema.ts` per section).
+- [x] **6.** dnd-kit reorder with drop indicator.
+- [x] **7.** Selection + hover toolbar (delete / duplicate / move).
+- [x] **8.** Section library expansion (Gallery, Testimonials, FAQ,
+  Contact + Pricing, CTA).
+- [x] **9.** Confirm dialog + toast polish.
+- [x] **10.** JSON export/import in Settings.
 
 ## M3. Templates + business workflows
 
-- [ ] **11. Landing page `/`.** Hero, Features, Starter layouts showcase,
-  Workflow examples, CTA. Links to `/templates`.
-- [ ] **12. Templates page `/templates`.** Scratch + 3 starter cards. Selecting
-  one creates a project with that section array → routes to `/builder/[id]`.
-- [ ] **13. Workflow sections.** Booking, Menu, Portfolio sections (real
-  interactive — see business-template specs above).
-- [ ] **14. Preview route `/preview/[id]`.** Pure render, no builder UI.
-- [ ] **15. Dashboard shell `/dashboard/[id]`.** Sidebar (Overview / Website /
-  Workflow / Customers / Settings) + content area.
-- [ ] **16. Dashboard pages.** Overview (mock analytics cards), Website (edit /
-  preview / publish actions), Customers (mock list), Settings (rename project,
-  delete project).
-- [ ] **17. Workflow pages.** Barber Bookings (submissions list from Booking
-  section), Coffee Menu editor (CRUD with live preview), Photography Portfolio
-  (gallery CRUD). All local.
+- [x] **11.** Landing page `/`.
+- [x] **12.** Templates page `/templates` (auth-gated).
+- [x] **13.** Workflow sections (Booking, Menu, Portfolio).
+- [x] **14.** Preview route `/preview/[id]`.
+- [x] **15.** Dashboard shell.
+- [x] **16.** Dashboard sub-pages (Overview, Website, Customers, Settings).
+- [x] **17.** Workflow pages (Bookings table + calendar, Menu editor,
+  Portfolio CRUD).
 
 ## M4. Polish + ship
 
-- [ ] **18. Animations.** Framer Motion fades / slide-ups for section add,
-  panel open, toast.
-- [ ] **19. Empty states + skeletons.** Every list/canvas has a guiding empty
-  state. Loading skeletons where applicable.
-- [ ] **20. AR/RTL pass.** Mirror layout when `language === "ar"`, tune Arabic
-  typography, flip directional icons.
-- [ ] **21. Mobile pass.** Walk every screen on mobile, fix touch targets, tab
-  transitions.
-- [ ] **22. Deploy.** Dockerize, Caddy reverse proxy, DNS for
-  `builder.naifhub.com`, README live-demo link.
+- [x] **18.** Framer Motion animation pass.
+- [x] **19.** Empty states + skeletons across lists / canvas / panels.
+- [x] **20.** AR/RTL pass (Arabic-only UI, `dir="rtl"` default).
+- [x] **21.** Mobile pass — bottom tabs, touch targets, device-mode reflow.
+- [x] **22.** Deploy — Dockerised, Postgres + app on `docker_default`
+  network, Caddy reverse-proxy.
+
+## M5. Backend + multi-page (post-interview)
+
+- [x] **23.** Postgres + idempotent migrations replacing localStorage.
+- [x] **24.** Phone-only auth + signed-cookie sessions.
+- [x] **25.** API routes (auth, projects CRUD, pages CRUD, publish/unpublish).
+- [x] **26.** Multi-page projects with home-page invariant + page switcher.
+- [x] **27.** Publishing to `/sites/<slug>` with slug uniqueness.
+- [x] **28.** Free-canvas primitives (heading/text/button/image/list/shape/icon/input/qa).
+- [x] **29.** Auto-explode starter presets into editable primitives.
+- [x] **30.** Device-mode reflow + fit-to-width scaling on the canvas.
+- [x] **31.** First-run onboarding tour.
+- [x] **32.** Server-side visit analytics (VisitBeacon + `/api/visits`
+  + `/api/projects/[id]/visits`).
 
 ---
 
-# Part 4 — Decisions log
+# Part 4 — Roadmap
+
+Concrete next-ups, grouped by theme. Pick from here when starting a new
+phase.
+
+## A. Polish
+
+- [ ] Tablet/mobile pass on every dashboard sub-page.
+- [ ] Empty-state copy on workflow panels when data is missing.
+- [ ] Animation pass on free-canvas primitive insertion.
+- [ ] Lighthouse budget gate on `/sites/[slug]` routes.
+
+## B. New surface area
+
+- [ ] Image library — server-side uploads to `public/uploads/` so users
+      stop pasting Unsplash URLs.
+- [ ] Custom domains for published sites (Caddy on-demand TLS + CNAME).
+- [ ] Per-section visibility toggle (hide without delete).
+- [ ] "Duplicate page" action in the page switcher.
+- [ ] Per-project bookings analytics (peak hours, no-show rate).
+- [ ] Geo / referrer breakdown of visits on the dashboard.
+
+## C. Testing & quality
+
+The project currently has no automated tests (Vitest + Playwright were
+removed when scope was simplified). If we re-introduce them, start with:
+
+- [ ] Pure-logic Vitest tests on the Zustand stores (`builder/state`,
+      `projects`, `workflows/booking`).
+- [ ] Vitest snapshot for the section registry — fails when a preset is
+      added without a thumbnail / defaults / schema.
+- [ ] Playwright e2e: landing CTAs, auth gate on `/templates`,
+      `/demo` smoke.
+- [ ] Playwright e2e: drop a Hero, type a title, assert canvas updates
+      and the auto-save PATCH lands.
+- [ ] Publish-flow e2e: publish → fetch `/sites/<slug>` as anonymous.
+- [ ] Visual regression on the rendered starters.
+
+---
+
+# Part 5 — Decisions log
 
 Append as we go.
 
 - **2026-05-21** — Brand color locked to `#E85D5D` (was `#df625b` earlier).
 - **2026-05-21** — Routing locked to multi-project with IDs.
-- **2026-05-21** — Persistence locked to localStorage only (no Supabase).
-- **2026-05-21** — Layout / Component data model dropped (plan says sections only).
-- **2026-05-21** — Rekaz.io homepage adopted as visual reference. Added tinted section backgrounds (peach / mint / lavender / cream) + dark CTA pattern to the design system.
+- **2026-05-21** — Persistence initially locked to localStorage only
+  (no Supabase).
+- **2026-05-21** — Layout / Component data model dropped (plan is
+  sections only).
+- **2026-05-21** — Rekaz.io homepage adopted as visual reference. Added
+  tinted section backgrounds (peach / mint / lavender / cream) + dark
+  CTA pattern to the design system.
+- **2026-05-22** — Phone-only auth chosen over username/password. Saudi
+  mobile only, no OTP, no email recovery.
+- **2026-05-22** — Persistence moved from localStorage to PostgreSQL.
+  The product needs publishing and a public URL, which is impossible
+  with per-browser storage.
+- **2026-05-22** — Published sites live at `/sites/<slug>` (not
+  `/<slug>`) so the URL space is unambiguous and reserved root paths
+  (`/builder`, `/dashboard`, `/templates`) stay clean.
+- **2026-05-23** — One project per user — `POST /api/projects` is
+  idempotent. Multi-site is out of scope; the product is a single-site
+  builder by design.
+- **2026-05-23** — Builder canvas mobile mode **reflows** into a vertical
+  stack rather than only scaling. Scaling hid responsive bugs and made
+  the preview lie about the real phone result.
+- **2026-05-23** — Starter presets auto-explode into editable primitives
+  on creation, so users can edit any sub-element of a hero/features card
+  individually.
+- **2026-05-24** — Removed Vitest + Playwright tests + their deps to
+  keep the scope tight. CI runs lint + typecheck + build only.
+  Re-introduce tests under Roadmap C when there's a clear regression to
+  protect against.
