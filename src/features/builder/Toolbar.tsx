@@ -3,7 +3,6 @@
 import {
   Download,
   Eye,
-  FolderOpen,
   FolderUp,
   Hammer,
   LayoutDashboard,
@@ -22,7 +21,6 @@ import { useConfirm } from "@/shared/ui/ConfirmProvider";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
 import {
-  ProjectPicker,
   exportProjectFile,
   importProjectFile,
   useProjects,
@@ -52,7 +50,6 @@ export function Toolbar() {
   const redo = useBuilderStore((s) => s.redo);
   const clearDesign = useBuilderStore((s) => s.clearDesign);
 
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
 
   const projectName = useProjects((s) =>
@@ -191,11 +188,6 @@ export function Toolbar() {
             }}
           />
           <ToolbarIconButton
-            icon={<FolderOpen size={15} />}
-            label="فتح مشروع"
-            onClick={() => setPickerOpen(true)}
-          />
-          <ToolbarIconButton
             icon={<Download size={15} />}
             label="تصدير JSON"
             onClick={handleExport}
@@ -254,7 +246,6 @@ export function Toolbar() {
         <MobileOverflowMenu
           projectId={projectId}
           onPreview={() => projectId && window.open(`/preview/${projectId}`, "_blank")}
-          onOpenPicker={() => setPickerOpen(true)}
           onExport={handleExport}
           onImport={() => fileInputRef.current?.click()}
           onClear={handleClear}
@@ -276,13 +267,6 @@ export function Toolbar() {
           <Rocket size={14} />
         </button>
       </div>
-
-      {pickerOpen && (
-        <ProjectPicker
-          currentProjectId={projectId}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
 
       {projectId && (
         <PublishModal
@@ -335,14 +319,12 @@ function ToolbarIconButton({
 function MobileOverflowMenu({
   projectId,
   onPreview,
-  onOpenPicker,
   onExport,
   onImport,
   onClear,
 }: {
   projectId: string | null;
   onPreview: () => void;
-  onOpenPicker: () => void;
   onExport: () => void;
   onImport: () => void;
   onClear: () => void;
@@ -380,14 +362,6 @@ function MobileOverflowMenu({
               onPreview();
             }}
             disabled={!projectId}
-          />
-          <MobileMenuItem
-            icon={<FolderOpen size={14} />}
-            label="فتح مشروع"
-            onClick={() => {
-              setOpen(false);
-              onOpenPicker();
-            }}
           />
           <MobileMenuItem
             icon={<Download size={14} />}
