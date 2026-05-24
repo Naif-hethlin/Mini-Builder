@@ -156,10 +156,13 @@ export function Toolbar() {
         )}
       </div>
 
-      {/* On smaller screens collapse the status pill — keep just the page
-          switcher so multi-page projects stay usable. */}
+      {/* On smaller screens collapse the status pill — keep just the
+          page switcher so multi-page projects stay usable.
+          min-w-0 + truncate-friendly wrapper so the pill shrinks
+          gracefully on narrow phones instead of overlapping the brand
+          chip + the action buttons on either side. */}
       {projectId && (
-        <div className="lg:hidden">
+        <div className="min-w-0 flex-1 lg:hidden lg:flex-none">
           <PageSwitcher projectId={projectId} />
         </div>
       )}
