@@ -197,6 +197,20 @@ export function Toolbar() {
           />
         </div>
 
+        {/* Direct dashboard link on mobile — was buried two taps deep
+            inside the kebab. Surfaces the most common nav move (back
+            to the workspace) so users don't have to dig for it. */}
+        {projectId && (
+          <Link
+            href={`/dashboard/${projectId}`}
+            aria-label="لوحة التحكم"
+            title="لوحة التحكم"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-500 transition-colors hover:bg-white hover:text-slate-800 sm:hidden"
+          >
+            <LayoutDashboard size={16} />
+          </Link>
+        )}
+
         {/* Mobile overflow menu — exposes the same actions but kebab-style. */}
         <MobileOverflowMenu
           projectId={projectId}
@@ -341,16 +355,9 @@ function MobileOverflowMenu({
             }}
             disabled={!projectId}
           />
-          {projectId && (
-            <Link
-              href={`/dashboard/${projectId}`}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 border-t border-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <LayoutDashboard size={14} />
-              لوحة التحكم
-            </Link>
-          )}
+          {/* Dashboard link removed from kebab — it's now a direct
+              icon button in the toolbar so users don't have to dig
+              two taps deep for the most common nav move. */}
           {projectId && (
             <Link
               href={`/dashboard/${projectId}/settings`}
