@@ -103,8 +103,13 @@ export function Toolbar() {
       )}
     >
       {/* ── Left: brand chip + nav pills (nav pills hide on mobile) ─── */}
-      <div className="flex h-full items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-xl bg-brand-light px-2.5 py-1.5 text-brand sm:px-3">
+      <div className="flex h-full min-w-0 items-center gap-2">
+        {/* shrink-0 so a crowded mobile toolbar can't squeeze the
+            brand chip off the right edge. min-w-0 on the parent +
+            shrink-0 here means the page-switcher pill is the one
+            that truncates instead, which is the right tradeoff
+            (brand identity is fixed, page name can ellipsize). */}
+        <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-light px-2.5 py-1.5 text-brand sm:px-3">
           <Logo height={20} />
         </span>
 

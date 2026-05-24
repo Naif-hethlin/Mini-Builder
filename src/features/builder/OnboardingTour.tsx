@@ -13,7 +13,7 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/shared/lib/cn";
 import type { MobileTab } from "./state/types";
 import { useBuilderStore } from "./state/store";
@@ -34,6 +34,20 @@ import { useBuilderStore } from "./state/store";
 
 const STORAGE_KEY = "rekaz-builder/onboarding/v2";
 
+/** What the user is expected to do in this step. The tour subscribes
+ *  to the builder store and auto-advances when it sees the action
+ *  happen — so the tour is actually interactive, not just a slideshow.
+ *
+ *   - "added":    user added something to the design (section or
+ *                 primitive). Design weight grew vs. step baseline.
+ *   - "selected": user tapped something on the canvas
+ *                 (`selection.kind !== "none"`).
+ *   - "edited":   user made any mutation that hit undo history
+ *                 (renamed text, recoloured, moved, anything).
+ *   - undefined:  no expected action — advance only via the Next button.
+ */
+type Action = "added" | "selected" | "edited";
+
 type Step = {
   Icon: typeof Sparkles;
   title: string;
@@ -44,6 +58,10 @@ type Step = {
   mobileTab?: MobileTab;
   /** Tooltip placement relative to the target. Auto-flips if it would overflow. */
   placement?: "bottom" | "top" | "right" | "left";
+  /** Action the user should perform to auto-advance this step. */
+  awaitAction?: Action;
+  /** Hint shown in the tooltip footer while waiting for the action. */
+  awaitHint?: string;
 };
 
 // Each step's body is a direct instruction in plain Arabic — no tech
@@ -81,6 +99,8 @@ const STEPS: Step[] = [
     target: "library-content",
     mobileTab: "library",
     placement: "bottom",
+    awaitAction: "added",
+    awaitHint: "في انتظار إضافتك لعنصر…",
   },
   {
     Icon: Eye,
@@ -97,14 +117,18 @@ const STEPS: Step[] = [
     target: "canvas",
     mobileTab: "canvas",
     placement: "top",
+    awaitAction: "selected",
+    awaitHint: "في انتظار اختيارك لقسم…",
   },
   {
     Icon: Sliders,
     title: "٦. غيّر النص واللون والصور",
-    body: "كل شي في القسم — النص، اللون، الصور، الحجم — تعدّله من «الخصائص».",
+    body: "كل شي في القسم — النص، اللون، الصور، الحجم — تعدّله من «الخصائص». جرّب تغيّر النص الآن.",
     target: "edit-panel",
     mobileTab: "editor",
     placement: "top",
+    awaitAction: "edited",
+    awaitHint: "في انتظار أوّل تعديل منك…",
   },
   {
     Icon: Rocket,
@@ -123,10 +147,41 @@ const TOOLTIP_W_DESKTOP = 360;
 
 export function OnboardingTour() {
   const setMobileTab = useBuilderStore((s) => s.setMobileTab);
+  // Subscriptions used by the interactive auto-advance: when the user
+  // does what the current step asks (added/selected/edited), the tour
+  // moves itself to the next step instead of waiting on a Next tap.
+  const sections = useBuilderStore((s) => s.design.sections);
+  const selection = useBuilderStore((s) => s.selection);
+  const pastLen = useBuilderStore((s) => s.past.length);
+
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [tick, setTick] = useState(0);
+  // A flash-of-success state ("تم!") shown for ~600ms after an
+  // interactive step's condition is met, before auto-advancing.
+  const [satisfied, setSatisfied] = useState(false);
+
+  // Weighted size of the current design — sections plus all primitives
+  // inside any canvas section. Used as a single number to detect "user
+  // added something" regardless of which type.
+  const designWeight = useMemo(
+    () =>
+      sections.reduce((acc, s) => {
+        if (s.type === "canvas") return acc + 1 + s.props.primitives.length;
+        return acc + 1;
+      }, 0),
+    [sections],
+  );
+
+  // Baseline captured each time the tour advances to a new step. The
+  // auto-advance check compares the current store state against this
+  // baseline.
+  const baselineRef = useRef({
+    designWeight: 0,
+    hadSelection: false,
+    pastLen: 0,
+  });
 
   // First-mount: decide whether to show.
   //
@@ -149,6 +204,61 @@ export function OnboardingTour() {
     const s = STEPS[step];
     if (s.mobileTab) setMobileTab(s.mobileTab);
   }, [open, step, setMobileTab]);
+
+  // Capture the baseline state at each step boundary so the interactive
+  // auto-advance has a "before" snapshot to compare against.
+  useEffect(() => {
+    if (!open) return;
+    baselineRef.current = {
+      designWeight,
+      hadSelection: selection.kind !== "none",
+      pastLen,
+    };
+    setSatisfied(false);
+    // baselineRef only resets on step change — designWeight/selection/
+    // pastLen are intentionally NOT in the deps array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step]);
+
+  // Watch for the awaited action and auto-advance when it happens.
+  //
+  // The auto-advance timer is parked on a ref (not returned as effect
+  // cleanup) — otherwise setting `satisfied=true` re-runs the effect
+  // and its cleanup clears the timer before it can fire. Single
+  // unmount-only cleanup below covers the real teardown case.
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const s = STEPS[step];
+    if (!s.awaitAction || satisfied) return;
+    const base = baselineRef.current;
+    let met = false;
+    if (s.awaitAction === "added") {
+      met = designWeight > base.designWeight;
+    } else if (s.awaitAction === "selected") {
+      met =
+        selection.kind !== "none" &&
+        // Only counts if the user actively made a new selection during
+        // this step — not a stale selection that was already there.
+        !base.hadSelection;
+    } else if (s.awaitAction === "edited") {
+      met = pastLen > base.pastLen;
+    }
+    if (!met) return;
+    setSatisfied(true);
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    advanceTimerRef.current = setTimeout(() => {
+      advanceTimerRef.current = null;
+      setSatisfied(false);
+      setStep((x) => (x === STEPS.length - 1 ? x : x + 1));
+    }, 700);
+  }, [open, step, designWeight, selection, pastLen, satisfied]);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, []);
 
   // Track the target's bounding rect.
   useEffect(() => {
@@ -212,6 +322,11 @@ export function OnboardingTour() {
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
   const Icon = current.Icon;
+  // For interactive steps the user has to actually tap the highlighted
+  // UI (a library tile, a canvas section), so we MUST NOT cover those
+  // taps with our click-to-advance backdrop. Spotlight + tooltip still
+  // render; the user can advance manually via Next anytime.
+  const isInteractive = !!current.awaitAction;
 
   // ---- Tooltip placement ----
   const viewportW = typeof window !== "undefined" ? window.innerWidth : 1024;
@@ -234,18 +349,19 @@ export function OnboardingTour() {
 
     // If the target is too big for either above OR below — common when
     // the target is the whole canvas — overlay the tooltip in a fixed
-    // bottom-of-viewport position so it's always reachable. Without
-    // this, a flip-then-flip-back lands the tooltip off-screen and the
-    // user can't see the Next button to advance. The bottom offset
-    // clears the mobile-tabs strip + iPhone safe-area on phones.
+    // bottom-of-viewport position so it's always reachable. The bottom
+    // offset clears the mobile-tabs strip + iPhone safe-area on
+    // phones. NOTE: compute `left` in JS instead of `left: 50% +
+    // transform: translateX(-50%)` — framer-motion's animation
+    // transform overwrites the inline `transform`, killing the
+    // centering and parking the tooltip half-off the right edge.
     if (!fitsBelow && !fitsAbove) {
       tooltipStyle = {
         position: "fixed",
         bottom: isMobile
           ? "calc(80px + env(safe-area-inset-bottom))"
           : 24,
-        left: "50%",
-        transform: "translateX(-50%)",
+        left: Math.max(12, (viewportW - tooltipMaxW) / 2),
         width: tooltipMaxW,
       };
     } else {
@@ -292,11 +408,15 @@ export function OnboardingTour() {
       }
     }
   } else {
+    // Same gotcha as the bottom-center fallback above: framer-motion's
+    // animation `transform` overwrites our inline `transform`, so we
+    // can't use translate(-50%, -50%) to center. Compute positions
+    // numerically instead.
+    const estCardH = 220;
     tooltipStyle = {
       position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
+      top: Math.max(12, (viewportH - estCardH) / 2),
+      left: Math.max(12, (viewportW - tooltipMaxW) / 2),
       width: tooltipMaxW,
     };
   }
@@ -307,29 +427,37 @@ export function OnboardingTour() {
         role="dialog"
         aria-modal="true"
         aria-label="جولة تعريفية"
-        className="fixed inset-0 z-[180]"
+        className={cn(
+          "fixed inset-0 z-[180]",
+          // Interactive steps need taps to pass through to the
+          // highlighted UI (library tile, canvas section, edit panel
+          // controls). The outer container itself catches no events;
+          // tooltip + click-catcher children opt back in explicitly.
+          isInteractive && "pointer-events-none",
+        )}
       >
-        {/* Full-viewport click catcher — eats any tap outside the
-            tooltip and the spotlight target, advancing the tour. This
-            is what stops the canvas's own onClick from intercepting
-            taps during a canvas-target step (which made the tour feel
-            "stuck" — the click went to the canvas, did nothing
-            visible, and the user couldn't see how to progress).
+        {/* Full-viewport click catcher — for non-interactive steps,
+            eats any tap outside the tooltip and advances the tour. For
+            interactive steps (awaitAction) it's disabled so the user
+            can actually tap the highlighted library tile / canvas
+            section; the tour auto-advances when the action lands.
             For target-less steps it also doubles as the dim backdrop. */}
-        <motion.button
-          type="button"
-          aria-label={targetRect ? "متابعة" : "إغلاق"}
-          onClick={targetRect ? advance : close}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          className={cn(
-            "absolute inset-0 cursor-default",
-            // Only dim when there's no spotlight — the spotlight's own
-            // box-shadow paints the dim around the cut-out.
-            !targetRect && "bg-stone-900/45 backdrop-blur-[2px]",
-          )}
-        />
+        {!isInteractive && (
+          <motion.button
+            type="button"
+            aria-label={targetRect ? "متابعة" : "إغلاق"}
+            onClick={targetRect ? advance : close}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "absolute inset-0 cursor-default",
+              // Only dim when there's no spotlight — the spotlight's own
+              // box-shadow paints the dim around the cut-out.
+              !targetRect && "bg-stone-900/45 backdrop-blur-[2px]",
+            )}
+          />
+        )}
 
         {/* Spotlight cut-out + a separate pulsing ring so the
             highlighted area reads as "here, look at this" even when
@@ -443,13 +571,15 @@ export function OnboardingTour() {
           </>
         )}
 
-        {/* Tooltip card */}
+        {/* Tooltip card — pointer-events:auto so the user can still
+            tap Next/Skip even when the outer overlay is
+            pointer-events:none (interactive steps). */}
         <motion.div
           key={`tip-${step}`}
           initial={{ opacity: 0, y: 8, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
-          className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
+          className="pointer-events-auto overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl"
           style={tooltipStyle}
         >
           <button
@@ -483,6 +613,36 @@ export function OnboardingTour() {
             </div>
           </div>
 
+          {/* Interactive-step hint line: lets the user know the tour
+              is watching for the action and will move on by itself
+              when they do it. Flips to a green confirmation when
+              satisfied, just before the auto-advance fires. */}
+          {(current.awaitHint || satisfied) && (
+            <div
+              className={cn(
+                "flex items-center gap-2 border-t border-stone-100 bg-slate-50/60 px-5 py-2 text-xs",
+                satisfied ? "text-emerald-700" : "text-stone-500",
+              )}
+            >
+              {satisfied ? (
+                <>
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                    ✓
+                  </span>
+                  <span className="font-bold">تم! ننتقل للخطوة التالية…</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative inline-flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+                  </span>
+                  <span>{current.awaitHint}</span>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3 border-t border-stone-100 px-5 py-3">
             <div className="flex gap-1.5">
               {STEPS.map((_, i) => (
@@ -510,7 +670,7 @@ export function OnboardingTour() {
                 onClick={advance}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-brand-dark"
               >
-                {isLast ? "ابدأ البناء" : "التالي"}
+                {isLast ? "ابدأ البناء" : current.awaitAction ? "تخطّي" : "التالي"}
                 <ArrowLeft size={12} />
               </button>
             </div>
