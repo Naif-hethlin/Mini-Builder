@@ -46,65 +46,70 @@ type Step = {
   placement?: "bottom" | "top" | "right" | "left";
 };
 
+// Each step's body is a direct instruction in plain Arabic — no tech
+// jargon (no "كانفس" / "تبويب" / "واجهة"), just "اضغط على X عشان Y".
+// The whole point of the tour is to teach the workflow; passive copy
+// or unfamiliar words leave the user staring at a dimmed screen
+// wondering what to do next.
 const STEPS: Step[] = [
   {
     Icon: Sparkles,
-    title: "أهلًا بك في ركاز!",
-    body: "خلِّني أوريك بسرعة كيف تبني موقعك من البداية للنهاية.",
+    title: "أهلاً بك في ركاز",
+    body: "نمشي سوا ٧ خطوات قصيرة، وتبني أول موقع لك. اضغط «التالي» نبدأ.",
     target: null,
   },
   {
     Icon: Square,
-    title: "هذه مساحة عملك",
-    body: "كل ما تضيفه يظهر هنا — هذا الكانفس هو موقعك أثناء البناء.",
+    title: "١. هنا تبني موقعك",
+    body: "هذي المساحة اللي يظهر فيها موقعك. الآن فاضية — تعال نملاها سوا.",
     target: "canvas",
     mobileTab: "canvas",
     placement: "top",
   },
   {
     Icon: LayoutGrid,
-    title: "افتح المكتبة",
-    body: "من هنا تختار قسماً جاهزاً، أو عناصر حرّة تضيفها وتنسّقها بنفسك.",
+    title: "٢. افتح المكتبة",
+    body: "اضغط على «المكتبة» في الأسفل، فيها كل الأقسام والعناصر الجاهزة اللي تقدر تضيفها.",
     target: "library-tab",
     mobileTab: "library",
     placement: "top",
   },
   {
     Icon: Hand,
-    title: "اختر قالباً جاهزاً",
-    body: "اضغط على أي قسم لتضيفه فوراً — هيدر، أبطال، أسعار، تواصل… كل شيء جاهز.",
-    target: "library-sections",
+    title: "٣. اختر شي وأضفه",
+    body: "اضغط على أي شي هنا — نص، صورة، زر — وينضاف فوراً لموقعك. أو قلِّب لـ«الأقسام الجاهزة» تختار قسم كامل بضغطة وحدة.",
+    target: "library-content",
     mobileTab: "library",
     placement: "bottom",
   },
   {
-    Icon: Edit3,
-    title: "اضغط للتعديل",
-    body: "اضغط على القسم في الكانفس لتختاره. تظهر إعداداته على لوحة الخصائص فوراً.",
+    Icon: Eye,
+    title: "٤. ارجع تشوف موقعك",
+    body: "اضغط «المعاينة» في الأسفل، تشوف اللي ضفته الآن على موقعك.",
+    target: "canvas-tab",
+    mobileTab: "canvas",
+    placement: "top",
+  },
+  {
+    Icon: Hand,
+    title: "٥. اضغط على أي قسم لتعديله",
+    body: "اضغط على أي قسم في موقعك. تنفتح لك خصائصه تلقائياً عشان تغيّرها.",
     target: "canvas",
     mobileTab: "canvas",
     placement: "top",
   },
   {
     Icon: Sliders,
-    title: "غيّر النصوص والألوان",
-    body: "كل خصائص القسم — النصوص، الألوان، الصور — تعدّلها من هنا.",
+    title: "٦. غيّر النص واللون والصور",
+    body: "كل شي في القسم — النص، اللون، الصور، الحجم — تعدّله من «الخصائص».",
     target: "edit-panel",
     mobileTab: "editor",
     placement: "top",
   },
   {
-    Icon: Eye,
-    title: "عاين موقعك",
-    body: "ارجع للمعاينة في أي وقت لتشوف موقعك زي ما يشوفه الزائر.",
-    target: "canvas-tab",
-    mobileTab: "canvas",
-    placement: "top",
-  },
-  {
     Icon: Rocket,
-    title: "انشره للعالم",
-    body: "لما تخلص، اضغط نشر واختر رابطك العام. موقعك يكون متاح لزوّارك مباشرة.",
+    title: "٧. انشر موقعك",
+    body: "لما تخلص، اضغط زر النشر (الصاروخ) في الأعلى، واختر رابط موقعك. وخلاص — الزوار يقدرون يدخلونه.",
     target: "publish",
     mobileTab: "canvas",
     placement: "bottom",
@@ -366,6 +371,71 @@ export function OnboardingTour() {
                 pointerEvents: "none",
               }}
             />
+            {/* "Tap here" finger — a small circular badge pinned to
+                the spotlight's edge that bobs gently. Reads as a
+                tap-target indicator. Only on small (≤200px wide)
+                targets like buttons/tabs — for big areas the pulse
+                ring carries the eye.
+
+                Placement: above the spotlight when the spotlight is
+                in the bottom half of the viewport (so the finger
+                doesn't fall off the bottom edge / behind the iOS home
+                indicator), otherwise below. Same idea on the
+                horizontal axis for left/right edges. */}
+            {targetRect.width <= 200 &&
+              targetRect.height <= 120 &&
+              (() => {
+                const inBottomHalf = targetRect.top > viewportH * 0.5;
+                const fingerSize = 36;
+                const gap = 8;
+                const top = inBottomHalf
+                  ? targetRect.top - gap - fingerSize
+                  : targetRect.bottom + gap;
+                const left = Math.max(
+                  6,
+                  Math.min(
+                    targetRect.left + targetRect.width / 2 - fingerSize / 2,
+                    viewportW - fingerSize - 6,
+                  ),
+                );
+                return (
+                  <motion.div
+                    key={`tap-${step}`}
+                    aria-hidden
+                    initial={{ opacity: 0 }}
+                    animate={{
+                      opacity: 1,
+                      y: inBottomHalf ? [4, -4, 4] : [-4, 4, -4],
+                    }}
+                    transition={{
+                      opacity: { duration: 0.3 },
+                      y: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                    style={{
+                      position: "fixed",
+                      top,
+                      left,
+                      width: fingerSize,
+                      height: fingerSize,
+                      borderRadius: 999,
+                      background: "rgb(232, 93, 93)",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow:
+                        "0 8px 24px -8px rgba(232,93,93,0.7), 0 0 0 4px rgba(255,255,255,0.4)",
+                      pointerEvents: "none",
+                      // Flip the hand pointer 180° when the finger sits
+                      // above the target so it visually points down at
+                      // the target instead of up away from it.
+                      transform: inBottomHalf ? "rotate(180deg)" : undefined,
+                    }}
+                  >
+                    <Hand size={18} />
+                  </motion.div>
+                );
+              })()}
           </>
         )}
 
@@ -390,7 +460,9 @@ export function OnboardingTour() {
           <div className="bg-tint-peach px-5 pt-5 pb-4">
             <div className="mb-2 flex items-center gap-2 text-xs font-bold text-brand">
               <Sparkles size={12} />
-              الخطوة {step + 1} من {STEPS.length}
+              {step === 0
+                ? "نبدأ سوا"
+                : `الخطوة ${step} من ${STEPS.length - 1}`}
             </div>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm">
