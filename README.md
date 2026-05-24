@@ -158,7 +158,11 @@ and are registered in [`registry.ts`](src/features/primitives/registry.ts).
 - First-run onboarding tour.
 
 **Semi-real:**
-- Dashboard overview — real project + bookings counts, mocked visits.
+- Dashboard overview — real project + bookings counts. Visits are now
+  recorded server-side via `POST /api/visits` (see
+  [VisitBeacon](src/features/analytics/VisitBeacon.tsx)) but the
+  sparkline aggregation may still fall back to mocked sample shapes
+  for empty projects.
 
 **Mocked / stubbed:**
 - Email notifications (the bell in the dashboard is a static stub).
@@ -251,6 +255,7 @@ src/
 │   ├── sections/                 one folder per section type
 │   │   └── schema/               FieldSchema + Form + field primitives
 │   ├── primitives/               heading/text/button/image/list/shape/...
+│   ├── analytics/                VisitBeacon (POST /api/visits on mount)
 │   ├── projects/                 project model + API client + picker
 │   ├── workflows/                booking / menu / portfolio panels
 │   ├── preview/                  PreviewRoot (no builder chrome)
@@ -286,6 +291,8 @@ src/
 | `/api/projects` · `/api/projects/[id]`  | List, create, read, rename, delete         |
 | `/api/projects/[id]/pages/[pageId]`     | Update page design (auto-save target)      |
 | `/api/projects/[id]/publish`            | Publish / unpublish                        |
+| `/api/projects/[id]/visits`             | Aggregated visit counts for the dashboard  |
+| `/api/visits`                           | Anonymous beacon — VisitBeacon POSTs here  |
 
 ## Data model
 
@@ -306,47 +313,19 @@ the `pages.design` JSONB column. Section shapes are documented in
 
 ---
 
-## Testing
+## CI
 
 CI is configured in [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-and runs on every PR + push to `main`. Two jobs:
-
-### `verify` (blocking)
+and runs on every PR + push to `main`:
 
 1. `npm run lint` — ESLint with Next.js + TS rules.
 2. `npm run typecheck` — `tsc --noEmit`.
-3. `npm test` — Vitest unit tests (jsdom).
-4. `npm run build` — Next.js production build.
+3. `npm run build` — Next.js production build.
 
-Unit tests cover the high-risk pure logic:
-
-- [`src/features/projects/store.test.ts`](src/features/projects/store.test.ts) — project CRUD + sort order.
-- [`src/features/projects/io.test.ts`](src/features/projects/io.test.ts) — JSON export/import round-trip + soft Zod parse.
-- [`src/features/builder/state/store.test.ts`](src/features/builder/state/store.test.ts) — section add/remove/reorder, undo/redo, history cap.
-- [`src/features/sections/registry.test.ts`](src/features/sections/registry.test.ts) — every preset has thumbnail, defaults, and schema wired up.
-- [`src/features/workflows/booking/store.test.ts`](src/features/workflows/booking/store.test.ts) — bookings store CRUD + status transitions.
-
-### `e2e` (Playwright)
-
-Runs after `verify`. Auto-starts `npm run dev` on `127.0.0.1:3000` and
-walks the golden path in headless Chromium:
-
-- Landing loads with hero + features and visible CTAs.
-- `/templates` shows the auth gate (not the workspace) to anonymous visitors.
-- `/demo` renders the Rekaz-styled showcase.
-
-Tests live in [`tests/e2e/`](tests/e2e/).
-
-### Test plan going forward
-
-- Builder DnD reorder e2e — drag a Hero from sidebar to canvas, assert it lands.
-- Edit-panel schema-driven form e2e — type in a Hero title, assert the
-  canvas reflects the change after debounce.
-- Free-canvas primitive placement e2e — drop a heading, drag it to a new
-  position, undo.
-- Auth integration tests against a throwaway Postgres (testcontainers).
-- Publish flow e2e — publish a project, hit `/sites/<slug>` as a signed-out user.
-- Visual regression on each starter (Percy / Chromatic-style).
+The project doesn't ship with automated tests at the moment. If you add
+them later, drop them under `src/**/*.test.ts(x)` (Vitest) or
+`tests/e2e/*.spec.ts` (Playwright), wire the runners into `package.json`,
+and add the corresponding CI steps.
 
 ---
 
