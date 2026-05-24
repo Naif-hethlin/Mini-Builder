@@ -72,6 +72,7 @@ export function EditPanel() {
 
   return (
     <aside
+      data-tour="edit-panel"
       className={cn(
         "relative flex h-full w-full flex-col overflow-hidden",
         PANEL_CLASS,

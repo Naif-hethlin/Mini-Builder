@@ -75,6 +75,7 @@ export function Canvas() {
 
   return (
     <main
+      data-tour="canvas"
       className={cn(
         "relative flex h-full min-w-0 flex-col overflow-hidden",
         PANEL_CLASS,

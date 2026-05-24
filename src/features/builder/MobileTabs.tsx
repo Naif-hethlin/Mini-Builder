@@ -43,6 +43,7 @@ export function MobileTabs() {
             role="tab"
             aria-selected={isActive}
             type="button"
+            data-tour={`${id}-tab`}
             onClick={() => setMobileTab(id)}
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 transition-all",
