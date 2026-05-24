@@ -78,17 +78,56 @@ export function Website() {
       toast.error(result.error);
       return;
     }
-    // importProjectFile creates a NEW project; we want to overwrite the
-    // CURRENT one. Move the imported pages into the current project and
-    // drop the throwaway project.
+    // importProjectFile creates a NEW project in the local store. We
+    // want to overwrite the CURRENT project (so the dashboard view
+    // updates) AND push the new designs to the server (so a refresh
+    // doesn't clobber the import with stale DB data).
+    //
+    // Strategy: zip the imported designs onto the current project's
+    // pages by ORDER, preserving the server's page IDs. PATCH each
+    // page's design to /api/projects/[id]/pages/[pageId]. Pages on
+    // the server that don't get a matching imported design stay
+    // untouched.
     const store = useProjects.getState();
-    const patched = {
+    const importedDesigns = result.project.pages.map((p) => p.design);
+    const updatedPages = project.pages.map((serverPage, i) => {
+      const design = importedDesigns[i];
+      return design ? { ...serverPage, design } : serverPage;
+    });
+    store.upsert({
       ...project,
-      pages: result.project.pages,
+      pages: updatedPages,
       updatedAt: Date.now(),
-    };
-    store.upsert(patched);
+    });
     store.remove(result.project.id);
+
+    // Persist each updated page to the server. Done in parallel — the
+    // PATCH endpoint is idempotent per page, and we already showed the
+    // user the new content optimistically.
+    const persistResults = await Promise.allSettled(
+      updatedPages
+        .slice(0, importedDesigns.length)
+        .map((page) =>
+          fetch(`/api/projects/${id}/pages/${page.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ design: page.design }),
+          }).then((res) => {
+            if (!res.ok) throw new Error(`PATCH ${page.id} -> ${res.status}`);
+            return res;
+          }),
+        ),
+    );
+    const failed = persistResults.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      // Local UI is correct but the server didn't ack one or more pages.
+      // Surface it so the user knows a refresh might revert the change.
+      toast.error(
+        `تم الاستيراد محلياً، لكن لم يُحفظ ${failed.length} صفحة على الخادم. حاول مجدداً.`,
+      );
+      return;
+    }
     toast.success("تم استيراد الملف وحلّ محل المحتوى الحالي");
   };
 
