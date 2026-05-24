@@ -4,6 +4,7 @@ import {
   Download,
   Eye,
   FolderOpen,
+  FolderUp,
   Hammer,
   LayoutDashboard,
   MoreVertical,
@@ -14,6 +15,7 @@ import {
   Undo2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/ui/ConfirmProvider";
@@ -22,6 +24,7 @@ import { cn } from "@/shared/lib/cn";
 import {
   ProjectPicker,
   exportProjectFile,
+  importProjectFile,
   useProjects,
 } from "@/features/projects";
 import { PageSwitcher } from "./PageSwitcher";
@@ -62,6 +65,22 @@ export function Toolbar() {
     if (!project) return;
     exportProjectFile(project);
     toast.success(`تم تصدير ${project.name}`);
+  };
+
+  // Import lives on a hidden file input. The pill-group + kebab
+  // buttons trigger fileInputRef.click() so the user gets the native
+  // OS file picker. Selecting a JSON file calls importProjectFile()
+  // and, on success, navigates straight into the new project.
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const handleImportFile = async (file: File) => {
+    const result = await importProjectFile(file);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`تم استيراد ${result.project.name}`);
+    router.push(`/builder/${result.project.id}`);
   };
 
   const confirm = useConfirm();
@@ -182,6 +201,11 @@ export function Toolbar() {
             onClick={handleExport}
           />
           <ToolbarIconButton
+            icon={<FolderUp size={15} />}
+            label="استيراد JSON"
+            onClick={() => fileInputRef.current?.click()}
+          />
+          <ToolbarIconButton
             icon={<Trash2 size={15} />}
             label="مسح الصفحة"
             onClick={handleClear}
@@ -211,12 +235,28 @@ export function Toolbar() {
           </Link>
         )}
 
+        {/* Hidden file input — shared by the pill-group Import button
+            and the kebab's "استيراد JSON" entry. Reset value after each
+            use so re-picking the same file fires onChange again. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="sr-only"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleImportFile(file);
+            e.target.value = "";
+          }}
+        />
+
         {/* Mobile overflow menu — exposes the same actions but kebab-style. */}
         <MobileOverflowMenu
           projectId={projectId}
           onPreview={() => projectId && window.open(`/preview/${projectId}`, "_blank")}
           onOpenPicker={() => setPickerOpen(true)}
           onExport={handleExport}
+          onImport={() => fileInputRef.current?.click()}
           onClear={handleClear}
         />
 
@@ -296,12 +336,14 @@ function MobileOverflowMenu({
   onPreview,
   onOpenPicker,
   onExport,
+  onImport,
   onClear,
 }: {
   projectId: string | null;
   onPreview: () => void;
   onOpenPicker: () => void;
   onExport: () => void;
+  onImport: () => void;
   onClear: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -354,6 +396,14 @@ function MobileOverflowMenu({
               onExport();
             }}
             disabled={!projectId}
+          />
+          <MobileMenuItem
+            icon={<FolderUp size={14} />}
+            label="استيراد JSON"
+            onClick={() => {
+              setOpen(false);
+              onImport();
+            }}
           />
           {/* Dashboard link removed from kebab — it's now a direct
               icon button in the toolbar so users don't have to dig
