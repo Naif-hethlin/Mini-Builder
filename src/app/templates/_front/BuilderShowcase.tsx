@@ -823,35 +823,47 @@ function Main({
         !previewing &&
         typeof document !== "undefined" &&
         createPortal(
+          // Two-layer wrapper. OUTER carries the translate (page-coord
+          // positioning). INNER carries the scale-75 (visual sizing on
+          // phones). Critical: keep scale and translate on SEPARATE
+          // elements — Tailwind v4's `scale-*` compiles to the standalone
+          // CSS `scale:` property, which composes with `transform: ...`
+          // by scaling the translation too. If both lived on the same
+          // element, an inline `transform: translate(400px, 400px)` on a
+          // `scale-75` element would render at (300, 300) — off by 25%
+          // of the translate distance, which on a 430-wide phone meant
+          // the cursor missed every tile by ~80-100px.
           <div
             aria-hidden
             style={{
               transform: `translate(${cursor.x}px, ${cursor.y}px)`,
             }}
-            className="pointer-events-none absolute top-0 left-0 z-[100] flex h-8 w-8 origin-top-left scale-75 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:scale-100"
+            className="pointer-events-none absolute top-0 left-0 z-[100] transition-transform duration-700 ease-out"
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="relative z-10 origin-top-left -rotate-12 text-stone-900 drop-shadow-md"
-            >
-              <path
-                d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.36Z"
-                fill="currentColor"
-                stroke="white"
-                strokeWidth={2}
-                strokeLinejoin="round"
+            <div className="flex h-8 w-8 origin-top-left scale-75 items-center justify-center drop-shadow-xl sm:scale-100">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="relative z-10 origin-top-left -rotate-12 text-stone-900 drop-shadow-md"
+              >
+                <path
+                  d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.36Z"
+                  fill="currentColor"
+                  stroke="white"
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div
+                className={cn(
+                  "absolute inset-0 rounded-full border-2 border-brand bg-brand/20 transition-all duration-300",
+                  ripple ? "scale-[2.5] opacity-0" : "scale-0 opacity-0",
+                )}
               />
-            </svg>
-            <div
-              className={cn(
-                "absolute inset-0 rounded-full border-2 border-brand bg-brand/20 transition-all duration-300",
-                ripple ? "scale-[2.5] opacity-0" : "scale-0 opacity-0",
-              )}
-            />
+            </div>
           </div>,
           document.body,
         )}
