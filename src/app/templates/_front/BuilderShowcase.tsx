@@ -164,7 +164,7 @@ function Sidebar({
   onTemplates: () => void;
 }) {
   return (
-    <aside className="relative z-20 flex max-h-[52vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
+    <aside className="relative z-20 flex max-h-[38vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-100 bg-white/95 px-5 py-4 backdrop-blur md:px-8 md:py-6">
         <Logo variant="wordmark" height={28} />
       </div>
@@ -204,7 +204,12 @@ function Sidebar({
           />
         </section>
 
-        <section className="flex flex-col gap-4">
+        {/* Tool tiles — desktop only. On mobile the same tiles are
+            rendered as a compact strip inside the browser-frame canvas
+            (see CanvasMiniTools) so the demo cursor never has to
+            traverse from the sidebar to the canvas across the
+            stacked-layout boundary. */}
+        <section className="hidden flex-col gap-4 md:flex">
           <div className="mb-1 flex items-center justify-between">
             <h2 className="text-lg font-bold text-stone-900">
               العناصر الأساسية
@@ -366,6 +371,61 @@ function ToolTile({
 }
 
 // =============================================================================
+// CanvasMiniTools — mobile-only tools strip rendered INSIDE the browser-
+// frame canvas. Same data-tool attributes as the desktop ToolTiles so the
+// demo orchestrator finds whichever one is currently visible.
+//
+// Keeps the entire animation choreography inside a single bounded area on
+// phones — the cursor never has to cross the sidebar/canvas seam.
+// =============================================================================
+
+function CanvasMiniTools() {
+  const ITEMS: Array<{
+    id: string;
+    Icon: LucideIcon;
+    tone: Tone;
+    label: string;
+  }> = [
+    { id: "tool-header", Icon: Globe, tone: "brand", label: "ترويسة" },
+    { id: "tool-hero", Icon: ImageIcon, tone: "rose", label: "هيرو" },
+    { id: "tool-gallery", Icon: Images, tone: "emerald", label: "معرض" },
+    { id: "tool-text", Icon: Type, tone: "amber", label: "نص" },
+  ];
+
+  return (
+    <div className="sticky top-0 z-10 flex shrink-0 gap-1.5 border-b border-stone-100 bg-white/95 px-2 py-1.5 backdrop-blur md:hidden">
+      {ITEMS.map(({ id, Icon, tone, label }) => {
+        const t = TONE_GROUP[tone];
+        return (
+          <div
+            key={id}
+            data-tool={id}
+            aria-hidden
+            className={cn(
+              "group flex flex-1 cursor-grab flex-col items-center justify-center gap-1 rounded-lg border border-stone-200 bg-white p-1.5",
+              t.border,
+            )}
+          >
+            <div
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-md bg-stone-50 text-stone-400 transition-colors",
+                t.text,
+                t.bg,
+              )}
+            >
+              <Icon size={14} />
+            </div>
+            <span className={cn("text-[10px] font-bold text-stone-600", t.label)}>
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// =============================================================================
 // Main — top bar + blueprint canvas with auto-play demo
 // =============================================================================
 
@@ -456,7 +516,17 @@ function Main({
         let added = 0;
 
         for (const type of SEQUENCE) {
-          const tile = document.querySelector(`[data-tool="tool-${type}"]`);
+          // Two tiles share the same data-tool: the desktop one in the
+          // sidebar (md:flex) and the mobile one inside the canvas
+          // (md:hidden). Pick whichever is currently visible —
+          // offsetWidth > 0 is enough because the hidden one collapses
+          // to width 0 via the responsive class.
+          const candidates = document.querySelectorAll(
+            `[data-tool="tool-${type}"]`,
+          );
+          const tile = Array.from(candidates).find(
+            (el) => (el as HTMLElement).offsetWidth > 0,
+          );
           if (!tile) continue;
           // The sidebar has internal overflow-y-auto; on phones the
           // tile is often below the fold. Scroll the nearest scrollable
@@ -640,12 +710,15 @@ function Main({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6 md:p-10">
-                {dropped.length === 0 ? <EmptyState /> : null}
-                {dropped.map((d) => (
-                  <DroppedElement key={d.id} type={d.type} />
-                ))}
-              </div>
+              <>
+                <CanvasMiniTools />
+                <div className="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6 md:p-10">
+                  {dropped.length === 0 ? <EmptyState /> : null}
+                  {dropped.map((d) => (
+                    <DroppedElement key={d.id} type={d.type} />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
