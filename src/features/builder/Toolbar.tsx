@@ -262,6 +262,7 @@ export function Toolbar() {
 
         <button
           type="button"
+          data-tour="publish"
           onClick={() => {
             if (!projectId) {
               toast.info("افتح مشروعاً أولاً");

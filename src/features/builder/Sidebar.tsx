@@ -207,7 +207,10 @@ function SectionsPanel({ query }: { query: string }) {
   }, [query]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pb-4">
+    <div
+      data-tour="library-sections"
+      className="flex-1 overflow-y-auto px-4 pb-4"
+    >
       {filtered.length === 0 ? (
         <EmptyResults query={query} />
       ) : (

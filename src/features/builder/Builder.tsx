@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { cn } from "@/shared/lib/cn";
 import { ConfirmProvider } from "@/shared/ui/ConfirmProvider";
@@ -15,6 +15,7 @@ import { Canvas } from "./Canvas";
 import { EditPanel } from "./EditPanel";
 import { MobileTabs } from "./MobileTabs";
 import { OnboardingTour } from "./OnboardingTour";
+import { ProjectNamePrompt } from "./ProjectNamePrompt";
 import { Sidebar } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
 
@@ -88,7 +89,10 @@ export function Builder({ projectId }: { projectId: string }) {
 
         <MobileTabs />
 
-        <OnboardingTour />
+        {/* First-run flow: ask for project name, then run the spotlight
+            tour. The tour is gated on `namePromptDone` so the two don't
+            stack on top of each other. */}
+        <FirstRunGate projectId={projectId} />
 
         <Toaster
           position="bottom-right"
@@ -102,5 +106,24 @@ export function Builder({ projectId }: { projectId: string }) {
         />
       </div>
     </ConfirmProvider>
+  );
+}
+
+/**
+ * Sequences the first-run modals: the name prompt comes first (so the
+ * user names the project before being shown around), then the spotlight
+ * tour mounts. If either has already been dismissed (per the storage
+ * flags on each component), they're a no-op visually.
+ */
+function FirstRunGate({ projectId }: { projectId: string }) {
+  const [namePromptDone, setNamePromptDone] = useState(false);
+  return (
+    <>
+      <ProjectNamePrompt
+        projectId={projectId}
+        onDone={() => setNamePromptDone(true)}
+      />
+      {namePromptDone && <OnboardingTour />}
+    </>
   );
 }
