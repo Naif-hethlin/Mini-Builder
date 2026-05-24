@@ -1,16 +1,20 @@
 // =============================================================================
 // THE DATA MODEL
 //
-// A PAGE is a list of SECTIONS.
-// Each SECTION is one of 6 types: 5 presets (Header/Hero/Features/CTA/Footer)
-//   + 1 Layout container that holds nested COMPONENTS.
-// A COMPONENT is one of 6 atomic types (Image/Text/Heading/Button/FeaturedItem/Comments).
+// A PAGE is a list of SECTIONS plus a free-canvas layer of PRIMITIVES.
+// SECTION is a discriminated union over 14 preset types (Header, Hero,
+//   Features, Pricing, CTA, Footer, Gallery, Testimonials, FAQ, Contact,
+//   Booking, Menu, Portfolio, Canvas) — see SECTION_PRESETS in
+//   features/sections/registry.ts.
+// PRIMITIVE is a discriminated union over 9 free-positioned atoms
+//   (Heading, Text, Button, Image, List, Shape, Icon, Input, QA) used
+//   inside the Canvas section — see features/primitives/.
 //
 // This file ONLY defines the shape of data. No behavior, no React, no Zustand.
 // =============================================================================
 
 // -----------------------------------------------------------------------------
-// Shared bits used inside section/component props
+// Shared bits used inside section / primitive props
 // -----------------------------------------------------------------------------
 
 export type Link = {
