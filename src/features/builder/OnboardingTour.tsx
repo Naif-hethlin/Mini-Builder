@@ -129,9 +129,15 @@ export function OnboardingTour() {
   const [tick, setTick] = useState(0);
 
   // First-mount: decide whether to show.
+  //
+  // TESTING MODE: the localStorage gate is currently commented out so
+  // the tour fires on every visit. Restore the gated form before
+  // shipping to production users:
+  //
+  //   if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
+  //
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
     // Small delay so the builder finishes mounting first.
     const t = setTimeout(() => setOpen(true), 400);
     return () => clearTimeout(t);
@@ -188,13 +194,11 @@ export function OnboardingTour() {
   }, [open, step]);
 
   const close = () => {
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(STORAGE_KEY, "1");
-      } catch {
-        /* localStorage unavailable */
-      }
-    }
+    // TESTING MODE: not writing the localStorage flag, so the tour
+    // re-fires on the next visit. Restore the write before shipping:
+    //
+    //   try { window.localStorage.setItem(STORAGE_KEY, "1"); } catch {}
+    //
     setOpen(false);
   };
 
