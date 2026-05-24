@@ -94,9 +94,9 @@ match.
 - **21. Mobile pass** —
   [`src/features/builder/MobileTabs.tsx`](../src/features/builder/MobileTabs.tsx),
   device-mode reflow on the canvas.
-- **22. Deploy** — Multi-stage [Dockerfile](../Dockerfile),
-  [docker-compose.yml](../docker-compose.yml) with Postgres + app on
-  the shared `docker_default` network, Caddy reverse proxy on the host.
+- **22. Deploy** — Multi-stage [Dockerfile](../Dockerfile) and a
+  [docker-compose.yml](../docker-compose.yml) that bundles a Postgres
+  service and exposes the app on port 3000 for local runs.
 
 ## M5. Backend + multi-page (DONE)
 
@@ -179,10 +179,10 @@ flow tied to the user's project.
 - `src/lib/projects-repo.ts` — `domains` table, attach/detach helpers.
 - `src/app/api/projects/[id]/domain/route.ts` — attach / detach handler.
 - `next.config.ts` middleware — route hostname → project lookup.
-- Caddy `on_demand_tls` block in the host's `Caddyfile`.
+- Reverse-proxy / on-demand-TLS config on whatever host is deployed.
 
 **Acceptance**
-- [ ] Pointing a CNAME at the VPS resolves to the right project.
+- [ ] Pointing a CNAME at the host resolves to the right project.
 - [ ] Two projects can't claim the same domain.
 - [ ] On-demand TLS issues a certificate without manual intervention.
 

@@ -12,8 +12,7 @@
 - **Project:** Naif's Rekaz frontend interview submission, now extended.
 - **Repo:** `/home/ubuntu/mini-website-builder/` (standalone).
 - **GitHub:** <https://github.com/Naif-hethlin/Mini-Builder>
-- **Live URL:** <https://builder.naifhub.com> (self-hosted VPS via
-  Docker + Caddy).
+- **Live URL:** <https://builder.naifhub.com>.
 - **Brand color:** `#E85D5D` (coral). Secondary `#F28B82`.
 - **Routing model:** multi-page projects with IDs
   (`/builder/[id]`, `/dashboard/[id]`, `/preview/[id]/[slug?]`,
@@ -275,8 +274,8 @@ Phase numbers match [IMPLEMENTATION.md](./IMPLEMENTATION.md).
 - [x] **19.** Empty states + skeletons across lists / canvas / panels.
 - [x] **20.** AR/RTL pass (Arabic-only UI, `dir="rtl"` default).
 - [x] **21.** Mobile pass — bottom tabs, touch targets, device-mode reflow.
-- [x] **22.** Deploy — Dockerised, Postgres + app on `docker_default`
-  network, Caddy reverse-proxy.
+- [x] **22.** Deploy — Dockerised (multi-stage build) with a bundled
+  Postgres service via docker-compose.
 
 ## M5. Backend + multi-page (post-interview)
 
@@ -310,7 +309,7 @@ phase.
 
 - [ ] Image library — server-side uploads to `public/uploads/` so users
       stop pasting Unsplash URLs.
-- [ ] Custom domains for published sites (Caddy on-demand TLS + CNAME).
+- [ ] Custom domains for published sites (CNAME-based, on-demand TLS).
 - [ ] Per-section visibility toggle (hide without delete).
 - [ ] "Duplicate page" action in the page switcher.
 - [ ] Per-project bookings analytics (peak hours, no-show rate).

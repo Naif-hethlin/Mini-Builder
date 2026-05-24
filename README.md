@@ -196,7 +196,6 @@ and are registered in [`registry.ts`](src/features/primitives/registry.ts).
 | Unit tests       | **Vitest** + Testing Library + jsdom                                    |
 | E2E tests        | **Playwright** (Chromium)                                               |
 | Container        | Multi-stage Docker (Node 22 Alpine) + Docker Compose                    |
-| Reverse proxy    | Caddy (external `docker_default` network on the VPS)                    |
 
 ---
 
@@ -344,7 +343,7 @@ Headline next-ups:
 **New surface area**
 - Image library (server-side uploads → `public/uploads/`) so users can
   stop pasting Unsplash URLs.
-- Custom domains for published sites (CNAME + Caddy on-demand TLS).
+- Custom domains for published sites (CNAME-based, on-demand TLS).
 - Per-project bookings analytics (peak hours, no-show rate).
 - A "duplicate page" action in the page switcher.
 - Per-section visibility toggle (hide without delete).
@@ -356,42 +355,32 @@ Headline next-ups:
 
 ---
 
-## Deploy
+## Run with Docker (local)
 
-Self-hosted on a VPS via Docker Compose + Caddy:
+If you'd rather not install Node + Postgres yourself, the bundled
+Compose stack spins up both:
 
 ```bash
+# from the repo root
+cp .env.example .env 2>/dev/null || true   # if you keep one; otherwise create one
+# .env must contain at least:
+#   POSTGRES_PASSWORD=<change-me>
+#   SESSION_SECRET=<32+ char random>
+
 docker compose build
-docker compose up -d
+docker compose up
 ```
 
-The compose file pulls in `postgres:16-alpine` and the app image. Both
-containers join the shared `docker_default` network so the host's main
-Caddy can reverse-proxy `builder.naifhub.com` → `mini-website-builder:3000`.
+Then open <http://localhost:3000>.
 
-Required env (in `.env` next to `docker-compose.yml`):
+- The `app` container exposes port 3000 (override via `PORT` in `.env`).
+- A Postgres 16 container is started alongside and the app talks to it
+  on the compose network.
+- The data volume `postgres_data` persists between restarts; remove it
+  with `docker compose down -v` for a clean slate.
 
-```env
-POSTGRES_USER=rekaz
-POSTGRES_PASSWORD=<change-me>
-POSTGRES_DB=rekaz_builder
-SESSION_SECRET=<32+ char random>
-```
-
-Caddy block on the host:
-
-```caddy
-builder.naifhub.com {
-  reverse_proxy mini-website-builder:3000
-  encode gzip
-  header {
-    X-Frame-Options SAMEORIGIN
-    X-Content-Type-Options nosniff
-    Referrer-Policy strict-origin-when-cross-origin
-    -Server
-  }
-}
-```
+This is just for spinning up a local copy. Production deploy details
+are not documented here on purpose.
 
 ---
 
