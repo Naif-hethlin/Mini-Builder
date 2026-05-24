@@ -134,7 +134,10 @@ function ElementsPanel({ query }: { query: string }) {
   }, [query]);
 
   return (
-    <div className="flex-1 space-y-5 overflow-y-auto px-4 pb-4">
+    <div
+      data-tour="library-content"
+      className="flex-1 space-y-5 overflow-y-auto px-4 pb-4"
+    >
       {/* Indigo info banner */}
       <div className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-indigo-100/60 bg-indigo-50 p-3">
         <div className="absolute -end-2 -top-2 h-12 w-12 rounded-full bg-indigo-500/10 blur-xl" />
@@ -208,7 +211,8 @@ function SectionsPanel({ query }: { query: string }) {
 
   return (
     <div
-      data-tour="library-sections"
+      data-tour="library-content"
+      data-tour-alt="library-sections"
       className="flex-1 overflow-y-auto px-4 pb-4"
     >
       {filtered.length === 0 ? (
