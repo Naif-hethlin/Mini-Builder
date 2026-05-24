@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Logo } from "@/shared/ui/Logo";
 import { cn } from "@/shared/lib/cn";
 import { useProjects, type ProjectTemplateType } from "@/features/projects";
@@ -525,9 +526,18 @@ function Main({
       await sleep(ms);
     };
 
+    // PAGE coords, not viewport coords. The cursor is absolute-positioned
+    // (and portaled to <body> so no positioned ancestor steals the frame
+    // of reference), so x/y are interpreted as document-origin offsets.
+    // Using page coords means the cursor stays glued to its target as
+    // the user scrolls the page — fixed-positioning would leave it
+    // floating in the viewport while the target slid past.
     const centerOf = (el: Element) => {
       const rect = el.getBoundingClientRect();
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      return {
+        x: rect.left + rect.width / 2 + window.scrollX,
+        y: rect.top + rect.height / 2 + window.scrollY,
+      };
     };
 
     const loop = async () => {
@@ -537,9 +547,15 @@ function Main({
 
       while (!cancelled) {
         // Reset (clear any previously-dropped elements + sit cursor off-screen).
+        // Page coords now — offset by the current scroll so "off-screen"
+        // means off the current viewport regardless of where the user is
+        // on the page.
         setDropped([]);
         setPublishActive(false);
-        setCursor({ x: window.innerWidth + 100, y: window.innerHeight + 100 });
+        setCursor({
+          x: window.innerWidth + 100 + window.scrollX,
+          y: window.innerHeight + 100 + window.scrollY,
+        });
         await gatedSleep(500);
         if (cancelled) return;
 
@@ -609,17 +625,13 @@ function Main({
           await gatedSleep(700);
         }
 
-        // Publish click — on mobile the page is scrollable and the
-        // publish button (in Main's top bar) can be off-screen if the
-        // user scrolled past it. scrollIntoView keeps the cursor's
-        // final beat visible regardless of scroll position.
+        // Publish click — cursor uses PAGE coords, so it stays glued
+        // to the publish button regardless of where the user has
+        // scrolled. No scrollIntoView: yanking the page back to bring
+        // publish into view fights the user; if they've scrolled away
+        // they're not watching anyway, and the next cycle will redraw
+        // wherever they look.
         if (publishRef.current) {
-          publishRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest",
-          });
-          await gatedSleep(350);
-          if (cancelled) return;
           const p = centerOf(publishRef.current);
           setCursor({ x: p.x - 14, y: p.y - 14 });
           await gatedSleep(STEP_BEFORE_PUBLISH);
@@ -766,49 +778,56 @@ function Main({
         </div>
       </div>
 
-      {/* Demo cursor — desktop only. The auto-play looks awkward on phones
-          (the SVG appears huge over a stacked layout); the cursor's
-          z-index sits below the auth overlay so it can't appear over
-          the login form on desktop either. */}
-      {cursor && !previewing && (
-        <div
-          aria-hidden
-          style={{
-            transform: `translate(${cursor.x}px, ${cursor.y}px)`,
-          }}
-          // NOTE: left-0 (not start-0). The cursor uses absolute pixel
-          // translate() based on getBoundingClientRect coords, which are
-          // measured from the viewport's LEFT edge. start-0 would anchor
-          // it to the right edge in RTL and park it off-screen.
-          //
-          // z-[100] sits BELOW the auth overlay (z-[200]) so a stray
-          // cursor frame can never appear over the login form.
-          className="pointer-events-none fixed top-0 left-0 z-[100] flex h-8 w-8 origin-top-left scale-75 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:scale-100"
-        >
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="relative z-10 origin-top-left -rotate-12 text-stone-900 drop-shadow-md"
-          >
-            <path
-              d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.36Z"
-              fill="currentColor"
-              stroke="white"
-              strokeWidth={2}
-              strokeLinejoin="round"
-            />
-          </svg>
+      {/* Demo cursor — portaled to <body> with position:absolute so it
+          uses PAGE coords (not viewport coords). That way the cursor
+          stays glued to its tile/canvas target as the user scrolls the
+          page; fixed positioning would leave it floating in the viewport
+          while content slid past, which read as "the cursor follows me
+          when I scroll" + "the animation breaks".
+
+          NOTE: left-0 (not start-0). The cursor uses absolute pixel
+          translate() based on PAGE coords measured from the LEFT edge.
+          start-0 would anchor it to the right edge in RTL and park it
+          off-screen.
+
+          z-[100] sits BELOW the auth overlay (z-[200]) so a stray
+          cursor frame can never appear over the login form. */}
+      {cursor &&
+        !previewing &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className={cn(
-              "absolute inset-0 rounded-full border-2 border-brand bg-brand/20 transition-all duration-300",
-              ripple ? "scale-[2.5] opacity-0" : "scale-0 opacity-0",
-            )}
-          />
-        </div>
-      )}
+            aria-hidden
+            style={{
+              transform: `translate(${cursor.x}px, ${cursor.y}px)`,
+            }}
+            className="pointer-events-none absolute top-0 left-0 z-[100] flex h-8 w-8 origin-top-left scale-75 items-center justify-center drop-shadow-xl transition-transform duration-700 ease-out sm:scale-100"
+          >
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="relative z-10 origin-top-left -rotate-12 text-stone-900 drop-shadow-md"
+            >
+              <path
+                d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87a.5.5 0 0 0 .35-.85L6.35 2.85a.5.5 0 0 0-.85.36Z"
+                fill="currentColor"
+                stroke="white"
+                strokeWidth={2}
+                strokeLinejoin="round"
+              />
+            </svg>
+            <div
+              className={cn(
+                "absolute inset-0 rounded-full border-2 border-brand bg-brand/20 transition-all duration-300",
+                ripple ? "scale-[2.5] opacity-0" : "scale-0 opacity-0",
+              )}
+            />
+          </div>,
+          document.body,
+        )}
     </main>
   );
 }
