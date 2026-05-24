@@ -117,7 +117,7 @@ export function BuilderShowcase(_props: { suspended?: boolean }) {
   );
 
   return (
-    <div className="flex h-dvh w-screen flex-col overflow-hidden bg-stone-50 text-stone-800 md:flex-row">
+    <div className="flex min-h-dvh w-screen flex-col bg-stone-50 text-stone-800 md:h-dvh md:flex-row md:overflow-hidden">
       <Sidebar
         onScratch={startScratch}
         onTemplates={() => setChooserOpen(true)}
@@ -164,44 +164,64 @@ function Sidebar({
   onTemplates: () => void;
 }) {
   return (
-    <aside className="relative z-20 flex max-h-[38vh] w-full shrink-0 flex-col overflow-y-auto border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:max-h-none md:w-[380px] md:border-b-0 md:border-s">
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-100 bg-white/95 px-5 py-4 backdrop-blur md:px-8 md:py-6">
+    <aside className="relative z-20 flex w-full shrink-0 flex-col border-b border-stone-200 bg-white shadow-[0_0_40px_rgba(0,0,0,0.03)] md:h-full md:w-[380px] md:overflow-y-auto md:border-b-0 md:border-s">
+      <div className="flex items-center gap-3 border-b border-stone-100 bg-white/95 px-5 py-4 backdrop-blur md:sticky md:top-0 md:z-10 md:px-8 md:py-6">
         <Logo variant="wordmark" height={28} />
       </div>
 
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5 md:gap-10 md:px-8 md:py-8">
-        <section className="flex flex-col gap-4">
-          <h2 className="mb-1 text-xl font-bold text-stone-900">
+      <div className="flex flex-col gap-5 px-5 py-5 md:flex-1 md:gap-10 md:px-8 md:py-8">
+        <section className="flex flex-col gap-3 md:gap-4">
+          <h2 className="text-base font-bold text-stone-900 md:text-xl">
             اختر بداية مشروعك
           </h2>
 
-          <StarterCard
-            primary
-            icon={
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            }
-            title="بناء حر من الصفر"
-            subtitle="صفحة فارغة، أنت تختار الأقسام وتصممها."
-            onClick={onScratch}
-          />
+          {/* On phones the two cards sit side-by-side as a 2-col grid;
+              on desktop they stack vertically as before. */}
+          <div className="grid grid-cols-2 gap-3 md:flex md:flex-col md:gap-4">
+            <StarterCard
+              primary
+              icon={
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="md:hidden"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              }
+              iconDesktop={
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              }
+              title="بناء حر من الصفر"
+              subtitle="صفحة فارغة، أنت تختار الأقسام وتصممها."
+              onClick={onScratch}
+            />
 
-          <StarterCard
-            icon={<LayoutGrid size={26} />}
-            title="قوالب جاهزة"
-            subtitle="اختر من قوالب جاهزة للأنشطة المختلفة."
-            onClick={onTemplates}
-          />
+            <StarterCard
+              icon={<LayoutGrid size={22} className="md:hidden" />}
+              iconDesktop={<LayoutGrid size={26} />}
+              title="قوالب جاهزة"
+              subtitle="اختر من قوالب جاهزة للأنشطة المختلفة."
+              onClick={onTemplates}
+            />
+          </div>
         </section>
 
         {/* Tool tiles — desktop only. On mobile the same tiles are
@@ -254,12 +274,14 @@ function Sidebar({
 function StarterCard({
   primary = false,
   icon,
+  iconDesktop,
   title,
   subtitle,
   onClick,
 }: {
   primary?: boolean;
   icon: React.ReactNode;
+  iconDesktop?: React.ReactNode;
   title: string;
   subtitle: string;
   onClick: () => void;
@@ -269,30 +291,41 @@ function StarterCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border-2 p-4 text-start transition-all",
+        // Mobile: vertical stack inside a 2-col grid cell (icon on top,
+        //         title below, subtitle hidden — keeps it readable at
+        //         ~150px wide).
+        // Desktop: horizontal row (icon left, title + subtitle right),
+        //         full panel width.
+        "group relative flex w-full flex-col items-center gap-2 overflow-hidden rounded-2xl border-2 p-3 text-center transition-all md:flex-row md:items-center md:gap-4 md:p-4 md:text-start",
         primary
           ? "border-brand bg-brand-light"
           : "border-transparent bg-stone-50 hover:border-stone-200 hover:bg-stone-100",
       )}
     >
       {primary && (
-        <div className="absolute top-0 right-0 h-full w-1.5 rounded-s-xl bg-brand" />
+        <div className="absolute top-0 right-0 hidden h-full w-1.5 rounded-s-xl bg-brand md:block" />
       )}
       <div
         className={cn(
-          "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-white shadow-sm transition-transform group-hover:scale-105",
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-white shadow-sm transition-transform group-hover:scale-105 md:h-14 md:w-14",
           primary
             ? "border-brand/30 text-brand"
             : "border-stone-200 text-stone-400 group-hover:text-stone-600",
         )}
       >
         {icon}
+        {iconDesktop ? (
+          <span className="hidden md:inline">{iconDesktop}</span>
+        ) : null}
       </div>
-      <div>
-        <div className="text-lg font-bold text-stone-900">{title}</div>
+      <div className="min-w-0">
+        <div className="text-sm font-bold text-stone-900 md:text-lg">
+          {title}
+        </div>
+        {/* Subtitle is desktop-only — it doesn't fit a 150px-wide tile. */}
         <div
           className={cn(
-            "mt-1 text-sm leading-relaxed",
+            "mt-1 hidden text-sm leading-relaxed md:block",
             primary ? "text-stone-600" : "text-stone-500",
           )}
         >
@@ -576,8 +609,17 @@ function Main({
           await gatedSleep(700);
         }
 
-        // Publish click
+        // Publish click — on mobile the page is scrollable and the
+        // publish button (in Main's top bar) can be off-screen if the
+        // user scrolled past it. scrollIntoView keeps the cursor's
+        // final beat visible regardless of scroll position.
         if (publishRef.current) {
+          publishRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+          await gatedSleep(350);
+          if (cancelled) return;
           const p = centerOf(publishRef.current);
           setCursor({ x: p.x - 14, y: p.y - 14 });
           await gatedSleep(STEP_BEFORE_PUBLISH);
@@ -598,7 +640,7 @@ function Main({
   }, [previewing]);
 
   return (
-    <main className="relative flex h-full min-w-0 flex-1 flex-col">
+    <main className="relative flex h-[64vh] min-w-0 flex-col md:h-full md:flex-1">
       {/* Top bar — tight padding on mobile so the inline buttons + chip fit. */}
       <div className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-stone-200 bg-white/90 px-3 backdrop-blur-sm sm:h-16 sm:px-8">
         <div className="flex min-w-0 items-center gap-2 text-sm font-semibold sm:gap-3">
