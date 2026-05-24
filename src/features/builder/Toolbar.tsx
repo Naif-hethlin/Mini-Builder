@@ -168,19 +168,31 @@ export function Toolbar() {
       )}
 
       {/* ── Right: history + view group + publish ───────────────────── */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className={PILL_GROUP_CLASS}>
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* History pill — tighter on phones so it doesn't compete with
+            the page-switcher pill for horizontal real estate. Smaller
+            icons (13 vs 15) + p-0.5 vs p-1 = ~22px saved on mobile. */}
+        <div
+          className={cn(
+            PILL_GROUP_CLASS,
+            "gap-0 p-0.5 sm:gap-1 sm:p-1",
+          )}
+        >
           <ToolbarIconButton
-            icon={<Undo2 size={15} />}
+            icon={<Undo2 size={13} className="sm:hidden" />}
+            iconSm={<Undo2 size={15} />}
             label="تراجع (Ctrl+Z)"
             disabled={!canUndo}
             onClick={undo}
+            compact
           />
           <ToolbarIconButton
-            icon={<Redo2 size={15} />}
+            icon={<Redo2 size={13} className="sm:hidden" />}
+            iconSm={<Redo2 size={15} />}
             label="إعادة (Ctrl+Shift+Z)"
             disabled={!canRedo}
             onClick={redo}
+            compact
           />
         </div>
 
@@ -289,16 +301,23 @@ export function Toolbar() {
 
 function ToolbarIconButton({
   icon,
+  iconSm,
   label,
   onClick,
   disabled = false,
   danger = false,
+  compact = false,
 }: {
   icon: React.ReactNode;
+  /** Optional larger icon shown at sm:+ breakpoint. */
+  iconSm?: React.ReactNode;
   label: string;
   onClick?: () => void;
   disabled?: boolean;
   danger?: boolean;
+  /** Compact size — used inside the history pill on phones so the
+   *  toolbar doesn't outgrow a 430px viewport. */
+  compact?: boolean;
 }) {
   return (
     <button
@@ -308,13 +327,15 @@ function ToolbarIconButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex items-center justify-center rounded-lg text-slate-500 transition-all disabled:cursor-not-allowed disabled:opacity-40",
+        compact ? "h-6 w-6 sm:h-8 sm:w-8" : "h-8 w-8",
         danger
           ? "hover:bg-rose-50 hover:text-rose-600"
           : "hover:bg-white hover:text-slate-800 hover:shadow-sm",
       )}
     >
       {icon}
+      {iconSm ? <span className="hidden sm:inline-flex">{iconSm}</span> : null}
     </button>
   );
 }

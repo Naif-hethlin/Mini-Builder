@@ -101,13 +101,18 @@ export function PageSwitcher({ projectId }: { projectId: string }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-stone-200 px-2 text-xs font-medium text-stone-700 transition-colors hover:border-brand hover:text-brand"
+        // flex + w-full + min-w-0 lets this pill USE the width its
+        // wrapper gives it (the Toolbar wraps this in flex-1 on
+        // mobile). Without `w-full` the inline-flex button kept its
+        // natural content width and overflowed the wrapper —
+        // overlapping the undo/redo pill next to it on phones.
+        className="flex h-8 w-full min-w-0 items-center gap-1.5 rounded-md border border-stone-200 px-2 text-xs font-medium text-stone-700 transition-colors hover:border-brand hover:text-brand"
       >
-        <FileText size={12} />
-        <span className="max-w-[120px] truncate">
+        <FileText size={12} className="shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-start">
           {current?.name ?? "صفحة"}
         </span>
-        <ChevronDown size={12} className="text-stone-400" />
+        <ChevronDown size={12} className="shrink-0 text-stone-400" />
       </button>
 
       {open && (
